@@ -24,6 +24,7 @@ To eradicate predatory micro-lending in the Philippine informal gig economy by l
 ## References and Examples
 * For comprehensive deployment instructions, please refer to the HOW TO DEPLOY GUIDE found in the file Copy-Paste Board.pdf[cite: 1].
 * For an architecture mapping to a frontend application, see the EXAMPLE SMART CONTRACT + FRONTEND repository found in the file Copy-Paste Board.pdf[cite: 1].
+<img width="1907" height="907" alt="image" src="https://github.com/user-attachments/assets/416d63f4-1e34-46ae-a734-9e5a59976146" />
 
 ## Build and Test Instructions
 **How to build:**
