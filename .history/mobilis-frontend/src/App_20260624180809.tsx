@@ -6,6 +6,7 @@ import Login from './components/Login';
 import Signup from './components/Signup';
 import Dashboard from './components/Dashboard';
 
+// Replace line 9 with this:
 const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
   const { currentUser } = useAuth();
   if (currentUser === null) {

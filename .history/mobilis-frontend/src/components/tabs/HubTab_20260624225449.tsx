@@ -31,7 +31,6 @@ const HubTab: React.FC<HubTabProps> = ({ stellarData, isAdmin, currencyMode, set
     const [pendingUsers, setPendingUsers] = useState<UserData[]>([]);
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLimitInput(borrowLimit.toString());
         setDriverRequestAmt(borrowLimit.toString());
     }, [borrowLimit]);

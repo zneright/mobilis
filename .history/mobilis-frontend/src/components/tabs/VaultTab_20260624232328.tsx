@@ -8,7 +8,6 @@ interface Asset {
 }
 
 interface VaultTabProps {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     stellarData: any;
     externalWallet: string | null;
     activePubKey: string | null;
@@ -54,7 +53,6 @@ const VaultTab: React.FC<VaultTabProps> = ({
             const response = await fetch(`https://friendbot.stellar.org/?addr=${activePubKey}`);
             if (response.ok) {
                 alert("Success! 10,000 Testnet XLM has been deposited to your account.");
-                // Immediately pull new data after funding
                 await refreshData();
             } else {
                 const errorData = await response.json();

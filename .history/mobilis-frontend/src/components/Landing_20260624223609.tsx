@@ -1,8 +1,6 @@
-import { useState, useEffect } from 'react';
-import type { CSSProperties } from 'react';
+import { useState, useEffect, CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import type { Variants } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import { Fuel, Zap, ShieldCheck, ArrowRight, Wallet, Globe } from 'lucide-react';
 import { EarthCanvas, ShootingStar } from './EarthCanvas';
 

@@ -18,8 +18,11 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ stellarData, isSuperAdmin }) =>
         if (stellarData) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setEditPhone(stellarData.phone || '');
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setEditPlate(stellarData.plateNumber || '');
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setEditContact(stellarData.contactPerson || '');
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setEditRegNum(stellarData.registrationNumber || '');
         }
     }, [stellarData]);

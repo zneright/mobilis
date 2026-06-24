@@ -10,9 +10,7 @@ import { AlertTriangle, Copy, CheckCircle2, Wallet } from 'lucide-react';
 import type { UserData } from '../types';
 
 declare global {
-    interface Window {
-        lobstr: unknown;
-    }
+    interface Window { lobstr: unknown; }
 }
 
 const Signup: React.FC = () => {
@@ -104,7 +102,7 @@ const Signup: React.FC = () => {
                     } else throw new Error("Freighter extension not found or access denied.");
                 } else if (adminWalletMethod === 'lobstr') {
                     if (window.lobstr) {
-                        publicKey = await (window.lobstr as { requestAccess: () => Promise<string> }).requestAccess();
+                        publicKey = await window.lobstr.requestAccess();
                     } else throw new Error("LOBSTR extension not found.");
                 } else if (adminWalletMethod === 'generate') {
                     const pair = Keypair.random();

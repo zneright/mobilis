@@ -8,7 +8,6 @@ interface Asset {
 }
 
 interface VaultTabProps {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     stellarData: any;
     externalWallet: string | null;
     activePubKey: string | null;
@@ -85,7 +84,8 @@ const VaultTab: React.FC<VaultTabProps> = ({
                         <button onClick={() => setShowWalletModal(true)} className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold font-mono bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 shadow-sm transition-colors hover:bg-blue-100 dark:hover:bg-blue-500/20">
                             <LinkIcon className="w-4 h-4" /> Connect Wallet
                         </button>
-                    )}
+                    )
+                    }
                     <button onClick={() => setCurrencyMode(p => p === 'PHP' ? 'XLM' : 'PHP')} className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold font-mono bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 shadow-sm">
                         <RefreshCw className="w-4 h-4" /> {currencyMode}
                     </button>
@@ -173,11 +173,11 @@ const VaultTab: React.FC<VaultTabProps> = ({
                                     <div className="flex gap-2">
                                         <code className="flex-1 bg-gray-50 dark:bg-black/40 p-4 rounded-xl text-xs break-all border border-gray-200 dark:border-white/5 select-none">
                                             {showSecret ? stellarData.secret : 'S•••••••••••••••••••••••••••••••••••••••••••••••••••••••'}
-                                        </code>
-                                        <button onClick={() => setShowSecret(!showSecret)} className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-200 dark:hover:bg-white/10">
-                                            {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                        </button>
-                                        <button onClick={() => navigator.clipboard.writeText(stellarData.secret)} className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-200 dark:hover:bg-white/10"><Copy className="w-4 h-4" /></button>
+                                        Code/>
+                                            <button onClick={() => setShowSecret(!showSecret)} className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-200 dark:hover:bg-white/10">
+                                                {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
+                                            <button onClick={() => navigator.clipboard.writeText(stellarData.secret)} className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-200 dark:hover:bg-white/10"><Copy className="w-4 h-4" /></button>
                                     </div>
                                 </div>
                             </div>
