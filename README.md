@@ -1,4 +1,3 @@
-```markdown
 # 🚙⚡ Mobilis
 
 > A Soroban-powered automated micro-credit treasury for unbanked transport drivers in the Philippines.
@@ -37,6 +36,7 @@
 * **Testnet Contract Address:** `CAVFLXBG4MXGTGECI6WAZXMDNX2H3UWFTMNY4DHK2MR4YUYEEU5STBID`
 
 ### On-Chain Transaction Verification
+
 | Action Log | Transaction Hash / Explorer Link | Ledger Verification |
 | :--- | :--- | :--- |
 | **Initial Funding** | [64d87c59f1d0...](https://stellar.expert/explorer/testnet/tx/64d87c59f1d037475199dfd8e56425cf7a9dc0b183ab6da6838b961eb1dcd481) | <img width="280" alt="Tx 1" src="https://github.com/user-attachments/assets/23435bd2-cf4a-4ac4-b4fb-c73b6af21429" /> |
@@ -71,46 +71,36 @@ running 1 test
 test test::test::test_end_to_end_borrow_and_settle ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
-
-```
-
----
-
-## 🏗️ Architecture & Tech Stack
-
+🏗️ Architecture & Tech Stack
 Mobilis uses a reliable Web2.5 hybrid system designed to bring low-latency structural integrity to traditional transport workflows.
 
-* **Frontend:** React 18, Vite, Tailwind CSS, Framer Motion (for immersive 3D Global Earth WebGL interactions via Three.js).
-* **State Management & Web3 Connections:** `@stellar/stellar-sdk`, integrated directly with `@stellar/freighter-api` and extension hooks for automated node configurations.
-* **Database & Directory Ledger:** Firebase Auth and Firestore to track fleet structural metadata (plate profiles, TODA cooperative nodes, names) without exposing unnecessary PII on the ledger.
-* **On-Chain Settlement Protocol:** WebAssembly Rust binary deployed under the Soroban SDK smart contract environment running on the Stellar Testnet.
+Frontend: React 18, Vite, Tailwind CSS, Framer Motion (for immersive 3D Global Earth WebGL interactions via Three.js).
 
----
+State Management & Web3 Connections: @stellar/stellar-sdk, integrated directly with @stellar/freighter-api and extension hooks for automated node configurations.
 
-## 💻 Local Development & Testing Instructions
+Database & Directory Ledger: Firebase Auth and Firestore to track fleet structural metadata (plate profiles, TODA cooperative nodes, names) without exposing unnecessary PII on the ledger.
 
-### Prerequisites
+On-Chain Settlement Protocol: WebAssembly Rust binary deployed under the Soroban SDK smart contract environment running on the Stellar Testnet.
 
-* [Node.js & npm](https://nodejs.org/)
-* [Rust toolchain](https://www.rust-lang.org/) (`rustup target add wasm32-unknown-unknown`)
-* [Soroban CLI](https://soroban.stellar.org/) (`cargo install --locked soroban-cli`)
+💻 Local Development & Testing Instructions
+Prerequisites
+Node.js & npm
 
-### 1. Smart Contract Compilation & Verification
+Rust toolchain (rustup target add wasm32-unknown-unknown)
 
+Soroban CLI (cargo install --locked soroban-cli)
+
+1. Smart Contract Compilation & Verification
 Navigate to your localized contract directory to compile logic structures and pass system-defined test variants:
 
-```bash
+Bash
 cd contracts/Mobilis
 # Run unit assertions verifying contract actions (3+ passing tests)
 cargo test
-
-```
-
-### 2. Frontend Workspace System Initialization
-
+2. Frontend Workspace System Initialization
 Open a parallel command context window to configure your environment flags and execute the local user interface:
 
-```bash
+Bash
 cd ../../mobilis-frontend
 npm install
 
@@ -120,15 +110,9 @@ cp .env.example .env
 
 # Fire up the lightweight development engine server
 npm run dev
+🔒 Security, Loading States & Architectural Guardrails
+Pre-flight Asset Assurances: The UI prevents double-borrowing by reading the immutable smart contract ledger debt mapping via pre-flight simulations before unlocking operational buttons.
 
-```
+Dynamic Fee Allocation: Upon repayment, fees are programmatically routed across structural accounts (0.3% to Coop Admins for risk mitigation, 0.2% to Platform core infrastructure maintenance).
 
----
-
-## 🔒 Security, Loading States & Architectural Guardrails
-
-* **Pre-flight Asset Assurances:** The UI prevents double-borrowing by reading the immutable smart contract ledger debt mapping via pre-flight simulations before unlocking operational buttons.
-* **Dynamic Fee Allocation:** Upon repayment, fees are programmatically routed across structural accounts (0.3% to Coop Admins for risk mitigation, 0.2% to Platform core infrastructure maintenance).
-* **Fail-Safe Cryptography:** Wallet actions utilize loading state overlays, intercepting user mistakes and handling runtime ledger rejections cleanly.
-
----
+Fail-Safe Cryptography: Wallet actions utilize loading state overlays, intercepting user mistakes and handling runtime ledger rejections cleanly.
