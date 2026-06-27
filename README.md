@@ -70,7 +70,7 @@
   <img width="882" height="128" alt="CI/CD Test Suite Run" src="https://github.com/user-attachments/assets/ca5ee05a-45dd-443f-a09a-c3c70e26073e" />
 </p>
 
-```text
+
 running 1 test
 test test::test::test_end_to_end_borrow_and_settle ... ok
 
