@@ -1,9 +1,9 @@
-// src/components/Login.tsx
 import React, { useState } from 'react';
 import { auth } from '../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate, Link } from 'react-router-dom';
-import { Fuel, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import MobilisLogo from './common/MobilisLogo';
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -34,9 +34,7 @@ const Login: React.FC = () => {
 
             <div className="w-full max-w-md bg-[#0a0a14]/80 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 sm:p-10 shadow-2xl relative z-10">
                 <div className="flex justify-center mb-6">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center shadow-[0_0_20px_rgba(52,211,153,0.3)]">
-                        <Fuel className="w-6 h-6 text-white" />
-                    </div>
+                    <MobilisLogo size={56} />
                 </div>
 
                 <h2 className="text-2xl sm:text-3xl font-black text-center mb-2 tracking-tight">Welcome Back</h2>

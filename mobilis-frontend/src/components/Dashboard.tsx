@@ -29,6 +29,7 @@ import ProfileTab from './tabs/ProfileTab';
 
 import CommuterRadar from './commuter/CommuterRadar';
 import DriverDutyToggle from './driver/DriverDutyToggle';
+import MobilisLoader from './common/MobilisLoader';
 import { playDoubleChime } from '../utils/webAudio';
 import { setupFcmNotifications } from '../services/fcm';
 
@@ -600,7 +601,7 @@ const Dashboard: React.FC = () => {
         return `${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} XLM`;
     };
 
-    if (!stellarData) return <div className="min-h-screen bg-gray-50 dark:bg-[#060610] flex items-center justify-center text-white">Loading Node Profile...</div>;
+    if (!stellarData) return <MobilisLoader message="Loading Node Profile..." />;
 
     if (stellarData.status === 'pending') {
         return (

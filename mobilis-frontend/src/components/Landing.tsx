@@ -3,8 +3,9 @@ import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
-import { Fuel, Zap, ShieldCheck, ArrowRight, Wallet, Globe } from 'lucide-react';
+import { Zap, ShieldCheck, ArrowRight, Wallet, Globe } from 'lucide-react';
 import { EarthCanvas, ShootingStar } from './EarthCanvas';
+import MobilisLogo from './common/MobilisLogo';
 
 // --- ANIMATION VARIANTS ---
 const fadeUp: Variants = {
@@ -80,12 +81,7 @@ export default function Landing() {
                     }}
                 >
                     <div className="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center shadow-[0_0_15px_rgba(52,211,153,0.4)]">
-                                <Fuel className="w-5 h-5 text-white" />
-                            </div>
-                            <div className="font-black text-2xl text-white tracking-wide">MOBILIS</div>
-                        </div>
+                        <MobilisLogo size={36} showText />
 
                         <div className="flex items-center gap-4">
                             <Link to="/login" className="px-4 py-2 text-xs font-bold tracking-wide text-gray-300 hover:text-white transition-colors">
@@ -257,9 +253,8 @@ export default function Landing() {
 
                 {/* --- FOOTER --- */}
                 <footer className="border-t border-white/10 py-10 text-center relative z-10">
-                    <div className="flex items-center justify-center gap-2 mb-4 opacity-50 hover:opacity-100 transition-opacity cursor-pointer">
-                        <Fuel className="w-5 h-5 text-white" />
-                        <span className="font-black text-xl tracking-widest text-white">MOBILIS</span>
+                    <div className="flex items-center justify-center mb-4 opacity-75 hover:opacity-100 transition-opacity">
+                        <MobilisLogo size={32} showText />
                     </div>
                     <p className="text-xs text-gray-600 font-mono">
                         © {new Date().getFullYear()} Mobilis Protocol. Engineered for TODA.

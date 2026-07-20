@@ -5,6 +5,7 @@ import Landing from './components/Landing';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import Dashboard from './components/Dashboard';
+import SplashScreen from './components/common/SplashScreen';
 
 const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
   const { currentUser } = useAuth();
@@ -17,6 +18,7 @@ const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
 const App: React.FC = () => {
   return (
     <AuthProvider>
+      <SplashScreen />
       <Router>
         <Routes>
           <Route path="/" element={<Landing />} />

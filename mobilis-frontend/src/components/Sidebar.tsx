@@ -1,5 +1,6 @@
 import React from 'react';
-import { Fuel, LayoutDashboard, Wallet, History, UserCog, Radio } from 'lucide-react';
+import { LayoutDashboard, Wallet, History, UserCog, Radio } from 'lucide-react';
+import MobilisLogo from './common/MobilisLogo';
 
 interface SidebarProps {
     activeTab: 'hub' | 'vault' | 'history' | 'profile';
@@ -25,11 +26,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, role }) => {
     return (
         <aside className="hidden md:flex flex-col w-64 h-screen border-r border-gray-200 dark:border-white/10 bg-white dark:bg-[#060610] transition-colors duration-300">
             {/* Sidebar Header */}
-            <div className="h-20 flex items-center gap-3 px-6 border-b border-gray-200 dark:border-white/10">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center shadow-sm dark:shadow-[0_0_15px_rgba(52,211,153,0.4)]">
-                    <Fuel className="w-5 h-5 text-white" />
-                </div>
-                <span className="font-black text-xl tracking-widest text-gray-900 dark:text-white">MOBILIS</span>
+            <div className="h-20 flex items-center px-6 border-b border-gray-200 dark:border-white/10">
+                <MobilisLogo size={32} showText />
             </div>
 
             {/* Navigation Links */}

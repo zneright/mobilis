@@ -1,5 +1,6 @@
 import React from 'react';
-import { Fuel, Sun, Moon, LogOut } from 'lucide-react';
+import { Sun, Moon, LogOut } from 'lucide-react';
+import MobilisLogo from './common/MobilisLogo';
 
 interface HeaderProps {
     theme: 'dark' | 'light';
@@ -13,11 +14,8 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onSignOut }) => {
             <div className="w-full px-6 flex items-center justify-between">
 
                 {/* Brand - Hidden on Desktop because Sidebar has it */}
-                <div className="flex items-center gap-3 md:hidden">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center shadow-sm dark:shadow-[0_0_15px_rgba(52,211,153,0.4)]">
-                        <Fuel className="w-5 h-5 text-white" />
-                    </div>
-                    <span className="font-black text-xl tracking-widest text-gray-900 dark:text-white">MOBILIS</span>
+                <div className="md:hidden">
+                    <MobilisLogo size={32} showText />
                 </div>
                 <div className="hidden md:block"></div> {/* Spacer for desktop */}
 

@@ -8,6 +8,7 @@ import { requestAccess, isConnected } from '@stellar/freighter-api';
 import { AlertTriangle, Copy, CheckCircle2, Wallet, UserCheck } from 'lucide-react';
 import type { UserData } from '../types';
 import { trackWalletCreated } from '../services/analytics';
+import MobilisLogo from './common/MobilisLogo';
 
 declare global {
     interface Window {
@@ -211,7 +212,10 @@ const Signup: React.FC = () => {
             )}
 
             <div className="w-full max-w-lg bg-[#0a0a14]/80 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 sm:p-10 shadow-2xl">
-                <h2 className="text-2xl sm:text-3xl font-black text-center mb-8 tracking-tight">Deploy Node</h2>
+                <div className="flex justify-center mb-4">
+                    <MobilisLogo size={48} showText />
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black text-center mb-6 tracking-tight text-gray-300">Deploy Transport Account</h2>
 
                 {error && (
                     <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm text-center">
