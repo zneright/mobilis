@@ -11,21 +11,20 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, role }) 
     const isAdmin = role === 'superadmin' || role === 'admin';
     const isCommuter = role === 'commuter';
 
-    // Type the array explicitly using your allowed tab types
     const tabs: {
         readonly id: 'hub' | 'vault' | 'history' | 'profile';
         readonly label: string;
         readonly icon: React.ComponentType<{ className?: string }>;
     }[] = [
-        { id: 'hub', label: isAdmin ? 'Command' : isCommuter ? 'Radar' : 'Hub', icon: isCommuter ? Radio : LayoutDashboard },
+        { id: 'hub', label: isAdmin ? 'Command' : isCommuter ? 'Radar' : 'Control', icon: isCommuter ? Radio : LayoutDashboard },
         { id: 'vault', label: isAdmin ? 'Treasury' : 'Wallet', icon: Wallet },
-        { id: 'history', label: 'History', icon: History },
+        { id: 'history', label: 'Ledger', icon: History },
         { id: 'profile', label: 'Profile', icon: UserCog },
     ] as const;
 
     return (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#0a0a14]/95 backdrop-blur-xl border-t border-gray-200 dark:border-white/10 pt-2 pb-6 px-2 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transition-colors duration-300">
-            <div className="max-w-md mx-auto flex items-center justify-around h-16">
+        <div className="md:hidden fixed bottom-4 left-4 right-4 z-50 pointer-events-none flex justify-center">
+            <nav className="pointer-events-auto w-full max-w-md bg-slate-900/90 dark:bg-[#060610]/95 backdrop-blur-2xl border border-slate-700/60 dark:border-white/15 rounded-full p-2 shadow-[0_15px_40px_rgba(0,0,0,0.5)] flex items-center justify-around">
                 {tabs.map((tab) => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
@@ -33,20 +32,21 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, role }) 
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-all ${isActive
-                                ? 'text-emerald-500 dark:text-emerald-400'
-                                : 'text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                                }`}
+                            className={`flex flex-col items-center justify-center py-2 px-3 rounded-full transition-all duration-200 active:scale-95 ${
+                                isActive
+                                    ? 'bg-emerald-500 text-black shadow-[0_0_20px_rgba(52,211,153,0.5)] font-black'
+                                    : 'text-gray-400 hover:text-white'
+                            }`}
                         >
-                            <div className={`p-1.5 rounded-xl transition-all ${isActive ? 'bg-emerald-50 dark:bg-emerald-500/10 scale-110' : 'bg-transparent scale-100'}`}>
-                                <Icon className="w-[22px] h-[22px]" />
-                            </div>
-                            <span className="text-[10px] font-bold tracking-wide">{tab.label}</span>
+                            <Icon className={`w-5 h-5 ${isActive ? 'scale-110' : 'scale-100'}`} />
+                            <span className="text-[9px] font-mono tracking-wider font-bold mt-0.5 uppercase">
+                                {tab.label}
+                            </span>
                         </button>
                     );
                 })}
-            </div>
-        </nav>
+            </nav>
+        </div>
     );
 };
 
