@@ -80,18 +80,22 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                 } else {
                     // Fallback: Query registered drivers strictly from Firebase users collection
                     try {
-                        const qUsers = query(collection(db, 'users'), where('role', '==', 'driver'));
+                        const qUsers = query(
+                            collection(db, 'users'),
+                            where('role', '==', 'driver'),
+                            where('status', '==', 'approved')
+                        );
                         const userSnap = await getDocs(qUsers);
                         const fallbackDrivers: DriverLocationDoc[] = [];
                         userSnap.forEach((uDoc) => {
                             const uData = uDoc.data();
-                            if (uData.publicKey && uData.role === 'driver') {
+                            if (uData.publicKey && uData.role === 'driver' && uData.status === 'approved') {
                                 fallbackDrivers.push({
                                     uid: uData.uid,
                                     publicKey: uData.publicKey,
-                                    driverName: uData.fullName || 'Registered Driver',
+                                    driverName: uData.fullName || 'Approved Driver',
                                     plateNumber: uData.plateNumber || 'N/A',
-                                    todaAffiliation: uData.todaAffiliation || 'Independent TODA',
+                                    todaAffiliation: uData.todaAffiliation || 'Cooperative TODA',
                                     // Generate coordinates within ~30 meters of commuter location
                                     lat: (commuterCoords?.lat || DEFAULT_COORDS.lat) + (Math.random() * 0.0004 - 0.0002),
                                     lng: (commuterCoords?.lng || DEFAULT_COORDS.lng) + (Math.random() * 0.0004 - 0.0002),
