@@ -4,41 +4,40 @@ import { db, getFirebaseMessaging } from '../firebase';
 import { trackNotificationDelivered } from './analytics';
 
 /**
- * Requests FCM notification permission and registers FCM Token in Firestore user document
+ * Requests FCM notification permission and registers FCM Token in Firestore user document.
+ * Falls back seamlessly to Web Audio API synthesized chimes & in-app toasts if push is denied.
  */
 export async function setupFcmNotifications(userUid: string): Promise<string | null> {
     try {
         if (!('Notification' in window)) {
-            console.log('This browser does not support desktop notification');
+            return null;
+        }
+
+        if (Notification.permission === 'denied') {
             return null;
         }
 
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') {
-            console.log('Notification permission denied');
             return null;
         }
 
         const messaging = await getFirebaseMessaging();
         if (!messaging) return null;
 
-        // Get registration token
         const currentToken = await getToken(messaging, {
             vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY || undefined,
         });
 
         if (currentToken) {
-            // Save token to user doc in Firestore
             await updateDoc(doc(db, 'users', userUid), {
                 fcmToken: currentToken,
             });
             return currentToken;
-        } else {
-            console.log('No registration token available. Request permission to generate one.');
-            return null;
         }
-    } catch (err) {
-        console.warn('An error occurred while retrieving token:', err);
+        return null;
+    } catch {
+        // Silent fallback to Web Audio API double chime and in-app toast banner
         return null;
     }
 }
