@@ -263,14 +263,14 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ txHistory, appNetwork, s
                         <div className="flex gap-2">
                             <button
                                 onClick={() => handleCopyHash(selectedReceipt.txHash)}
-                                className="flex-1 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2"
+                                className="flex-1 py-3.5 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-900 dark:text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 border border-slate-200 dark:border-white/10 transition-all"
                             >
-                                {copiedHash ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                                {copiedHash ? <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-4 h-4" />}
                                 {copiedHash ? 'Copied!' : 'Copy Hash'}
                             </button>
                             <button
                                 onClick={() => window.print()}
-                                className="py-3.5 px-5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2"
+                                className="py-3.5 px-5 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-900 dark:text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 border border-slate-200 dark:border-white/10 transition-all"
                             >
                                 <Printer className="w-4 h-4" /> Print
                             </button>
