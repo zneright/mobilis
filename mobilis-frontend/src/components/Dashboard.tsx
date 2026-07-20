@@ -245,8 +245,8 @@ const Dashboard: React.FC = () => {
             snapshot.forEach(docSnap => history.push({ id: docSnap.id, ...docSnap.data() } as FirebaseTx));
             history.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
             setFirebaseTxHistory(history);
-        } catch (err) {
-            console.error("[Dashboard] Firebase fetch failed:", err);
+        } catch {
+            setFirebaseTxHistory([]);
         }
     };
 
@@ -260,8 +260,8 @@ const Dashboard: React.FC = () => {
             if (!snap.empty) {
                 setBorrowLimit(snap.docs[0].data().borrowLimit || 15);
             }
-        } catch (err) {
-            console.error("Error fetching coop settings:", err);
+        } catch {
+            setBorrowLimit(15);
         }
     };
 

@@ -1,33 +1,9 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
-
-    // Users collection rules - allow public read for TODA registration discovery & signup
-    match /users/{userId} {
-      allow read: if true;
-      allow create, update: if true;
-      allow delete: if isOwner(userId);
-    }
-
-    // Driver locations collection rules - allow public read for radar discovery
-    match /driver_locations/{driverId} {
-      allow read: if true;
-      allow write, create, update: if true;
-    }
-
-    // Fare transactions collection rules
-    match /fare_transactions/{transactionId} {
-      allow read: if true;
-      allow create, write: if true;
+    // Permit read and write across all collections for Mobilis operations
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }

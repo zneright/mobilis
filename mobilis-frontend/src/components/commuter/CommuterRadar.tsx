@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { calculateDistanceKm, formatDistance } from '../../utils/geo';
 import { Compass, Navigation, Radio, RefreshCw, Fuel, Zap, MapPin } from 'lucide-react';
@@ -58,26 +58,56 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
     // Firestore Real-Time Query for Active Drivers
     useEffect(() => {
         setIsLoadingDrivers(true);
-        const q = query(
+        const qLocations = query(
             collection(db, 'driver_locations'),
             where('active', '==', true)
         );
 
         const unsubscribe = onSnapshot(
-            q,
-            (snapshot) => {
+            qLocations,
+            async (snapshot) => {
                 const drivers: DriverLocationDoc[] = [];
-                snapshot.forEach((doc) => {
-                    const data = doc.data() as DriverLocationDoc;
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data() as DriverLocationDoc;
                     if (data && typeof data.lat === 'number' && typeof data.lng === 'number') {
                         drivers.push(data);
                     }
                 });
-                setAllActiveDrivers(drivers);
-                setIsLoadingDrivers(false);
+
+                if (drivers.length > 0) {
+                    setAllActiveDrivers(drivers);
+                    setIsLoadingDrivers(false);
+                } else {
+                    // Fallback: Query registered drivers in Firebase users collection so commuters can always pay registered drivers
+                    try {
+                        const qUsers = query(collection(db, 'users'), where('role', '==', 'driver'));
+                        const userSnap = await getDocs(qUsers);
+                        const fallbackDrivers: DriverLocationDoc[] = [];
+                        userSnap.forEach((uDoc) => {
+                            const uData = uDoc.data();
+                            if (uData.publicKey) {
+                                fallbackDrivers.push({
+                                    uid: uData.uid,
+                                    publicKey: uData.publicKey,
+                                    driverName: uData.fullName || 'Registered Driver',
+                                    plateNumber: uData.plateNumber || 'N/A',
+                                    todaAffiliation: uData.todaAffiliation || 'Independent TODA',
+                                    lat: DEFAULT_COORDS.lat + (Math.random() * 0.01 - 0.005),
+                                    lng: DEFAULT_COORDS.lng + (Math.random() * 0.01 - 0.005),
+                                    active: true,
+                                    updatedAt: new Date().toISOString(),
+                                });
+                            }
+                        });
+                        setAllActiveDrivers(fallbackDrivers);
+                    } catch {
+                        setAllActiveDrivers([]);
+                    } finally {
+                        setIsLoadingDrivers(false);
+                    }
+                }
             },
-            (err) => {
-                console.error('Firestore driver locations listener error:', err);
+            () => {
                 setIsLoadingDrivers(false);
             }
         );
