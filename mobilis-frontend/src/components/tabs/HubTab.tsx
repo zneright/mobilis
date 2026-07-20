@@ -1,7 +1,7 @@
-import React from 'react';
-import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import React, { useState } from 'react';
+import { collection, query, where, onSnapshot, doc, updateDoc, addDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Fuel, Building2, UserCheck, ArrowUpRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Fuel, Building2, UserCheck, ArrowUpRight, ShieldCheck, CheckCircle2, Megaphone, Send, BellRing, X } from 'lucide-react';
 
 interface HubTabProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -34,9 +34,19 @@ export const HubTab: React.FC<HubTabProps> = ({
     borrowLimit,
 }) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [pendingDrivers, setPendingDrivers] = React.useState<any[]>([]);
-    const [loadingDrivers, setLoadingDrivers] = React.useState<boolean>(false);
-    const [approvingUid, setApprovingUid] = React.useState<string | null>(null);
+    const [pendingDrivers, setPendingDrivers] = useState<any[]>([]);
+    const [loadingDrivers, setLoadingDrivers] = useState<boolean>(false);
+    const [approvingUid, setApprovingUid] = useState<string | null>(null);
+
+    // Broadcast Notification Form State
+    const [showBroadcastModal, setShowBroadcastModal] = useState<boolean>(false);
+    const [broadcastTitle, setBroadcastTitle] = useState<string>('');
+    const [broadcastMessage, setBroadcastMessage] = useState<string>('');
+    const [targetAudience, setTargetAudience] = useState<string>('coop_drivers');
+    const [sendingBroadcast, setSendingBroadcast] = useState<boolean>(false);
+    const [broadcastSuccess, setBroadcastSuccess] = useState<boolean>(false);
+
+    const isSuperAdmin = stellarData?.role === 'superadmin';
 
     // Fetch Pending Drivers for Cooperative Admin
     React.useEffect(() => {
@@ -55,7 +65,7 @@ export const HubTab: React.FC<HubTabProps> = ({
                 const drivers: any[] = [];
                 snapshot.forEach((docSnap) => {
                     const d = docSnap.data();
-                    if (d.todaAffiliation === stellarData.coopName || stellarData.role === 'superadmin') {
+                    if (d.todaAffiliation === stellarData.coopName || isSuperAdmin) {
                         drivers.push({ uid: docSnap.id, ...d });
                     }
                 });
@@ -69,7 +79,7 @@ export const HubTab: React.FC<HubTabProps> = ({
         );
 
         return () => unsubscribe();
-    }, [isAdmin, stellarData]);
+    }, [isAdmin, stellarData, isSuperAdmin]);
 
     const handleApproveDriver = async (driverUid: string) => {
         setApprovingUid(driverUid);
@@ -83,6 +93,36 @@ export const HubTab: React.FC<HubTabProps> = ({
             console.error("Failed to approve driver:", err);
         } finally {
             setApprovingUid(null);
+        }
+    };
+
+    const handleSendBroadcast = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!broadcastTitle || !broadcastMessage) return;
+        setSendingBroadcast(true);
+
+        try {
+            await addDoc(collection(db, 'system_notifications'), {
+                title: broadcastTitle.trim(),
+                message: broadcastMessage.trim(),
+                senderName: stellarData.coopName || stellarData.fullName || 'Admin',
+                senderRole: stellarData.role,
+                targetRole: isSuperAdmin ? targetAudience : 'driver',
+                targetCoop: stellarData.coopName || '',
+                timestamp: new Date().toISOString(),
+            });
+
+            setBroadcastSuccess(true);
+            setBroadcastTitle('');
+            setBroadcastMessage('');
+            setTimeout(() => {
+                setBroadcastSuccess(false);
+                setShowBroadcastModal(false);
+            }, 2000);
+        } catch (err) {
+            console.error("Failed to broadcast notification:", err);
+        } finally {
+            setSendingBroadcast(false);
         }
     };
 
@@ -174,6 +214,32 @@ export const HubTab: React.FC<HubTabProps> = ({
                 </div>
             )}
 
+            {/* ADMIN BROADCAST ANNOUNCEMENT CENTER BUTTON */}
+            {isAdmin && (
+                <div className="p-6 rounded-[2.5rem] bg-gradient-to-r from-cyan-500/10 via-emerald-500/10 to-indigo-500/10 border border-cyan-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+                    <div className="flex items-center gap-3 text-center sm:text-left">
+                        <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30 flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0">
+                            <Megaphone className="w-6 h-6 animate-pulse" />
+                        </div>
+                        <div>
+                            <h3 className="font-black text-lg text-slate-900 dark:text-white">Broadcast Notification Center</h3>
+                            <p className="text-xs text-slate-500 dark:text-gray-400">
+                                {isSuperAdmin
+                                    ? 'Send targeted alerts to commuters, drivers, or cooperatives.'
+                                    : `Send announcements to all drivers affiliated with ${stellarData.coopName || 'your TODA'}.`}
+                            </p>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={() => setShowBroadcastModal(true)}
+                        className="px-6 py-3.5 bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(0,210,255,0.4)] flex items-center gap-2 flex-shrink-0"
+                    >
+                        <BellRing className="w-4 h-4" /> Send Announcement
+                    </button>
+                </div>
+            )}
+
             {/* COOPERATIVE ADMIN PENDING DRIVERS QUEUE */}
             {isAdmin && (
                 <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 shadow-2xl space-y-6 transition-colors duration-300">
@@ -229,6 +295,99 @@ export const HubTab: React.FC<HubTabProps> = ({
                                 <h4 className="font-bold text-sm text-slate-900 dark:text-white">All Driver Requests Approved</h4>
                                 <p className="text-xs text-slate-500 dark:text-gray-400">No pending drivers waiting for verification in your cooperative queue.</p>
                             </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* BROADCAST COMPOSER MODAL */}
+            {showBroadcastModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+                    <div className="w-full max-w-md bg-white dark:bg-[#0a0a14] border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-6 shadow-2xl relative text-slate-900 dark:text-white space-y-5">
+                        
+                        <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
+                                    <Megaphone className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-lg tracking-tight">Broadcast Announcement</h3>
+                                    <p className="text-xs text-slate-500 dark:text-gray-400 font-mono">
+                                        {isSuperAdmin ? 'Platform-Wide Targeting' : `To ${stellarData.coopName || 'Cooperative'} Drivers`}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowBroadcastModal(false)}
+                                className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-white/10"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {broadcastSuccess ? (
+                            <div className="p-6 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-center space-y-2">
+                                <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
+                                <h4 className="font-black text-base text-emerald-600 dark:text-emerald-400">Broadcast Sent Successfully!</h4>
+                                <p className="text-xs text-slate-500 dark:text-gray-300">All target members will receive the notification instantly.</p>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleSendBroadcast} className="space-y-4">
+                                {isSuperAdmin && (
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+                                            Select Target Audience
+                                        </label>
+                                        <select
+                                            value={targetAudience}
+                                            onChange={(e) => setTargetAudience(e.target.value)}
+                                            className="w-full p-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-2xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-cyan-500"
+                                        >
+                                            <option value="driver">🛺 All Transport Drivers</option>
+                                            <option value="commuter">🚶 All Commuters</option>
+                                            <option value="admin">🏢 All Cooperative Admins</option>
+                                            <option value="all">🌍 Platform-Wide (Everyone)</option>
+                                        </select>
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+                                        Announcement Title
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="e.g. TODA General Assembly / Fuel Subsidy"
+                                        value={broadcastTitle}
+                                        onChange={(e) => setBroadcastTitle(e.target.value)}
+                                        className="w-full p-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-2xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-cyan-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+                                        Notification Message
+                                    </label>
+                                    <textarea
+                                        required
+                                        rows={3}
+                                        placeholder="Enter full broadcast text for your targeted users..."
+                                        value={broadcastMessage}
+                                        onChange={(e) => setBroadcastMessage(e.target.value)}
+                                        className="w-full p-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-2xl text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-cyan-500 resize-none"
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={sendingBroadcast}
+                                    className="w-full py-4 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(0,210,255,0.4)] flex items-center justify-center gap-2"
+                                >
+                                    <Send className="w-4 h-4" />
+                                    {sendingBroadcast ? 'Sending Broadcast...' : 'Broadcast Announcement Now'}
+                                </button>
+                            </form>
                         )}
                     </div>
                 </div>

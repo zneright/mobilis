@@ -17,7 +17,7 @@ import {
     Transaction
 } from '@stellar/stellar-sdk';
 import { requestAccess, signTransaction, isConnected, isAllowed } from '@stellar/freighter-api';
-import { Copy, ArrowUpRight, X, Wallet, Globe, Zap, Bell, Radio, ShieldCheck } from 'lucide-react';
+import { Copy, ArrowUpRight, X, Wallet, Globe, Zap, Bell, Radio, ShieldCheck, Megaphone } from 'lucide-react';
 import Header from './Header';
 import BottomNav from './BottomNav';
 import Sidebar from './Sidebar';
@@ -147,6 +147,60 @@ const Dashboard: React.FC = () => {
             });
         }, (err) => {
             console.warn('Firestore fare notification listener error:', err);
+        });
+
+        return () => unsubscribe();
+    }, [stellarData]);
+
+    const [broadcasts, setBroadcasts] = useState<{ id: string; title: string; message: string; senderName: string; timestamp: string }[]>([]);
+    const [broadcastToast, setBroadcastToast] = useState<{ title: string; message: string; senderName: string } | null>(null);
+
+    // REAL-TIME SYSTEM BROADCAST NOTIFICATION LISTENER
+    useEffect(() => {
+        if (!stellarData?.uid) return;
+
+        let isInitial = true;
+        const q = query(collection(db, 'system_notifications'));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const list: { id: string; title: string; message: string; senderName: string; timestamp: string }[] = [];
+            
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                const targetRole = data.targetRole;
+                const targetCoop = data.targetCoop;
+                const userRole = stellarData.role;
+                const userCoop = stellarData.todaAffiliation || stellarData.coopName;
+
+                const isTarget = 
+                    targetRole === 'all' ||
+                    targetRole === userRole ||
+                    (targetCoop && targetCoop === userCoop) ||
+                    data.targetUid === stellarData.uid;
+
+                if (isTarget) {
+                    list.push({
+                        id: docSnap.id,
+                        title: data.title || 'Announcement',
+                        message: data.message || '',
+                        senderName: data.senderName || 'Admin',
+                        timestamp: data.timestamp || new Date().toISOString()
+                    });
+                }
+            });
+
+            list.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+            setBroadcasts(list);
+
+            if (!isInitial && list.length > 0) {
+                const newest = list[0];
+                playDoubleChime();
+                setBroadcastToast({ title: newest.title, message: newest.message, senderName: newest.senderName });
+                setTimeout(() => setBroadcastToast(null), 7000);
+            }
+            isInitial = false;
+        }, (err) => {
+            console.warn("System notifications listener warning:", err);
         });
 
         return () => unsubscribe();
@@ -649,6 +703,23 @@ const Dashboard: React.FC = () => {
                 </div>
             )}
 
+            {/* IN-APP REALTIME BROADCAST ANNOUNCEMENT TOAST */}
+            {broadcastToast && (
+                <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] max-w-md w-full bg-cyan-500 text-black p-4 rounded-2xl shadow-[0_0_35px_rgba(0,210,255,0.6)] border border-cyan-400 flex items-center gap-3 animate-bounce">
+                    <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center flex-shrink-0">
+                        <Megaphone className="w-6 h-6 text-black" />
+                    </div>
+                    <div className="flex-1">
+                        <p className="font-black text-xs uppercase tracking-wider">📢 Announcement from {broadcastToast.senderName}</p>
+                        <p className="font-bold text-sm">{broadcastToast.title}</p>
+                        <p className="text-xs font-medium text-slate-900 truncate">{broadcastToast.message}</p>
+                    </div>
+                    <button onClick={() => setBroadcastToast(null)} className="p-1 hover:bg-black/10 rounded-lg">
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
+
             <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} role={stellarData.role} />
             <div className="flex-1 flex flex-col h-full overflow-y-auto relative">
                 <Header
@@ -800,6 +871,24 @@ const Dashboard: React.FC = () => {
 
                         {/* Notifications List */}
                         <div className="space-y-3 max-h-72 overflow-y-auto custom-scrollbar">
+                            {/* Real Broadcast Announcements */}
+                            {broadcasts.length > 0 && broadcasts.map((b) => (
+                                <div key={b.id} className="p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl space-y-1">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="font-bold text-cyan-600 dark:text-cyan-400 flex items-center gap-1.5">
+                                            <Megaphone className="w-3.5 h-3.5" /> {b.title}
+                                        </span>
+                                        <span className="text-[9px] font-mono text-cyan-500">{b.senderName}</span>
+                                    </div>
+                                    <p className="text-xs text-slate-700 dark:text-gray-300 font-medium">
+                                        {b.message}
+                                    </p>
+                                    <span className="text-[9px] font-mono text-slate-400 block pt-1">
+                                        {new Date(b.timestamp).toLocaleString()}
+                                    </span>
+                                </div>
+                            ))}
+
                             <div className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl space-y-1">
                                 <div className="flex items-center justify-between text-xs">
                                     <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
