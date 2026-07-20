@@ -1,17 +1,19 @@
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { useVisitorStore } from '../../store/visitorStore';
 
 declare global {
     interface Window {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         THREE: any;
     }
 }
 
 // ─── SHOOTING STAR (METEORITE) ──────────────────────────────────────────────
 export const ShootingStar = ({ delay = 0 }: { delay?: number }) => {
-    const startX = useMemo(() => Math.random() * 100 + 20, []);
-    const startY = useMemo(() => Math.random() * 50 - 20, []);
-    const repeatDelay = useMemo(() => Math.random() * 7 + 3, []);
+    const [startX] = useState(() => Math.random() * 100 + 20);
+    const [startY] = useState(() => Math.random() * 50 - 20);
+    const [repeatDelay] = useState(() => Math.random() * 7 + 3);
 
     return (
         <motion.div
@@ -44,15 +46,18 @@ export const ShootingStar = ({ delay = 0 }: { delay?: number }) => {
 export const EarthCanvas = () => {
     const mountRef = useRef<HTMLDivElement>(null);
     const animRef = useRef<number>(0);
+    const theme = useVisitorStore((state) => state.theme);
+    const isLight = theme === 'light';
 
     useEffect(() => {
         if (!mountRef.current) return;
+        const currentMount = mountRef.current;
 
         const initThree = () => {
             const THREE = window.THREE;
-            const container = mountRef.current!;
+            const container = currentMount;
 
-            // --- NEW: Wipe out any duplicate Earths from React Strict Mode ---
+            // Wipe out any duplicate Earths from React Strict Mode
             while (container.firstChild) {
                 container.removeChild(container.firstChild);
             }
@@ -83,10 +88,18 @@ export const EarthCanvas = () => {
             texCanvas.width = 1024;
             texCanvas.height = 512;
             const ctx = texCanvas.getContext("2d")!;
+
+            // Adjust Ocean Color based on theme
             const oceanGrad = ctx.createLinearGradient(0, 0, 0, 512);
-            oceanGrad.addColorStop(0, "#0d1a3a");
-            oceanGrad.addColorStop(0.5, "#0a2050");
-            oceanGrad.addColorStop(1, "#061228");
+            if (isLight) {
+                oceanGrad.addColorStop(0, "#3b82f6");
+                oceanGrad.addColorStop(0.5, "#2563eb");
+                oceanGrad.addColorStop(1, "#1d4ed8");
+            } else {
+                oceanGrad.addColorStop(0, "#0d1a3a");
+                oceanGrad.addColorStop(0.5, "#0a2050");
+                oceanGrad.addColorStop(1, "#061228");
+            }
             ctx.fillStyle = oceanGrad;
             ctx.fillRect(0, 0, 1024, 512);
 
@@ -99,28 +112,25 @@ export const EarthCanvas = () => {
                 { x: 790, y: 340, rx: 55, ry: 40, rot: 0.2 },
             ];
             landMasses.forEach(({ x, y, rx, ry, rot }) => {
-                ctx.fillStyle = "#1a5c32";
+                ctx.fillStyle = isLight ? "#22c55e" : "#1a5c32";
                 ctx.beginPath();
                 ctx.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.fillStyle = "#217a42";
+                ctx.fillStyle = isLight ? "#16a34a" : "#217a42";
                 ctx.beginPath();
                 ctx.ellipse(x - 5, y - 5, rx * 0.75, ry * 0.75, rot, 0, Math.PI * 2);
                 ctx.fill();
             });
 
+            // Clouds
             const pG = ctx.createRadialGradient(512, 0, 0, 512, 0, 90);
-            pG.addColorStop(0, "rgba(200,230,255,0.85)");
-            pG.addColorStop(1, "rgba(200,230,255,0)");
+            pG.addColorStop(0, "rgba(255,255,255,0.85)");
+            pG.addColorStop(1, "rgba(255,255,255,0)");
             ctx.fillStyle = pG;
             ctx.fillRect(0, 0, 1024, 90);
-            const pG2 = ctx.createRadialGradient(512, 512, 0, 512, 512, 80);
-            pG2.addColorStop(0, "rgba(200,230,255,0.75)");
-            pG2.addColorStop(1, "rgba(200,230,255,0)");
-            ctx.fillStyle = pG2;
-            ctx.fillRect(0, 430, 1024, 82);
-            ctx.fillStyle = "rgba(255,255,255,0.07)";
-            for (let i = 0; i < 20; i++) {
+
+            ctx.fillStyle = "rgba(255,255,255,0.15)";
+            for (let i = 0; i < 25; i++) {
                 ctx.beginPath();
                 ctx.ellipse(
                     Math.random() * 1024,
@@ -135,34 +145,37 @@ export const EarthCanvas = () => {
             }
             const texture = new THREE.CanvasTexture(texCanvas);
 
-            // ── NIGHT LIGHTS ──────────────────────────────────────────
+            // ── NIGHT LIGHTS (Only visible heavily in dark mode) ──────
             const nightC = document.createElement("canvas");
             nightC.width = 1024;
             nightC.height = 512;
             const nCtx = nightC.getContext("2d")!;
             nCtx.fillStyle = "#000";
             nCtx.fillRect(0, 0, 1024, 512);
-            [
-                [200, 170], [215, 325], [530, 160], [700, 145], [740, 200],
-                [680, 170], [790, 340], [550, 310], [600, 180], [460, 175],
-            ].forEach(([cx, cy]) => {
-                const g = nCtx.createRadialGradient(cx, cy, 0, cx, cy, 45);
-                g.addColorStop(0, "rgba(255,210,100,0.9)");
-                g.addColorStop(0.4, "rgba(255,170,60,0.3)");
-                g.addColorStop(1, "rgba(255,140,30,0)");
-                nCtx.fillStyle = g;
-                nCtx.beginPath();
-                nCtx.arc(cx, cy, 45, 0, Math.PI * 2);
-                nCtx.fill();
-            });
+
+            if (!isLight) {
+                [
+                    [200, 170], [215, 325], [530, 160], [700, 145], [740, 200],
+                    [680, 170], [790, 340], [550, 310], [600, 180], [460, 175],
+                ].forEach(([cx, cy]) => {
+                    const g = nCtx.createRadialGradient(cx, cy, 0, cx, cy, 45);
+                    g.addColorStop(0, "rgba(176,38,255,0.9)"); // Purple city lights to match theme
+                    g.addColorStop(0.4, "rgba(176,38,255,0.3)");
+                    g.addColorStop(1, "rgba(176,38,255,0)");
+                    nCtx.fillStyle = g;
+                    nCtx.beginPath();
+                    nCtx.arc(cx, cy, 45, 0, Math.PI * 2);
+                    nCtx.fill();
+                });
+            }
             const nightTex = new THREE.CanvasTexture(nightC);
 
             const geo = new THREE.SphereGeometry(1, 64, 64);
             const mat = new THREE.MeshPhongMaterial({
                 map: texture,
                 emissiveMap: nightTex,
-                emissive: new THREE.Color(0xffaa22),
-                emissiveIntensity: 0.4,
+                emissive: new THREE.Color(0xffffff),
+                emissiveIntensity: isLight ? 0 : 0.8,
                 specular: new THREE.Color(0x3366ff),
                 shininess: 25,
             });
@@ -174,7 +187,7 @@ export const EarthCanvas = () => {
             const numNodes = 35;
             const nodes: any[] = [];
             const nodeGeo = new THREE.SphereGeometry(0.012, 8, 8);
-            const nodeMat = new THREE.MeshBasicMaterial({ color: 0x34d399 });
+            const nodeMat = new THREE.MeshBasicMaterial({ color: isLight ? 0x22c55e : 0x00FF66 });
 
             for (let i = 0; i < numNodes; i++) {
                 const v = new THREE.Vector3(
@@ -189,19 +202,15 @@ export const EarthCanvas = () => {
             }
 
             const lineMat = new THREE.LineBasicMaterial({
-                color: 0x8b5cf6,
+                color: isLight ? 0x7c3aed : 0xB026FF,
                 transparent: true,
-                opacity: 0.3,
+                opacity: 0.4,
             });
+
             for (let i = 0; i < nodes.length; i++) {
                 for (let j = i + 1; j < nodes.length; j++) {
                     if (nodes[i].distanceTo(nodes[j]) < 0.75) {
-                        const mid = nodes[i]
-                            .clone()
-                            .add(nodes[j])
-                            .multiplyScalar(0.5)
-                            .normalize()
-                            .multiplyScalar(1.12);
+                        const mid = nodes[i].clone().add(nodes[j]).multiplyScalar(0.5).normalize().multiplyScalar(1.12);
                         const curve = new THREE.QuadraticBezierCurve3(nodes[i], mid, nodes[j]);
                         const points = curve.getPoints(12);
                         const curveGeo = new THREE.BufferGeometry().setFromPoints(points);
@@ -215,29 +224,18 @@ export const EarthCanvas = () => {
             const atmMesh = new THREE.Mesh(
                 new THREE.SphereGeometry(1.05, 64, 64),
                 new THREE.MeshPhongMaterial({
-                    color: 0x4488ff,
+                    color: isLight ? 0x60a5fa : 0x4488ff,
                     transparent: true,
-                    opacity: 0.08,
+                    opacity: 0.15,
                 }),
             );
             globeGroup.add(atmMesh);
-
-            scene.add(
-                new THREE.Mesh(
-                    new THREE.SphereGeometry(1.15, 64, 64),
-                    new THREE.MeshPhongMaterial({
-                        color: 0x2255cc,
-                        transparent: true,
-                        opacity: 0.04,
-                    }),
-                ),
-            );
 
             // ── ORBITAL RING ───────────────────────────────────────────
             const ring = new THREE.Mesh(
                 new THREE.TorusGeometry(1.3, 0.004, 2, 120),
                 new THREE.MeshBasicMaterial({
-                    color: 0x6366f1,
+                    color: isLight ? 0x7c3aed : 0xB026FF,
                     transparent: true,
                     opacity: 0.35,
                 }),
@@ -245,64 +243,21 @@ export const EarthCanvas = () => {
             ring.rotation.x = Math.PI * 0.35;
             scene.add(ring);
 
-            // ── ORBITING TOKEN (JEEPNEY ICON) ──────────────────────────
+            // ── ORBITING TOKEN ──────────────────────────
             const tokenC = document.createElement("canvas");
             tokenC.width = 128;
             tokenC.height = 128;
             const tCtx = tokenC.getContext("2d")!;
 
-            tCtx.shadowColor = "#F59E0B";
-            tCtx.shadowBlur = 15;
-            tCtx.fillStyle = "rgba(245,158,11,0.2)";
+            tCtx.fillStyle = isLight ? "#22c55e" : "#00FF66";
             tCtx.beginPath();
             tCtx.arc(64, 64, 45, 0, Math.PI * 2);
             tCtx.fill();
-
-            tCtx.strokeStyle = "#F59E0B";
-            tCtx.lineWidth = 4;
-            tCtx.stroke();
-            tCtx.shadowBlur = 0;
-
-            const bx = 18, by = 42, bw = 92, bh = 42, r = 10;
-            tCtx.fillStyle = "#FBBF24";
-            tCtx.beginPath();
-            tCtx.moveTo(bx + r, by);
-            tCtx.lineTo(bx + bw - r, by);
-            tCtx.quadraticCurveTo(bx + bw, by, bx + bw, by + r);
-            tCtx.lineTo(bx + bw, by + bh - r);
-            tCtx.quadraticCurveTo(bx + bw, by + bh, bx + bw - r, by + bh);
-            tCtx.lineTo(bx + r, by + bh);
-            tCtx.quadraticCurveTo(bx, by + bh, bx, by + bh - r);
-            tCtx.lineTo(bx, by + r);
-            tCtx.quadraticCurveTo(bx, by, bx + r, by);
-            tCtx.closePath();
-            tCtx.fill();
-
-            tCtx.fillStyle = "#BAE6FD";
-            tCtx.fillRect(bx + 6, by + 4, bw - 12, 14);
-
-            tCtx.fillStyle = "#EF4444";
-            tCtx.fillRect(bx, by + 24, bw, 5);
-            tCtx.fillStyle = "#3B82F6";
-            tCtx.fillRect(bx, by + 30, bw, 4);
-
-            tCtx.fillStyle = "#9CA3AF";
-            tCtx.fillRect(bx + bw - 6, by + 6, 4, bh - 12);
-
-            tCtx.fillStyle = "#111827";
-            tCtx.beginPath();
-            tCtx.arc(bx + 18, by + bh + 2, 9, 0, Math.PI * 2);
-            tCtx.fill();
-            tCtx.beginPath();
-            tCtx.arc(bx + bw - 18, by + bh + 2, 9, 0, Math.PI * 2);
-            tCtx.fill();
-            tCtx.fillStyle = "#6B7280";
-            tCtx.beginPath();
-            tCtx.arc(bx + 18, by + bh + 2, 3.5, 0, Math.PI * 2);
-            tCtx.fill();
-            tCtx.beginPath();
-            tCtx.arc(bx + bw - 18, by + bh + 2, 3.5, 0, Math.PI * 2);
-            tCtx.fill();
+            tCtx.fillStyle = "#fff";
+            tCtx.font = "bold 50px sans-serif";
+            tCtx.textAlign = "center";
+            tCtx.textBaseline = "middle";
+            tCtx.fillText("RB", 64, 64);
 
             const tokenTex = new THREE.CanvasTexture(tokenC);
             tokenTex.needsUpdate = true;
@@ -312,37 +267,13 @@ export const EarthCanvas = () => {
             tokenSprite.scale.set(0.4, 0.4, 1);
             scene.add(tokenSprite);
 
-            // ── BACKGROUND STARS ───────────────────────────────────────
-            const sv: number[] = [];
-            for (let i = 0; i < 2000; i++) {
-                const t2 = Math.random() * Math.PI * 2,
-                    p = Math.acos(2 * Math.random() - 1),
-                    r2 = 40 + Math.random() * 20;
-                sv.push(
-                    r2 * Math.sin(p) * Math.cos(t2),
-                    r2 * Math.sin(p) * Math.sin(t2),
-                    r2 * Math.cos(p),
-                );
-            }
-            const starsGeo = new THREE.BufferGeometry();
-            starsGeo.setAttribute("position", new THREE.Float32BufferAttribute(sv, 3));
-            scene.add(
-                new THREE.Points(
-                    starsGeo,
-                    new THREE.PointsMaterial({ color: 0xffffff, size: 0.07, transparent: true, opacity: 0.6 }),
-                ),
-            );
-
             // ── LIGHTING ───────────────────────────────────────────────
-            scene.add(new THREE.AmbientLight(0x334466, 0.6));
+            scene.add(new THREE.AmbientLight(isLight ? 0xffffff : 0x334466, isLight ? 1 : 0.6));
             const sun = new THREE.DirectionalLight(0xffffff, 1.2);
             sun.position.set(5, 3, 5);
             scene.add(sun);
-            const fill = new THREE.DirectionalLight(0x2244aa, 0.3);
-            fill.position.set(-3, -1, -3);
-            scene.add(fill);
 
-            // ── DRAG TO ROTATE CONTROLS ───────────────────────────────
+            // ── CONTROLS & ANIMATION ────────────────────────────────────
             let isDragging = false;
             let previousMousePosition = { x: 0, y: 0 };
 
@@ -366,23 +297,6 @@ export const EarthCanvas = () => {
                 container.style.cursor = "grab";
             });
 
-            container.addEventListener("touchstart", (e) => {
-                isDragging = true;
-                previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            }, { passive: true });
-            container.addEventListener("touchmove", (e) => {
-                if (isDragging) {
-                    e.preventDefault();
-                    const deltaX = e.touches[0].clientX - previousMousePosition.x;
-                    const deltaY = e.touches[0].clientY - previousMousePosition.y;
-                    globeGroup.rotation.y += deltaX * 0.005;
-                    globeGroup.rotation.x += deltaY * 0.005;
-                    globeGroup.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, globeGroup.rotation.x));
-                    previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-                }
-            }, { passive: false });
-            window.addEventListener("touchend", () => { isDragging = false; });
-
             const onResize = () => {
                 const W2 = container.clientWidth, H2 = container.clientHeight;
                 camera.aspect = W2 / H2;
@@ -391,14 +305,13 @@ export const EarthCanvas = () => {
             };
             window.addEventListener("resize", onResize);
 
-            // ── ANIMATION LOOP ─────────────────────────────────────────
             let t = 0;
             const animate = () => {
                 animRef.current = requestAnimationFrame(animate);
                 t += 0.005;
 
                 if (!isDragging) {
-                    globeGroup.rotation.y += 0.0015;
+                    globeGroup.rotation.y += 0.002;
                 }
 
                 const orbitTilt = Math.PI * 0.35, orbitR = 1.3;
@@ -413,7 +326,7 @@ export const EarthCanvas = () => {
             };
             animate();
 
-            (container as any)._cleanup = () => {
+            (container as HTMLDivElement & { _cleanup?: () => void })._cleanup = () => {
                 cancelAnimationFrame(animRef.current);
                 window.removeEventListener("resize", onResize);
                 renderer.dispose();
@@ -423,46 +336,28 @@ export const EarthCanvas = () => {
 
         if (window.THREE) {
             initThree();
-            return;
+        } else {
+            const script = document.createElement("script");
+            script.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+            script.async = true;
+            script.onload = initThree;
+            document.head.appendChild(script);
         }
-        const script = document.createElement("script");
-        script.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
-        script.async = true;
-        script.onload = initThree;
-        document.head.appendChild(script);
 
-        return () => { (mountRef.current as any)?._cleanup?.(); };
-    }, []);
+        return () => { (currentMount as HTMLDivElement & { _cleanup?: () => void })?._cleanup?.(); };
+    }, [isLight]); // Re-run when theme changes
 
     return (
-        <div
-            className="relative w-full aspect-square max-w-[500px]"
-        >
+        <div className="relative w-full aspect-square max-w-[500px]">
             <div
                 className="absolute inset-0 rounded-full pointer-events-none"
                 style={{
-                    background: "radial-gradient(circle,rgba(59,130,246,0.15) 0%,rgba(99,102,241,0.08) 50%,transparent 70%)",
+                    background: isLight ? "radial-gradient(circle,rgba(59,130,246,0.1) 0%,transparent 60%)" : "radial-gradient(circle,rgba(176,38,255,0.15) 0%,rgba(0,255,102,0.08) 50%,transparent 70%)",
                     filter: "blur(20px)",
                     transform: "scale(1.2)",
                 }}
             />
             <div ref={mountRef} className="w-full h-full" />
-            {[
-                { top: "20%", left: "25%", color: "#10B981", delay: 0 },
-                { top: "55%", left: "85%", color: "#6366f1", delay: 1.5 },
-                { top: "85%", left: "35%", color: "#f59e0b", delay: 3 },
-            ].map((ping, i) => (
-                <motion.div
-                    key={i}
-                    className="absolute pointer-events-none"
-                    style={{ top: ping.top, left: ping.left }}
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: [0, 1, 0], scale: [0, 1.5, 0] }}
-                    transition={{ duration: 2.5, repeat: Infinity, delay: ping.delay, ease: "easeOut" }}
-                >
-                    <div className="w-3 h-3 rounded-full" style={{ background: ping.color, boxShadow: `0 0 12px ${ping.color}` }} />
-                </motion.div>
-            ))}
         </div>
     );
 };

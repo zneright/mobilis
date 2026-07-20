@@ -1,0 +1,27 @@
+# Antigravity & AI Agent Artifacts
+.antigravity
+.gemini
+.agents
+.brain
+antigravity-ide
+scratch
+*.log
+
+# Editor & IDE Directories
+.history
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+
+# Build & Dependency Outputs
+target/
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local

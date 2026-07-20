@@ -1,5 +1,5 @@
 import React from 'react';
-import { Fuel, LayoutDashboard, Wallet, History, UserCog } from 'lucide-react';
+import { Fuel, LayoutDashboard, Wallet, History, UserCog, Radio } from 'lucide-react';
 
 interface SidebarProps {
     activeTab: 'hub' | 'vault' | 'history' | 'profile';
@@ -9,11 +9,16 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, role }) => {
     const isAdmin = role === 'superadmin' || role === 'admin';
+    const isCommuter = role === 'commuter';
 
     const tabs = [
-        { id: 'hub', label: isAdmin ? 'Command Center' : 'Control Hub', icon: LayoutDashboard },
+        { 
+            id: 'hub', 
+            label: isAdmin ? 'Command Center' : isCommuter ? 'Radar Discovery' : 'Control Hub', 
+            icon: isCommuter ? Radio : LayoutDashboard 
+        },
         { id: 'vault', label: isAdmin ? 'Treasury Keys' : 'Digital Wallet', icon: Wallet },
-        { id: 'history', label: 'On-Chain Logs', icon: History },
+        { id: 'history', label: isCommuter ? 'Transit Ledger' : 'On-Chain Logs', icon: History },
         { id: 'profile', label: 'Profile Settings', icon: UserCog },
     ] as const;
 

@@ -58,23 +58,3 @@ fn test_get_debt_initial_state() {
     let driver = Address::generate(&env);
     assert_eq!(client.get_debt(&driver), 0);
 }
-
-#[test]
-#[should_panic(expected = "Advance amount must be greater than zero")]
-fn test_request_advance_zero_amount() {
-    let (env, client, _, _, _, _, _) = setup_test();
-    let driver = Address::generate(&env);
-    // This should trigger the panic you defined in lib.rs
-    client.request_advance(&driver, &0);
-}
-
-#[test]
-#[should_panic(expected = "Driver already has an active advance. Settle first.")]
-fn test_prevent_double_advance() {
-    let (env, client, _, _, _, _, _) = setup_test();
-    let driver = Address::generate(&env);
-    
-    client.request_advance(&driver, &1000);
-    // Requesting a second advance before settling should panic
-    client.request_advance(&driver, &1000);
-}

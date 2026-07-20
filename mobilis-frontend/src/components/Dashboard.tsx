@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { auth, db } from '../firebase';
 import { signOut } from 'firebase/auth';
-import { collection, query, where, getDocs, doc, addDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, addDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import {
     Keypair,
     Networks,
@@ -17,7 +17,7 @@ import {
     Transaction
 } from '@stellar/stellar-sdk';
 import { requestAccess, signTransaction, isConnected, isAllowed } from '@stellar/freighter-api';
-import { Copy, ArrowUpRight, X, Wallet, Globe } from 'lucide-react';
+import { Copy, ArrowUpRight, X, Wallet, Globe, Zap } from 'lucide-react';
 import Header from './Header';
 import BottomNav from './BottomNav';
 import Sidebar from './Sidebar';
@@ -26,6 +26,11 @@ import HubTab from './tabs/HubTab';
 import VaultTab from './tabs/VaultTab';
 import HistoryTab from './tabs/HistoryTab';
 import ProfileTab from './tabs/ProfileTab';
+
+import CommuterRadar from './commuter/CommuterRadar';
+import DriverDutyToggle from './driver/DriverDutyToggle';
+import { playDoubleChime } from '../utils/webAudio';
+import { setupFcmNotifications } from '../services/fcm';
 
 declare global {
     interface Window {
@@ -94,6 +99,53 @@ const Dashboard: React.FC = () => {
     const [showWalletModal, setShowWalletModal] = useState(false);
     const [sendDest, setSendDest] = useState('');
     const [sendAmt, setSendAmt] = useState('');
+
+    const [paymentToast, setPaymentToast] = useState<{ amount: string; commuterName: string } | null>(null);
+
+    // REAL-TIME DRIVER FARE PAYMENT NOTIFICATION LISTENER
+    useEffect(() => {
+        if (!stellarData?.uid || stellarData.role !== 'driver') return;
+
+        // Register FCM Push Token
+        setupFcmNotifications(stellarData.uid);
+
+        let isInitial = true;
+        const q = query(
+            collection(db, 'fare_transactions'),
+            where('driverId', '==', stellarData.uid)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            if (isInitial) {
+                isInitial = false;
+                return;
+            }
+
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'added') {
+                    const data = change.doc.data();
+                    const amount = data.amount || '0.00';
+                    const commuterName = data.commuterName || 'Commuter';
+
+                    // 1. Play Web Audio API double chime (no mp3 asset needed)
+                    playDoubleChime();
+
+                    // 2. Animated in-app toast notification banner
+                    setPaymentToast({ amount, commuterName });
+                    setTimeout(() => setPaymentToast(null), 6000);
+
+                    // 3. Native Browser Notification
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification('⚡ New Fare Received!', {
+                            body: `Received ${amount} XLM from ${commuterName}`,
+                        });
+                    }
+                }
+            });
+        });
+
+        return () => unsubscribe();
+    }, [stellarData]);
 
     useEffect(() => {
         const root = window.document.documentElement;
@@ -575,6 +627,23 @@ const Dashboard: React.FC = () => {
 
     return (
         <div className="flex h-screen bg-gray-50 dark:bg-[#060610] text-gray-900 dark:text-white font-sans overflow-hidden">
+            
+            {/* IN-APP REALTIME DRIVER PAYMENT TOAST ALERT */}
+            {paymentToast && (
+                <div className="fixed top-5 right-5 z-[100] max-w-sm w-full bg-emerald-500 text-black p-4 rounded-2xl shadow-[0_0_30px_rgba(52,211,153,0.6)] border border-emerald-400 flex items-center gap-3 animate-bounce">
+                    <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center flex-shrink-0">
+                        <Zap className="w-6 h-6 text-black" />
+                    </div>
+                    <div className="flex-1">
+                        <p className="font-black text-xs uppercase tracking-wider">New Fare Received!</p>
+                        <p className="font-extrabold text-sm">+{paymentToast.amount} XLM from {paymentToast.commuterName}</p>
+                    </div>
+                    <button onClick={() => setPaymentToast(null)} className="p-1 hover:bg-black/10 rounded-lg">
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
+
             <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} role={stellarData.role} />
             <div className="flex-1 flex flex-col h-full overflow-y-auto relative">
                 <Header theme={theme} toggleTheme={() => setTheme(p => p === 'dark' ? 'light' : 'dark')} onSignOut={handleFullSignOut} />
@@ -586,25 +655,43 @@ const Dashboard: React.FC = () => {
 
                 <main className="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-8 flex flex-col items-center pb-28 md:pb-8">
 
-                    {activeTab === 'hub' && <HubTab
-                        stellarData={stellarData}
-                        isAdmin={stellarData.role === 'superadmin' || stellarData.role === 'admin'}
-                        currencyMode={currencyMode}
-                        setCurrencyMode={setCurrencyMode}
-                        formatCurrency={formatCurrency}
-                        debtState={debtState}
-                        isProcessing={isProcessing}
-                        handleRequestAdvance={handleRequestAdvance}
-                        handleInjectLiquidity={async () => { }} // Disabled as requested
-                        handleSettleLoan={handleSettleLoan}
-                        appNetwork={appNetwork}
-                        treasuryBalance={treasuryBalance}
-                        borrowLimit={borrowLimit}
-                        handleSetBorrowLimit={handleSetBorrowLimit}
-                    />}
+                    {activeTab === 'hub' && (
+                        stellarData.role === 'commuter' ? (
+                            <CommuterRadar
+                                commuterData={stellarData}
+                                currencyMode={currencyMode}
+                                setCurrencyMode={setCurrencyMode}
+                            />
+                        ) : (
+                            <div className="w-full space-y-6 flex flex-col items-center">
+                                {stellarData.role === 'driver' && (
+                                    <div className="w-full max-w-lg">
+                                        <DriverDutyToggle userData={stellarData} />
+                                    </div>
+                                )}
+                                <HubTab
+                                    stellarData={stellarData}
+                                    isAdmin={stellarData.role === 'superadmin' || stellarData.role === 'admin'}
+                                    currencyMode={currencyMode}
+                                    setCurrencyMode={setCurrencyMode}
+                                    formatCurrency={formatCurrency}
+                                    debtState={debtState}
+                                    isProcessing={isProcessing}
+                                    handleRequestAdvance={handleRequestAdvance}
+                                    handleInjectLiquidity={async () => { }} // Disabled as requested
+                                    handleSettleLoan={handleSettleLoan}
+                                    appNetwork={appNetwork}
+                                    treasuryBalance={treasuryBalance}
+                                    borrowLimit={borrowLimit}
+                                    handleSetBorrowLimit={handleSetBorrowLimit}
+                                />
+                            </div>
+                        )
+                    )}
+
                     {activeTab === 'vault' && <VaultTab stellarData={stellarData} externalWallet={externalWallet} activePubKey={activePubKey || null} xlmBalance={xlmBalance} assetBalances={assetBalances} currencyMode={currencyMode} setCurrencyMode={setCurrencyMode} formatCurrency={formatCurrency} setShowWalletModal={setShowWalletModal} handleDisconnectWallet={handleDisconnectWallet} setShowReceiveModal={setShowReceiveModal} setShowSendModal={setShowSendModal} appNetwork={appNetwork} refreshData={fetchLedgerData} />}
 
-                    {activeTab === 'history' && <HistoryTab txHistory={firebaseHistory} appNetwork={appNetwork} />}
+                    {activeTab === 'history' && <HistoryTab txHistory={firebaseHistory} appNetwork={appNetwork} stellarData={stellarData} />}
 
                     {activeTab === 'profile' && <ProfileTab stellarData={stellarData} isSuperAdmin={stellarData.role === 'superadmin'} />}
 

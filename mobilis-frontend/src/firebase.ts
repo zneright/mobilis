@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
+import { getMessaging, isSupported } from "firebase/messaging";
 
 // Pull configuration from Vite environment variables
 const firebaseConfig = {
@@ -21,3 +22,15 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const analytics = getAnalytics(app);
+
+export const getFirebaseMessaging = async () => {
+    try {
+        const supported = await isSupported();
+        if (supported) {
+            return getMessaging(app);
+        }
+        return null;
+    } catch {
+        return null;
+    }
+};

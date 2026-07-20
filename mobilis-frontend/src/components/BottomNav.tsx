@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Wallet, History, UserCog } from 'lucide-react';
+import { LayoutDashboard, Wallet, History, UserCog, Radio } from 'lucide-react';
 
 interface BottomNavProps {
     activeTab: 'hub' | 'vault' | 'history' | 'profile';
@@ -9,6 +9,7 @@ interface BottomNavProps {
 
 const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, role }) => {
     const isAdmin = role === 'superadmin' || role === 'admin';
+    const isCommuter = role === 'commuter';
 
     // Type the array explicitly using your allowed tab types
     const tabs: {
@@ -16,7 +17,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, role }) 
         readonly label: string;
         readonly icon: React.ComponentType<{ className?: string }>;
     }[] = [
-        { id: 'hub', label: isAdmin ? 'Command' : 'Hub', icon: LayoutDashboard },
+        { id: 'hub', label: isAdmin ? 'Command' : isCommuter ? 'Radar' : 'Hub', icon: isCommuter ? Radio : LayoutDashboard },
         { id: 'vault', label: isAdmin ? 'Treasury' : 'Wallet', icon: Wallet },
         { id: 'history', label: 'History', icon: History },
         { id: 'profile', label: 'Profile', icon: UserCog },

@@ -1,17 +1,18 @@
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
 declare global {
     interface Window {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         THREE: any;
     }
 }
 
 // ─── SHOOTING STAR (METEORITE) ──────────────────────────────────────────────
 export const ShootingStar = ({ delay = 0 }: { delay?: number }) => {
-    const startX = useMemo(() => Math.random() * 100 + 20, []);
-    const startY = useMemo(() => Math.random() * 50 - 20, []);
-    const repeatDelay = useMemo(() => Math.random() * 7 + 3, []);
+    const [startX] = useState(() => Math.random() * 100 + 20);
+    const [startY] = useState(() => Math.random() * 50 - 20);
+    const [repeatDelay] = useState(() => Math.random() * 7 + 3);
 
     return (
         <motion.div
@@ -47,10 +48,11 @@ export const EarthCanvas = () => {
 
     useEffect(() => {
         if (!mountRef.current) return;
+        const currentMount = mountRef.current;
 
         const initThree = () => {
             const THREE = window.THREE;
-            const container = mountRef.current!;
+            const container = currentMount;
 
             // --- NEW: Wipe out any duplicate Earths from React Strict Mode ---
             while (container.firstChild) {
@@ -172,6 +174,7 @@ export const EarthCanvas = () => {
             // ── GLOBAL NETWORK OVERLAY ────────────────────────────────
             const networkGroup = new THREE.Group();
             const numNodes = 35;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const nodes: any[] = [];
             const nodeGeo = new THREE.SphereGeometry(0.012, 8, 8);
             const nodeMat = new THREE.MeshBasicMaterial({ color: 0x34d399 });
@@ -413,7 +416,7 @@ export const EarthCanvas = () => {
             };
             animate();
 
-            (container as any)._cleanup = () => {
+            (container as HTMLDivElement & { _cleanup?: () => void })._cleanup = () => {
                 cancelAnimationFrame(animRef.current);
                 window.removeEventListener("resize", onResize);
                 renderer.dispose();
@@ -431,7 +434,7 @@ export const EarthCanvas = () => {
         script.onload = initThree;
         document.head.appendChild(script);
 
-        return () => { (mountRef.current as any)?._cleanup?.(); };
+        return () => { (currentMount as HTMLDivElement & { _cleanup?: () => void })?._cleanup?.(); };
     }, []);
 
     return (

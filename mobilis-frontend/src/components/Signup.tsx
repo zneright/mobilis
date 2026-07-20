@@ -1,4 +1,3 @@
-// src/components/Signup.tsx
 import React, { useState, useEffect } from 'react';
 import { auth, db } from '../firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
@@ -6,8 +5,9 @@ import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firesto
 import { useNavigate, Link } from 'react-router-dom';
 import { Keypair } from '@stellar/stellar-sdk';
 import { requestAccess, isConnected } from '@stellar/freighter-api';
-import { AlertTriangle, Copy, CheckCircle2, Wallet } from 'lucide-react';
+import { AlertTriangle, Copy, CheckCircle2, Wallet, UserCheck } from 'lucide-react';
 import type { UserData } from '../types';
+import { trackWalletCreated } from '../services/analytics';
 
 declare global {
     interface Window {
@@ -16,11 +16,11 @@ declare global {
 }
 
 const Signup: React.FC = () => {
-    const [role, setRole] = useState<'driver' | 'admin'>('driver');
+    const [role, setRole] = useState<'driver' | 'admin' | 'commuter'>('driver');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    // Driver Fields
+    // Driver & Commuter Shared Fields
     const [fullName, setFullName] = useState('');
     const [phone, setPhone] = useState('');
     const [plateNumber, setPlateNumber] = useState('');
@@ -111,13 +111,9 @@ const Signup: React.FC = () => {
                     publicKey = pair.publicKey();
                     secret = pair.secret();
                     generatedKeyToDisplay = secret;
-
-                    // PROTOTYPE OVERRIDE: We are keeping the secret key in the variable 
-                    // so it gets saved to Firestore for the auto-approve flow.
-                    // (In production, you would normally do: secret = ''; here)
                 }
             } else {
-                // Drivers get auto-generated custodial wallets
+                // Drivers and Commuters get auto-generated custodial wallets
                 const pair = Keypair.random();
                 publicKey = pair.publicKey();
                 secret = pair.secret();
@@ -132,9 +128,9 @@ const Signup: React.FC = () => {
                 uid: user.uid,
                 email: user.email || email,
                 role: role,
-                status: 'pending',
+                status: role === 'commuter' ? 'approved' : 'pending',
                 publicKey,
-                secret // Now the admin secret actually gets saved to the database
+                secret
             };
 
             let finalUserData: UserData;
@@ -147,6 +143,11 @@ const Signup: React.FC = () => {
                     plateNumber,
                     todaAffiliation: todaAffiliation.trim()
                 } as UserData;
+            } else if (role === 'commuter') {
+                finalUserData = {
+                    ...baseData,
+                    fullName: fullName.trim() || 'Commuter User'
+                } as UserData;
             } else {
                 finalUserData = {
                     ...baseData,
@@ -158,6 +159,7 @@ const Signup: React.FC = () => {
             }
 
             await setDoc(doc(db, 'users', user.uid), finalUserData);
+            trackWalletCreated(role, publicKey);
 
             if (generatedKeyToDisplay) {
                 // Show modal with the key instead of navigating immediately
@@ -220,15 +222,18 @@ const Signup: React.FC = () => {
                 <form onSubmit={handleSignup} className="flex flex-col gap-4">
                     {/* Segmented Control for Role */}
                     <div className="flex p-1 bg-white/5 border border-white/10 rounded-xl mb-2">
-                        <button type="button" onClick={() => setRole('driver')} className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${role === 'driver' ? 'bg-emerald-500 text-black shadow-md' : 'text-gray-400 hover:text-white'}`}>
+                        <button type="button" onClick={() => setRole('driver')} className={`flex-1 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all ${role === 'driver' ? 'bg-emerald-500 text-black shadow-md' : 'text-gray-400 hover:text-white'}`}>
                             🚙 Driver
                         </button>
-                        <button type="button" onClick={() => setRole('admin')} className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${role === 'admin' ? 'bg-emerald-500 text-black shadow-md' : 'text-gray-400 hover:text-white'}`}>
+                        <button type="button" onClick={() => setRole('commuter')} className={`flex-1 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all ${role === 'commuter' ? 'bg-emerald-500 text-black shadow-md' : 'text-gray-400 hover:text-white'}`}>
+                            🚶 Commuter
+                        </button>
+                        <button type="button" onClick={() => setRole('admin')} className={`flex-1 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all ${role === 'admin' ? 'bg-emerald-500 text-black shadow-md' : 'text-gray-400 hover:text-white'}`}>
                             🏢 TODA Admin
                         </button>
                     </div>
 
-                    {role === 'driver' ? (
+                    {role === 'driver' && (
                         <>
                             <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} required className={inputClasses} />
                             <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} required className={inputClasses} />
@@ -250,7 +255,19 @@ const Signup: React.FC = () => {
                                 )}
                             </div>
                         </>
-                    ) : (
+                    )}
+
+                    {role === 'commuter' && (
+                        <>
+                            <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} required className={inputClasses} />
+                            <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-400 flex items-center gap-3">
+                                <UserCheck className="w-5 h-5 flex-shrink-0" />
+                                <span>Instant Commuter Pass: Your Stellar transport wallet will be provisioned automatically.</span>
+                            </div>
+                        </>
+                    )}
+
+                    {role === 'admin' && (
                         <>
                             <input type="text" placeholder="Registered Cooperative Name" value={coopName} onChange={(e) => setCoopName(e.target.value)} required className={inputClasses} />
                             <input type="text" placeholder="Contact Person Full Name" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} required className={inputClasses} />
