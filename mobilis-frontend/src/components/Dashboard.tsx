@@ -139,10 +139,13 @@ const Dashboard: React.FC = () => {
                     if ('Notification' in window && Notification.permission === 'granted') {
                         new Notification('⚡ New Fare Received!', {
                             body: `Received ${amount} XLM from ${commuterName}`,
+                            icon: '/favicon.svg',
                         });
                     }
                 }
             });
+        }, (err) => {
+            console.warn('Firestore fare notification listener error:', err);
         });
 
         return () => unsubscribe();

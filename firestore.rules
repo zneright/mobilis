@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Users collection rules
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if isOwner(userId);
+    }
+
+    // Driver locations collection rules
+    match /driver_locations/{driverId} {
+      allow read: if true; // Public or authenticated commute discovery
+      allow write, create, update: if isAuthenticated();
+    }
+
+    // Fare transactions collection rules
+    match /fare_transactions/{transactionId} {
+      allow read: if isAuthenticated();
+      allow create, write: if isAuthenticated();
+    }
+  }
+}
