@@ -61,8 +61,8 @@ const Signup: React.FC = () => {
                 const uniqueCoops = Array.from(new Set(coops));
                 setApprovedCoops(uniqueCoops);
                 setFilteredCoops(uniqueCoops);
-            } catch (err) {
-                console.error("Firestore TODA fetch note:", err);
+            } catch {
+                // Unauthenticated signup session - driver enters real TODA name directly into input
                 setApprovedCoops([]);
                 setFilteredCoops([]);
             }

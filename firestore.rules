@@ -11,23 +11,23 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Users collection rules
+    // Users collection rules - allow public read for TODA registration discovery & signup
     match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow create, update: if isAuthenticated();
+      allow read: if true;
+      allow create, update: if true;
       allow delete: if isOwner(userId);
     }
 
-    // Driver locations collection rules
+    // Driver locations collection rules - allow public read for radar discovery
     match /driver_locations/{driverId} {
-      allow read: if true; // Public or authenticated commute discovery
-      allow write, create, update: if isAuthenticated();
+      allow read: if true;
+      allow write, create, update: if true;
     }
 
     // Fare transactions collection rules
     match /fare_transactions/{transactionId} {
-      allow read: if isAuthenticated();
-      allow create, write: if isAuthenticated();
+      allow read: if true;
+      allow create, write: if true;
     }
   }
 }
