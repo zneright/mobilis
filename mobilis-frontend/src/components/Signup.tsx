@@ -5,7 +5,7 @@ import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firesto
 import { useNavigate, Link } from 'react-router-dom';
 import { Keypair } from '@stellar/stellar-sdk';
 import { requestAccess, isConnected } from '@stellar/freighter-api';
-import { AlertTriangle, Copy, CheckCircle2, Wallet, UserCheck, Building2 } from 'lucide-react';
+import { AlertTriangle, Copy, CheckCircle2, Wallet, UserCheck, Building2, ArrowRight, ArrowLeft } from 'lucide-react';
 import type { UserData } from '../types';
 import { trackWalletCreated } from '../services/analytics';
 import MobilisLogo from './common/MobilisLogo';
@@ -17,11 +17,12 @@ declare global {
 }
 
 const Signup: React.FC = () => {
+    const [step, setStep] = useState<1 | 2 | 3>(1);
     const [role, setRole] = useState<'driver' | 'admin' | 'commuter'>('driver');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    // Driver & Commuter Shared Fields
+    // Shared Details
     const [fullName, setFullName] = useState('');
     const [phone, setPhone] = useState('');
     const [plateNumber, setPlateNumber] = useState('');
@@ -32,7 +33,7 @@ const Signup: React.FC = () => {
     const [filteredCoops, setFilteredCoops] = useState<string[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
 
-    // Cooperative Admin Specific Fields
+    // Cooperative Admin Specific
     const [coopName, setCoopName] = useState('');
     const [contactPerson, setContactPerson] = useState('');
     const [registrationNumber, setRegistrationNumber] = useState('');
@@ -44,7 +45,7 @@ const Signup: React.FC = () => {
     const [generatedSecret, setGeneratedSecret] = useState<string | null>(null);
     const navigate = useNavigate();
 
-    // Fetch REAL Cooperative Admins strictly from Firebase Firestore (Zero Mockups)
+    // Fetch REAL Cooperative Admins strictly from Firebase Firestore
     useEffect(() => {
         const fetchRealFirebaseCoops = async () => {
             try {
@@ -54,7 +55,7 @@ const Signup: React.FC = () => {
                 );
                 const snapshot = await getDocs(q);
                 const realCoops = snapshot.docs
-                    .map((doc) => doc.data().coopName as string)
+                    .map((docSnap) => docSnap.data().coopName as string)
                     .filter((name): name is string => Boolean(name && name.trim().length > 0));
 
                 const uniqueCoops = Array.from(new Set(realCoops));
@@ -110,14 +111,14 @@ const Signup: React.FC = () => {
                     generatedKeyToDisplay = secret;
                 }
             } else {
-                // Drivers and Commuters get auto-generated custodial Stellar wallets
+                // Drivers and Commuters get custodial Stellar wallets
                 const pair = Keypair.random();
                 publicKey = pair.publicKey();
                 secret = pair.secret();
                 fetch(`https://friendbot.stellar.org?addr=${publicKey}`).catch(console.error);
             }
 
-            // Create Firebase Authentication User
+            // Create Firebase Auth User
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
@@ -155,7 +156,7 @@ const Signup: React.FC = () => {
                 } as UserData;
             }
 
-            // Store user document strictly in Firebase Firestore
+            // Store user doc in Firestore
             await setDoc(doc(db, 'users', user.uid), finalUserData);
             trackWalletCreated(role, publicKey);
 
@@ -167,7 +168,7 @@ const Signup: React.FC = () => {
 
             navigate('/dashboard');
         } catch (err: unknown) {
-            console.error("Signup Catch Block Triggered:", err);
+            console.error("Signup Catch Block:", err);
             const errorMessage = err instanceof Error ? err.message : "An error occurred during account creation.";
             setError(errorMessage);
         } finally {
@@ -175,164 +176,294 @@ const Signup: React.FC = () => {
         }
     };
 
-    const inputClasses = "w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors text-sm font-sans";
+    const inputClasses = "w-full p-4 bg-black/50 border border-white/10 rounded-2xl text-white placeholder-gray-500 outline-none focus:border-cyan-500 transition-colors text-sm font-sans";
 
     return (
-        <div className="min-h-screen bg-[#060610] flex flex-col items-center justify-center p-4 sm:p-8 font-sans text-white relative overflow-hidden">
-            {/* Background Glow */}
-            <div className="absolute top-[10%] right-[30%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] bg-emerald-600/10 blur-[120px] rounded-full pointer-events-none" />
+        <div className="min-h-screen bg-[#090A0C] flex flex-col justify-between p-6 sm:p-10 font-sans text-white relative overflow-hidden">
+            
+            {/* Top Progress Bar */}
+            <div className="fixed top-0 left-0 right-0 h-1 bg-white/10 z-50">
+                <div
+                    className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-all duration-300"
+                    style={{ width: `${(step / 3) * 100}%` }}
+                />
+            </div>
 
-            {/* Key Storage Modal for Admin Key Generation */}
+            {/* Header */}
+            <div className="w-full max-w-lg mx-auto flex items-center justify-between z-10 pt-4">
+                {step > 1 ? (
+                    <button
+                        onClick={() => setStep((s) => (s - 1) as 1 | 2)}
+                        className="p-3 rounded-2xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-all flex items-center gap-2 text-xs font-bold"
+                    >
+                        <ArrowLeft className="w-4 h-4" /> Back
+                    </button>
+                ) : (
+                    <Link to="/" className="p-3 rounded-2xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-all text-xs font-bold">
+                        Home
+                    </Link>
+                )}
+                <MobilisLogo size={32} showText={false} />
+            </div>
+
+            {/* Modal for Admin Secret Key */}
             {generatedSecret && (
                 <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-                    <div className="bg-[#0a0a14] border border-white/10 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl">
-                        <div className="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-xl flex items-center justify-center mb-4">
+                    <div className="bg-[#121418] border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl">
+                        <div className="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center mb-4">
                             <AlertTriangle className="w-6 h-6" />
                         </div>
-                        <h3 className="text-xl font-bold mb-2">Save Secret Key</h3>
-                        <p className="text-gray-400 text-sm mb-6">
+                        <h3 className="text-xl font-black mb-2">Save Treasury Key</h3>
+                        <p className="text-gray-400 text-xs mb-6">
                             This key provides full control over your Cooperative Treasury wallet. Store it securely.
                         </p>
                         
-                        <div className="p-4 bg-black/50 border border-white/10 rounded-xl font-mono text-xs text-amber-300 break-all mb-6">
+                        <div className="p-4 bg-black/60 border border-white/10 rounded-2xl font-mono text-xs text-amber-300 break-all mb-6">
                             {generatedSecret}
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-3">
-                            <button onClick={() => navigator.clipboard.writeText(generatedSecret)} className="flex-1 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all">
+                            <button onClick={() => navigator.clipboard.writeText(generatedSecret)} className="flex-1 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl flex items-center justify-center gap-2 text-xs transition-all">
                                 <Copy className="w-4 h-4" /> Copy Key
                             </button>
-                            <button onClick={() => navigate('/dashboard')} className="flex-1 py-4 bg-emerald-500 hover:bg-emerald-600 text-black font-black rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(52,211,153,0.4)]">
-                                <CheckCircle2 className="w-5 h-5" /> I Saved It
+                            <button onClick={() => navigate('/dashboard')} className="flex-1 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-black rounded-2xl flex items-center justify-center gap-2 text-xs transition-all shadow-[0_0_15px_rgba(52,211,153,0.4)]">
+                                <CheckCircle2 className="w-5 h-5" /> Saved & Continue
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            <div className="w-full max-w-lg bg-[#0a0a14]/80 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 sm:p-10 shadow-2xl">
-                <div className="flex justify-center mb-4">
-                    <MobilisLogo size={48} showText />
+            {/* Wizard Card Container */}
+            <div className="w-full max-w-lg mx-auto my-auto z-10 bg-[#121418] border border-white/10 rounded-[2.5rem] p-8 shadow-2xl space-y-6">
+                
+                <div className="text-center space-y-2">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400">
+                        Step {step} of 3
+                    </span>
+                    <h2 className="text-2xl font-black tracking-tight text-white">
+                        {step === 1 ? 'Select Your Account Role' : step === 2 ? 'Account Credentials' : 'Role Specifications'}
+                    </h2>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-black text-center mb-6 tracking-tight text-gray-300">Deploy Transport Account</h2>
 
                 {error && (
-                    <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm text-center">
+                    <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl text-xs text-center font-medium">
                         {error}
                     </div>
                 )}
 
-                <form onSubmit={handleSignup} className="flex flex-col gap-4">
-                    {/* Segmented Control for Role */}
-                    <div className="flex p-1 bg-white/5 border border-white/10 rounded-xl mb-2">
-                        <button type="button" onClick={() => setRole('driver')} className={`flex-1 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all ${role === 'driver' ? 'bg-emerald-500 text-black shadow-md' : 'text-gray-400 hover:text-white'}`}>
-                            🛺 Driver
-                        </button>
-                        <button type="button" onClick={() => setRole('commuter')} className={`flex-1 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all ${role === 'commuter' ? 'bg-emerald-500 text-black shadow-md' : 'text-gray-400 hover:text-white'}`}>
-                            🚶 Commuter
-                        </button>
-                        <button type="button" onClick={() => setRole('admin')} className={`flex-1 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all ${role === 'admin' ? 'bg-emerald-500 text-black shadow-md' : 'text-gray-400 hover:text-white'}`}>
-                            🏢 Coop Admin
-                        </button>
-                    </div>
-
-                    <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} required className={inputClasses} />
-                    <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required className={inputClasses} />
-
-                    {role === 'driver' && (
-                        <>
-                            <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} required className={inputClasses} />
-                            <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} required className={inputClasses} />
-                            <input type="text" placeholder="Plate Number (e.g., ABC-1234)" value={plateNumber} onChange={(e) => setPlateNumber(e.target.value)} required className={inputClasses} />
-                            
-                            <div className="relative">
-                                <label className="block text-xs text-gray-400 font-bold mb-1.5 uppercase tracking-wider">
-                                    Select Registered Firebase Cooperative / TODA
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="Search or Select Cooperative Admin Name..."
-                                    value={todaAffiliation}
-                                    onChange={handleTodaSearch}
-                                    onFocus={() => setShowDropdown(true)}
-                                    required
-                                    className={inputClasses}
-                                />
-                                {showDropdown && (
-                                    <ul className="absolute top-[105%] left-0 w-full bg-[#161622] border border-white/10 rounded-xl max-h-48 overflow-y-auto z-50 shadow-2xl custom-scrollbar">
-                                        {filteredCoops.length > 0 ? (
-                                            filteredCoops.map((coop, idx) => (
-                                                <li
-                                                    key={idx}
-                                                    onClick={() => handleSelectCoop(coop)}
-                                                    className="p-4 cursor-pointer hover:bg-emerald-500/20 text-white font-semibold border-b border-white/5 last:border-none transition-colors flex items-center gap-2"
-                                                >
-                                                    <Building2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                                                    <span>{coop}</span>
-                                                </li>
-                                            ))
-                                        ) : (
-                                            <li className="p-4 text-slate-400 text-xs italic">
-                                                No Cooperative Admin registered in Firebase yet. Your Cooperative Admin must register a Coop Admin account first to approve driver funding.
-                                            </li>
-                                        )}
-                                    </ul>
-                                )}
-                            </div>
-                        </>
-                    )}
-
-                    {role === 'commuter' && (
-                        <>
-                            <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} required className={inputClasses} />
-                            <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-400 flex items-center gap-3">
-                                <UserCheck className="w-5 h-5 flex-shrink-0" />
-                                <span>Instant Commuter Pass: Your Stellar transport wallet will be provisioned automatically.</span>
-                            </div>
-                        </>
-                    )}
-
-                    {role === 'admin' && (
-                        <>
-                            <input type="text" placeholder="Cooperative Name (e.g. Pasig Central TODA)" value={coopName} onChange={(e) => setCoopName(e.target.value)} required className={inputClasses} />
-                            <input type="text" placeholder="Contact Person Name" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} required className={inputClasses} />
-                            <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} required className={inputClasses} />
-                            <input type="text" placeholder="CDA Registration / TODA License No." value={registrationNumber} onChange={(e) => setRegistrationNumber(e.target.value)} required className={inputClasses} />
-
-                            <div className="flex flex-col gap-2 mt-2">
-                                <label className="text-xs text-gray-400 font-bold uppercase tracking-wider">Treasury Key Provisioning</label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    <button type="button" onClick={() => setAdminWalletMethod('generate')} className={`p-3 rounded-xl border text-xs font-bold transition-all ${adminWalletMethod === 'generate' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}>
-                                        🔑 Auto Generate
-                                    </button>
-                                    <button type="button" onClick={() => setAdminWalletMethod('freighter')} className={`p-3 rounded-xl border text-xs font-bold transition-all ${adminWalletMethod === 'freighter' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}>
-                                        🚀 Freighter
-                                    </button>
-                                    <button type="button" onClick={() => setAdminWalletMethod('lobstr')} className={`p-3 rounded-xl border text-xs font-bold transition-all ${adminWalletMethod === 'lobstr' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}>
-                                        🦞 LOBSTR
-                                    </button>
+                {/* STEP 1: ROLE SELECTION CARDS */}
+                {step === 1 && (
+                    <div className="space-y-3">
+                        <button
+                            type="button"
+                            onClick={() => setRole('driver')}
+                            className={`w-full p-5 rounded-2xl border text-left transition-all flex items-center justify-between ${
+                                role === 'driver'
+                                    ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400 shadow-md'
+                                    : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
+                            }`}
+                        >
+                            <div className="flex items-center gap-4">
+                                <span className="text-3xl">🛺</span>
+                                <div>
+                                    <h4 className="font-black text-base text-white">Transport Driver</h4>
+                                    <p className="text-xs text-gray-400">Receive fares & request micro-loans</p>
                                 </div>
                             </div>
-                        </>
-                    )}
+                            {role === 'driver' && <CheckCircle2 className="w-6 h-6 text-cyan-400" />}
+                        </button>
 
-                    <button type="submit" disabled={isLoading} className="w-full py-4 mt-4 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-black font-black rounded-xl text-base transition-all shadow-[0_0_20px_rgba(52,211,153,0.3)] flex items-center justify-center gap-2">
-                        {isLoading ? (
-                            <span className="animate-pulse">Provisioning Account...</span>
-                        ) : (
+                        <button
+                            type="button"
+                            onClick={() => setRole('commuter')}
+                            className={`w-full p-5 rounded-2xl border text-left transition-all flex items-center justify-between ${
+                                role === 'commuter'
+                                    ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400 shadow-md'
+                                    : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
+                            }`}
+                        >
+                            <div className="flex items-center gap-4">
+                                <span className="text-3xl">🚶</span>
+                                <div>
+                                    <h4 className="font-black text-base text-white">Commuter</h4>
+                                    <p className="text-xs text-gray-400">Pay transport fares via radar</p>
+                                </div>
+                            </div>
+                            {role === 'commuter' && <CheckCircle2 className="w-6 h-6 text-cyan-400" />}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setRole('admin')}
+                            className={`w-full p-5 rounded-2xl border text-left transition-all flex items-center justify-between ${
+                                role === 'admin'
+                                    ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400 shadow-md'
+                                    : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
+                            }`}
+                        >
+                            <div className="flex items-center gap-4">
+                                <span className="text-3xl">🏢</span>
+                                <div>
+                                    <h4 className="font-black text-base text-white">Cooperative Admin</h4>
+                                    <p className="text-xs text-gray-400">Verify drivers & manage TODA fleet</p>
+                                </div>
+                            </div>
+                            {role === 'admin' && <CheckCircle2 className="w-6 h-6 text-cyan-400" />}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setStep(2)}
+                            className="w-full py-4 mt-4 bg-cyan-500 hover:bg-cyan-400 text-black font-black rounded-2xl text-sm transition-all shadow-[0_0_20px_rgba(0,210,255,0.3)] flex items-center justify-center gap-2"
+                        >
+                            Continue <ArrowRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
+
+                {/* STEP 2: CREDENTIALS */}
+                {step === 2 && (
+                    <div className="space-y-4">
+                        <input
+                            type="email"
+                            placeholder="Email Address"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            className={inputClasses}
+                        />
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            className={inputClasses}
+                        />
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (!email || !password) {
+                                    setError("Please enter your email and password.");
+                                    return;
+                                }
+                                setError("");
+                                setStep(3);
+                            }}
+                            className="w-full py-4 bg-cyan-500 hover:bg-cyan-400 text-black font-black rounded-2xl text-sm transition-all shadow-[0_0_20px_rgba(0,210,255,0.3)] flex items-center justify-center gap-2"
+                        >
+                            Next Step <ArrowRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
+
+                {/* STEP 3: ROLE SPECIFICS & EXECUTION */}
+                {step === 3 && (
+                    <form onSubmit={handleSignup} className="space-y-4">
+                        {role === 'driver' && (
                             <>
-                                <Wallet className="w-5 h-5" /> Initialize Account
+                                <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} required className={inputClasses} />
+                                <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} required className={inputClasses} />
+                                <input type="text" placeholder="Plate Number (e.g., ABC-1234)" value={plateNumber} onChange={(e) => setPlateNumber(e.target.value)} required className={inputClasses} />
+                                
+                                <div className="relative">
+                                    <label className="block text-[10px] text-cyan-400 font-bold uppercase tracking-wider mb-1.5">
+                                        Select Firebase Registered Cooperative
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Search Cooperative Admin..."
+                                        value={todaAffiliation}
+                                        onChange={handleTodaSearch}
+                                        onFocus={() => setShowDropdown(true)}
+                                        required
+                                        className={inputClasses}
+                                    />
+                                    {showDropdown && (
+                                        <ul className="absolute top-[105%] left-0 w-full bg-[#1A1D24] border border-white/10 rounded-2xl max-h-48 overflow-y-auto z-50 shadow-2xl custom-scrollbar">
+                                            {filteredCoops.length > 0 ? (
+                                                filteredCoops.map((coop, idx) => (
+                                                    <li
+                                                        key={idx}
+                                                        onClick={() => handleSelectCoop(coop)}
+                                                        className="p-4 cursor-pointer hover:bg-cyan-500/20 text-white font-semibold border-b border-white/5 last:border-none transition-colors flex items-center gap-2"
+                                                    >
+                                                        <Building2 className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                                                        <span>{coop}</span>
+                                                    </li>
+                                                ))
+                                            ) : (
+                                                <li className="p-4 text-slate-400 text-xs italic">
+                                                    No Cooperative Admin registered in Firebase yet. Your Cooperative Admin must register a Coop Admin account first.
+                                                </li>
+                                            )}
+                                        </ul>
+                                    )}
+                                </div>
                             </>
                         )}
-                    </button>
-                </form>
 
-                <p className="mt-6 text-center text-xs text-gray-400">
-                    Already registered?{' '}
-                    <Link to="/login" className="text-emerald-400 hover:underline font-bold">
-                        Sign In
-                    </Link>
-                </p>
+                        {role === 'commuter' && (
+                            <>
+                                <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} required className={inputClasses} />
+                                <div className="p-4 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl text-xs text-cyan-400 flex items-center gap-3">
+                                    <UserCheck className="w-5 h-5 flex-shrink-0" />
+                                    <span>Instant Commuter Pass: Your Stellar transport wallet will be provisioned automatically.</span>
+                                </div>
+                            </>
+                        )}
+
+                        {role === 'admin' && (
+                            <>
+                                <input type="text" placeholder="Cooperative Name (e.g. Pasig Central TODA)" value={coopName} onChange={(e) => setCoopName(e.target.value)} required className={inputClasses} />
+                                <input type="text" placeholder="Contact Person Name" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} required className={inputClasses} />
+                                <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} required className={inputClasses} />
+                                <input type="text" placeholder="CDA Registration / TODA License No." value={registrationNumber} onChange={(e) => setRegistrationNumber(e.target.value)} required className={inputClasses} />
+
+                                <div className="flex flex-col gap-2 mt-2">
+                                    <label className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">Treasury Key Provisioning</label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <button type="button" onClick={() => setAdminWalletMethod('generate')} className={`p-3 rounded-xl border text-xs font-bold transition-all ${adminWalletMethod === 'generate' ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}>
+                                            🔑 Auto Generate
+                                        </button>
+                                        <button type="button" onClick={() => setAdminWalletMethod('freighter')} className={`p-3 rounded-xl border text-xs font-bold transition-all ${adminWalletMethod === 'freighter' ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}>
+                                            🚀 Freighter
+                                        </button>
+                                        <button type="button" onClick={() => setAdminWalletMethod('lobstr')} className={`p-3 rounded-xl border text-xs font-bold transition-all ${adminWalletMethod === 'lobstr' ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}>
+                                            🦞 LOBSTR
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        <button type="submit" disabled={isLoading} className="w-full py-4 mt-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-black rounded-2xl text-sm transition-all shadow-[0_0_20px_rgba(52,211,153,0.3)] flex items-center justify-center gap-2">
+                            {isLoading ? (
+                                <span className="animate-pulse">Provisioning Custodial Wallet...</span>
+                            ) : (
+                                <>
+                                    <Wallet className="w-4 h-4" /> Create Account & Provision Keys
+                                </>
+                            )}
+                        </button>
+                    </form>
+                )}
+
+                <div className="text-center pt-2">
+                    <p className="text-xs text-gray-400">
+                        Already have an account?{' '}
+                        <Link to="/login" className="text-cyan-400 font-bold hover:underline">
+                            Sign In
+                        </Link>
+                    </p>
+                </div>
+            </div>
+
+            {/* Bottom Footer */}
+            <div className="w-full text-center text-xs text-gray-600 font-mono z-10">
+                Mobilis Onboarding Wizard • Encrypted Key Provisioning
             </div>
         </div>
     );

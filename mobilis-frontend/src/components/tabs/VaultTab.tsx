@@ -1,11 +1,5 @@
-import React, { useState } from 'react';
-import { Eye, EyeOff, Copy, AlertTriangle, ArrowDownLeft, ArrowUpRight, Banknote, RefreshCw, Link as LinkIcon, Unlink, Droplet } from 'lucide-react';
-
-interface Asset {
-    asset_type: string;
-    asset_code?: string;
-    balance: string;
-}
+import React from 'react';
+import { Wallet, ArrowUpRight, ArrowDownLeft, QrCode, ShieldCheck, RefreshCw } from 'lucide-react';
 
 interface VaultTabProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -13,177 +7,167 @@ interface VaultTabProps {
     externalWallet: string | null;
     activePubKey: string | null;
     xlmBalance: string;
-    assetBalances: Asset[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    assetBalances: any[];
     currencyMode: 'XLM' | 'PHP';
     setCurrencyMode: React.Dispatch<React.SetStateAction<'XLM' | 'PHP'>>;
-    formatCurrency: (amount: number | string) => string;
-    setShowWalletModal: (val: boolean) => void;
+    formatCurrency: (amountXlm: number | string) => string;
+    setShowWalletModal: (show: boolean) => void;
     handleDisconnectWallet: () => void;
-    setShowReceiveModal: (val: boolean) => void;
-    setShowSendModal: (val: boolean) => void;
-    appNetwork?: 'TESTNET';
-    refreshData: () => Promise<void>;
+    setShowReceiveModal: (show: boolean) => void;
+    setShowSendModal: (show: boolean) => void;
+    appNetwork: string;
+    refreshData: () => void;
 }
 
-const PHP_EXCHANGE_RATE = 60.69;
-const USDC_EXCHANGE_RATE = 58.00;
+const PHP_RATE = 60.69;
 
-const VaultTab: React.FC<VaultTabProps> = ({
+export const VaultTab: React.FC<VaultTabProps> = ({
     stellarData,
-    externalWallet,
     activePubKey,
     xlmBalance,
     assetBalances,
     currencyMode,
     setCurrencyMode,
-    formatCurrency,
-    setShowWalletModal,
-    handleDisconnectWallet,
     setShowReceiveModal,
     setShowSendModal,
-    refreshData
+    appNetwork,
+    refreshData,
 }) => {
-    const [showSecret, setShowSecret] = useState(false);
-    const [isFunding, setIsFunding] = useState(false);
-
-    // --- FRIEND BOT FUNDING LOGIC ---
-    const handleFundTestnet = async () => {
-        if (!activePubKey) return;
-        setIsFunding(true);
-        try {
-            const response = await fetch(`https://friendbot.stellar.org/?addr=${activePubKey}`);
-            if (response.ok) {
-                alert("Success! 10,000 Testnet XLM has been deposited to your account.");
-                // Immediately pull new data after funding
-                await refreshData();
-            } else {
-                const errorData = await response.json();
-                console.error("[VaultTab -> handleFundTestnet] API Error Details:", errorData);
-                alert(`Friendbot failed: ${errorData.detail || "Account may already be funded or network is busy."}`);
-            }
-        } catch (error) {
-            console.error("[VaultTab -> handleFundTestnet] Network/Fetch Error:", error);
-            alert("Network error: Could not reach Stellar Friendbot.");
-        } finally {
-            setIsFunding(false);
-        }
-    };
+    const xlmNum = parseFloat(xlmBalance || '0');
+    const phpEquivalent = (xlmNum * PHP_RATE).toFixed(2);
 
     return (
-        <div className="w-full max-w-4xl mx-auto flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-2 gap-4">
-                <div>
-                    <h3 className="text-2xl font-black">Digital Wallet</h3>
-                    <p className="text-gray-500 text-sm">Stellar Network Assets</p>
+        <div className="w-full max-w-4xl mx-auto space-y-6 text-white font-sans">
+            
+            {/* REVOLUT / APPLE WALLET BALANCE HERO CARD */}
+            <div className="p-8 sm:p-10 rounded-[2.5rem] bg-gradient-to-br from-[#121418] to-[#1C1F26] border border-white/10 shadow-2xl relative overflow-hidden text-center space-y-6">
+                
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-mono font-bold">
+                        <Wallet className="w-3.5 h-3.5" />
+                        <span>Mobilis Web3 Vault</span>
+                    </div>
+                    <button
+                        onClick={refreshData}
+                        className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-all"
+                        title="Sync Stellar Ledger"
+                    >
+                        <RefreshCw className="w-4 h-4" />
+                    </button>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                    {externalWallet ? (
-                        <button onClick={handleDisconnectWallet} className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold font-mono bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400 border border-red-200 dark:border-red-500/20 shadow-sm transition-colors hover:bg-red-100 dark:hover:bg-red-500/20">
-                            <Unlink className="w-4 h-4" /> Disconnect External
-                        </button>
-                    ) : (
-                        <button onClick={() => setShowWalletModal(true)} className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold font-mono bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 shadow-sm transition-colors hover:bg-blue-100 dark:hover:bg-blue-500/20">
-                            <LinkIcon className="w-4 h-4" /> Connect Wallet
-                        </button>
-                    )}
-                    <button onClick={() => setCurrencyMode(p => p === 'PHP' ? 'XLM' : 'PHP')} className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold font-mono bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 shadow-sm">
-                        <RefreshCw className="w-4 h-4" /> {currencyMode}
+
+                <div className="space-y-2">
+                    <p className="text-xs font-mono uppercase tracking-widest text-gray-400 font-bold">Total Wallet Balance</p>
+                    <h2 className="text-4xl sm:text-6xl font-black tracking-tight text-white font-mono">
+                        {currencyMode === 'PHP' ? `₱${phpEquivalent} PHP` : `${xlmNum.toFixed(2)} XLM`}
+                    </h2>
+                    <p className="text-xs font-mono text-cyan-400 font-bold">
+                        {currencyMode === 'PHP' ? `≈ ${xlmNum.toFixed(4)} XLM` : `≈ ₱${phpEquivalent} PHP`}
+                    </p>
+                </div>
+
+                {/* Quick Currency Mode Toggle */}
+                <div className="inline-flex p-1 bg-black/40 border border-white/10 rounded-2xl">
+                    <button
+                        onClick={() => setCurrencyMode('PHP')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                            currencyMode === 'PHP'
+                                ? 'bg-cyan-500 text-black shadow-md font-black'
+                                : 'text-gray-400 hover:text-white'
+                        }`}
+                    >
+                        🇵🇭 PHP Fiat Mode
+                    </button>
+                    <button
+                        onClick={() => setCurrencyMode('XLM')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                            currencyMode === 'XLM'
+                                ? 'bg-cyan-500 text-black shadow-md font-black'
+                                : 'text-gray-400 hover:text-white'
+                        }`}
+                    >
+                        🚀 XLM Native Mode
+                    </button>
+                </div>
+
+                {/* QUICK ACTION CIRCLE BUTTONS */}
+                <div className="flex items-center justify-center gap-6 pt-4">
+                    <button
+                        onClick={() => setShowSendModal(true)}
+                        className="flex flex-col items-center gap-2 group"
+                    >
+                        <div className="w-14 h-14 rounded-2xl bg-cyan-500 text-black flex items-center justify-center font-black transition-all group-hover:scale-110 shadow-[0_0_20px_rgba(0,210,255,0.4)]">
+                            <ArrowUpRight className="w-6 h-6" />
+                        </div>
+                        <span className="text-xs font-bold text-gray-300">Send</span>
+                    </button>
+
+                    <button
+                        onClick={() => setShowReceiveModal(true)}
+                        className="flex flex-col items-center gap-2 group"
+                    >
+                        <div className="w-14 h-14 rounded-2xl bg-emerald-500 text-black flex items-center justify-center font-black transition-all group-hover:scale-110 shadow-[0_0_20px_rgba(52,211,153,0.4)]">
+                            <ArrowDownLeft className="w-6 h-6" />
+                        </div>
+                        <span className="text-xs font-bold text-gray-300">Receive</span>
+                    </button>
+
+                    <button
+                        onClick={() => setShowReceiveModal(true)}
+                        className="flex flex-col items-center gap-2 group"
+                    >
+                        <div className="w-14 h-14 rounded-2xl bg-white/10 text-white border border-white/20 flex items-center justify-center font-black transition-all group-hover:scale-110">
+                            <QrCode className="w-6 h-6" />
+                        </div>
+                        <span className="text-xs font-bold text-gray-300">My QR</span>
                     </button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Balance Card */}
-                <div className="col-span-1 md:col-span-2 bg-gradient-to-br from-emerald-400 to-cyan-500 rounded-[2rem] p-8 shadow-xl text-black flex flex-col justify-between min-h-[200px]">
-                    <div>
-                        <p className="text-sm font-bold opacity-80 uppercase tracking-widest mb-1">Total Main Balance</p>
-                        <h2 className="text-5xl md:text-6xl font-black">{formatCurrency(xlmBalance)}</h2>
-                    </div>
-                    <div className="flex items-center gap-2 mt-6 bg-black/10 w-fit px-3 py-1.5 rounded-lg backdrop-blur-sm">
-                        <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                        <span className="text-xs font-bold tracking-wider">{externalWallet ? 'External Web3 Connected' : 'Internal Node Active'}</span>
-                    </div>
-                </div>
+            {/* ASSET LIST */}
+            <div className="p-8 rounded-[2.5rem] bg-[#121418] border border-white/10 shadow-2xl space-y-4">
+                <h3 className="font-black text-lg text-white">Vault Assets</h3>
 
-                {/* Actions */}
-                <div className="col-span-1 bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 rounded-[2rem] p-6 shadow-xl flex flex-col gap-3 justify-center min-h-[200px]">
-                    <button
-                        onClick={handleFundTestnet}
-                        disabled={isFunding}
-                        className="w-full py-3.5 px-4 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/20 rounded-xl font-bold text-sm flex items-center justify-between text-yellow-600 dark:text-yellow-400 transition-colors"
-                    >
-                        <span className="flex items-center gap-3"><Droplet className="w-4 h-4" /> {isFunding ? 'Funding...' : 'Drop Testnet XLM'}</span>
-                    </button>
-
-                    <button onClick={() => setShowReceiveModal(true)} className="w-full py-3.5 px-4 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 rounded-xl font-bold text-sm flex items-center justify-between transition-colors">
-                        <span className="flex items-center gap-3"><ArrowDownLeft className="w-4 h-4 text-emerald-500" /> Receive</span>
-                    </button>
-                    <button onClick={() => setShowSendModal(true)} className="w-full py-3.5 px-4 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 rounded-xl font-bold text-sm flex items-center justify-between transition-colors">
-                        <span className="flex items-center gap-3"><ArrowUpRight className="w-4 h-4 text-blue-500" /> Send</span>
-                    </button>
-                    <button onClick={() => alert("Fiat Cashout architecture is currently disabled in testnet mode.")} className="w-full py-3.5 px-4 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-xl font-bold text-sm flex items-center justify-between text-emerald-600 dark:text-emerald-400 transition-colors">
-                        <span className="flex items-center gap-3"><Banknote className="w-4 h-4" /> Cashout</span>
-                    </button>
-                </div>
-
-                {/* Multi-Asset List */}
-                {assetBalances && assetBalances.map((asset, idx) => {
-                    const isNative = asset.asset_type === 'native';
-                    const code = isNative ? 'XLM' : asset.asset_code;
-                    const bal = parseFloat(asset.balance);
-                    const rate = isNative ? PHP_EXCHANGE_RATE : (code === 'USDC' ? USDC_EXCHANGE_RATE : 1);
-                    const phpValue = bal * rate;
-
-                    return (
-                        <div key={idx} className="col-span-1 bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 rounded-[2rem] p-6 shadow-xl flex flex-col justify-between">
-                            <p className="text-sm font-bold text-gray-500 mb-1">{code} Vault</p>
-                            <h4 className="text-2xl font-black">{bal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {code}</h4>
-                            {currencyMode === 'PHP' && (
-                                <p className="text-emerald-500 font-bold mt-2 text-sm">≈ ₱ {phpValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                            )}
+                <div className="p-4 bg-black/40 border border-white/5 rounded-2xl flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center font-black text-xs">
+                            XLM
                         </div>
-                    );
-                })}
-
-                {/* Keys */}
-                <div className="col-span-1 md:col-span-3 bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 rounded-[2rem] p-6 sm:p-8 shadow-xl">
-                    {externalWallet ? (
-                        <div className="flex flex-col items-center justify-center py-6 text-center">
-                            <LinkIcon className="w-12 h-12 text-blue-500 mb-4 opacity-50" />
-                            <h4 className="text-lg font-bold mb-2">External Web3 Connected</h4>
-                            <p className="text-gray-500 text-sm mb-4">You are currently managing your assets via a third-party Stellar application.</p>
-                            <code className="bg-gray-50 dark:bg-black/40 p-3 rounded-xl text-xs break-all border border-gray-200 dark:border-white/5">{externalWallet}</code>
+                        <div>
+                            <h4 className="font-bold text-sm text-white">Stellar Native (XLM)</h4>
+                            <p className="text-[10px] font-mono text-gray-400">{appNetwork} Ledger Asset</p>
                         </div>
-                    ) : (
-                        <>
-                            <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl p-4 mb-6 flex gap-3 text-xs text-red-600 dark:text-red-400">
-                                <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-                                <p>Do not expose your secret seed key. These values control your internal assets on the Stellar Network.</p>
-                            </div>
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-xs font-bold tracking-widest text-gray-500 dark:text-gray-400 uppercase mb-2">Public Address</label>
-                                    <div className="flex gap-2">
-                                        <code className="flex-1 bg-gray-50 dark:bg-black/40 p-4 rounded-xl text-xs break-all border border-gray-200 dark:border-white/5">{activePubKey}</code>
-                                        <button onClick={() => navigator.clipboard.writeText(activePubKey!)} className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-200 dark:hover:bg-white/10"><Copy className="w-4 h-4" /></button>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold tracking-widest text-gray-500 dark:text-gray-400 uppercase mb-2">Secret Seed Phrase</label>
-                                    <div className="flex gap-2">
-                                        <code className="flex-1 bg-gray-50 dark:bg-black/40 p-4 rounded-xl text-xs break-all border border-gray-200 dark:border-white/5 select-none">
-                                            {showSecret ? stellarData.secret : 'S•••••••••••••••••••••••••••••••••••••••••••••••••••••••'}
-                                        </code>
-                                        <button onClick={() => setShowSecret(!showSecret)} className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-200 dark:hover:bg-white/10">
-                                            {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                        </button>
-                                        <button onClick={() => navigator.clipboard.writeText(stellarData.secret)} className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-200 dark:hover:bg-white/10"><Copy className="w-4 h-4" /></button>
-                                    </div>
-                                </div>
-                            </div>
-                        </>
-                    )}
+                    </div>
+                    <div className="text-right">
+                        <span className="font-mono font-bold text-sm text-white block">{xlmNum.toFixed(4)} XLM</span>
+                        <span className="text-xs font-mono text-emerald-400 font-bold block">≈ ₱{phpEquivalent} PHP</span>
+                    </div>
                 </div>
+
+                {assetBalances && assetBalances.length > 0 && assetBalances.map((asset, idx) => (
+                    <div key={idx} className="p-4 bg-black/40 border border-white/5 rounded-2xl flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-black text-xs">
+                                {asset.asset_code?.substring(0, 3) || 'TOKEN'}
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-sm text-white">{asset.asset_code || 'Custom Asset'}</h4>
+                                <p className="text-[10px] font-mono text-gray-400">{asset.asset_issuer?.substring(0, 8)}...</p>
+                            </div>
+                        </div>
+                        <span className="font-mono font-bold text-sm text-white">{parseFloat(asset.balance).toFixed(2)}</span>
+                    </div>
+                ))}
+            </div>
+
+            {/* PUBLIC KEY & STATUS BLOCK */}
+            <div className="p-6 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-between text-xs text-gray-400 font-mono">
+                <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                    <span>Public Key: {activePubKey ? `${activePubKey.substring(0, 8)}...${activePubKey.substring(activePubKey.length - 8)}` : (stellarData?.publicKey ? `${stellarData.publicKey.substring(0, 8)}...` : 'N/A')}</span>
+                </div>
+                <span className="text-cyan-400 font-bold uppercase">{appNetwork}</span>
             </div>
         </div>
     );

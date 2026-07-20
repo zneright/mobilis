@@ -1,10 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
+import React from 'react';
+import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Coins, RefreshCw } from 'lucide-react';
-import type { UserData } from '../../types';
-
-const CONTRACT_ID = "CAVFLXBG4MXGTGECI6WAZXMDNX2H3UWFTMNY4DHK2MR4YUYEEU5STBID";
+import { Fuel, Building2, UserCheck, ArrowUpRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
 
 interface HubTabProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -12,150 +9,228 @@ interface HubTabProps {
     isAdmin: boolean;
     currencyMode: 'XLM' | 'PHP';
     setCurrencyMode: React.Dispatch<React.SetStateAction<'XLM' | 'PHP'>>;
-    formatCurrency: (amount: number | string) => string;
-    debtState: number;
+    formatCurrency: (amountXlm: number | string) => string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    debtState: any;
     isProcessing: boolean;
-    handleRequestAdvance: (amount: number) => Promise<void>;
-    handleInjectLiquidity: (amount: number) => Promise<void>;
-    handleSettleLoan: () => Promise<void>;
-    appNetwork: 'TESTNET';
-    treasuryBalance?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    handleRequestAdvance: (amount?: any) => void;
+    handleInjectLiquidity: () => void;
+    handleSettleLoan: () => void;
+    appNetwork: string;
+    treasuryBalance: string;
     borrowLimit: number;
-    handleSetBorrowLimit: (limit: number) => Promise<void>;
+    handleSetBorrowLimit: (limit: number) => void;
 }
 
-const HubTab: React.FC<HubTabProps> = ({ stellarData, isAdmin, currencyMode, setCurrencyMode, formatCurrency, debtState, isProcessing, handleRequestAdvance, handleInjectLiquidity, handleSettleLoan, treasuryBalance, borrowLimit, handleSetBorrowLimit }) => {
-    const [customAmount, setCustomAmount] = useState<string>('500');
-    const [limitInput, setLimitInput] = useState<string>(borrowLimit.toString());
-    const [driverRequestAmt, setDriverRequestAmt] = useState<string>(borrowLimit.toString());
-    const [pendingUsers, setPendingUsers] = useState<UserData[]>([]);
+export const HubTab: React.FC<HubTabProps> = ({
+    stellarData,
+    isAdmin,
+    formatCurrency,
+    debtState,
+    isProcessing,
+    handleRequestAdvance,
+    handleSettleLoan,
+    borrowLimit,
+}) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [pendingDrivers, setPendingDrivers] = React.useState<any[]>([]);
+    const [loadingDrivers, setLoadingDrivers] = React.useState<boolean>(false);
+    const [approvingUid, setApprovingUid] = React.useState<string | null>(null);
 
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setLimitInput(borrowLimit.toString());
-        setDriverRequestAmt(borrowLimit.toString());
-    }, [borrowLimit]);
+    // Fetch Pending Drivers for Cooperative Admin
+    React.useEffect(() => {
+        if (!isAdmin) return;
+        setLoadingDrivers(true);
+        const q = query(
+            collection(db, 'users'),
+            where('role', '==', 'driver'),
+            where('status', '==', 'pending')
+        );
 
-    useEffect(() => {
-        const fetchPendingAccounts = async () => {
-            if (!isAdmin) return;
-            try {
-                const q = stellarData.role === 'superadmin'
-                    ? query(collection(db, 'users'), where('role', '==', 'admin'), where('status', '==', 'pending'))
-                    : query(collection(db, 'users'), where('role', '==', 'driver'), where('status', '==', 'pending'), where('todaAffiliation', '==', stellarData.coopName));
-
-                const querySnapshot = await getDocs(q);
-                const users: UserData[] = [];
-                querySnapshot.forEach((doc) => users.push(doc.data() as UserData));
-                setPendingUsers(users);
-            } catch (error) {
-                console.error("Error fetching pending accounts:", error);
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const drivers: any[] = [];
+                snapshot.forEach((docSnap) => {
+                    const d = docSnap.data();
+                    if (d.todaAffiliation === stellarData.coopName || stellarData.role === 'superadmin') {
+                        drivers.push({ uid: docSnap.id, ...d });
+                    }
+                });
+                setPendingDrivers(drivers);
+                setLoadingDrivers(false);
+            },
+            (err) => {
+                console.warn("Error fetching pending drivers:", err);
+                setLoadingDrivers(false);
             }
-        };
-        fetchPendingAccounts();
-    }, [stellarData, isAdmin]);
+        );
 
-    const handleApprove = async (uid: string) => {
+        return () => unsubscribe();
+    }, [isAdmin, stellarData]);
+
+    const handleApproveDriver = async (driverUid: string) => {
+        setApprovingUid(driverUid);
         try {
-            await updateDoc(doc(db, 'users', uid), { status: 'approved' });
-            setPendingUsers(prev => prev.filter(user => user.uid !== uid));
-            alert("Account verified on-chain successfully!");
-        } catch {
-            alert("Failed to sign node approval. Check console for details.");
+            await updateDoc(doc(db, 'users', driverUid), {
+                status: 'approved',
+                approvedAt: new Date().toISOString(),
+                approvedBy: stellarData.uid,
+            });
+        } catch (err) {
+            console.error("Failed to approve driver:", err);
+        } finally {
+            setApprovingUid(null);
         }
     };
 
+    const isDriver = stellarData.role === 'driver';
+    const usedDebtPercentage = Math.min((debtState.debt / borrowLimit) * 100, 100);
+
     return (
-        <div className="w-full flex flex-col items-center">
-            <div className="w-full max-w-lg mb-4 flex justify-end items-center">
-                <button onClick={() => setCurrencyMode(p => p === 'PHP' ? 'XLM' : 'PHP')} className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold font-mono bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 shadow-sm">
-                    <RefreshCw className="w-3.5 h-3.5" /> Display: {currencyMode}
-                </button>
-            </div>
-
-            {isAdmin ? (
-                <div className="w-full">
-                    {/* BOX 1: SET THE LIMIT */}
-                    <div className="mb-6 bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-sm">
-                        <h3 className="text-sm font-bold tracking-widest text-blue-500 uppercase mb-2">Cooperative Rules</h3>
-                        <p className="text-sm text-gray-500 mb-6">Set the maximum amount of XLM a single driver can request per advance.</p>
-
-                        <div className="flex flex-col sm:flex-row items-center gap-4">
-                            <input type="number" value={limitInput} onChange={(e) => setLimitInput(e.target.value)} placeholder="Max Limit" className="w-full sm:flex-1 p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-blue-500" />
-                            <button onClick={() => handleSetBorrowLimit(parseFloat(limitInput))} disabled={isProcessing} className="w-full sm:w-auto px-6 py-4 bg-blue-500 text-white font-black text-sm rounded-xl hover:bg-blue-600 transition-colors">
-                                {isProcessing ? "Saving..." : "Set Limit Rule"}
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* BOX 2: INJECT LIQUIDITY */}
-                    <div className="mb-8 bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-sm">
-                        <h3 className="text-sm font-bold tracking-widest text-emerald-500 uppercase mb-4">Treasury Liquidity</h3>
-
-                        <div className="mb-6 p-6 bg-gradient-to-br from-blue-500/10 to-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Live Cooperative Vault</p>
-                            <h2 className="text-4xl font-black text-gray-900 dark:text-white">
-                                {formatCurrency(treasuryBalance || "0")}
-                            </h2>
-                            <p className="text-[10px] text-gray-500 mt-2 font-mono break-all">Contract: {CONTRACT_ID}</p>
-                        </div>
-
-                        <p className="text-sm text-gray-500 mb-4">Deposit physical funds from your Admin wallet into the Smart Contract Vault so drivers can borrow.</p>
-                        <div className="flex flex-col sm:flex-row items-center gap-4">
-                            <input type="number" value={customAmount} onChange={(e) => setCustomAmount(e.target.value)} placeholder="Deposit amount..." className="w-full sm:flex-1 p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-emerald-500" />
-                            <button onClick={() => handleInjectLiquidity(parseFloat(customAmount))} disabled={isProcessing} className="w-full sm:w-auto px-6 py-4 bg-emerald-500 text-black font-black text-sm rounded-xl hover:bg-emerald-400">
-                                {isProcessing ? "Executing..." : "Deposit to Vault"}
-                            </button>
-                        </div>
-                    </div>
-
-                    <h3 className="text-xl font-bold mb-6 flex items-center gap-3">
-                        Pending Registrations <span className="px-3 py-1 bg-gray-200 dark:bg-white/10 rounded-full text-xs font-mono">{pendingUsers.length}</span>
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {pendingUsers.map(user => (
-                            <div key={user.uid} className="bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 rounded-2xl p-6 flex flex-col justify-between shadow-sm">
-                                <div className="mb-4">
-                                    <h4 className="text-lg font-bold">{stellarData.role === 'admin' ? user.fullName : user.coopName}</h4>
-                                    <p className="text-sm text-gray-500 font-mono mt-2">PLATE: {user.plateNumber || 'N/A'}</p>
-                                </div>
-                                <button onClick={() => handleApprove(user.uid)} className="w-full py-3 bg-gray-900 text-white dark:bg-white dark:text-black font-bold rounded-xl text-sm">Approve Node Signature</button>
+        <div className="w-full max-w-4xl mx-auto space-y-6 text-white font-sans">
+            
+            {/* DRIVER / MEMBER SOROBAN CREDIT HERO GAUGE CARD */}
+            {isDriver && (
+                <div className="p-8 rounded-[2.5rem] bg-[#121418] border border-white/10 shadow-2xl relative overflow-hidden space-y-6">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
+                                <Fuel className="w-6 h-6" />
                             </div>
-                        ))}
+                            <div>
+                                <h3 className="font-black text-xl text-white">Soroban Micro-Credit Line</h3>
+                                <p className="text-xs text-gray-400 font-mono">Affiliated with {stellarData.todaAffiliation || 'Cooperative TODA'}</p>
+                            </div>
+                        </div>
+                        <div className="px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-bold">
+                            Active Gauge
+                        </div>
+                    </div>
+
+                    {/* Circular Debt Gauge Visualizer */}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-8 p-6 bg-black/40 border border-white/5 rounded-3xl">
+                        
+                        <div className="relative w-36 h-36 flex items-center justify-center">
+                            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                <path
+                                    className="text-white/10"
+                                    strokeWidth="3.5"
+                                    stroke="currentColor"
+                                    fill="none"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                />
+                                <path
+                                    className="text-cyan-400 transition-all duration-1000"
+                                    strokeDasharray={`${usedDebtPercentage}, 100`}
+                                    strokeWidth="3.5"
+                                    strokeLinecap="round"
+                                    stroke="currentColor"
+                                    fill="none"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                />
+                            </svg>
+                            <div className="absolute text-center">
+                                <span className="text-xl font-black text-white block">{borrowLimit - debtState.debt}</span>
+                                <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest block font-bold">Available XLM</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3 flex-1 text-center sm:text-left">
+                            <div className="flex justify-between items-baseline text-sm">
+                                <span className="text-gray-400 font-medium">Used Credit Debt:</span>
+                                <span className="font-mono font-bold text-amber-400">{formatCurrency(debtState.debt)}</span>
+                            </div>
+                            <div className="flex justify-between items-baseline text-sm">
+                                <span className="text-gray-400 font-medium">Total Credit Limit:</span>
+                                <span className="font-mono font-bold text-white">{formatCurrency(borrowLimit)}</span>
+                            </div>
+                            <div className="pt-2 border-t border-white/10 flex justify-between items-center text-xs">
+                                <span className="text-gray-500 font-mono">Smart Contract:</span>
+                                <span className="font-mono text-cyan-400 font-bold">Soroban Verified</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button
+                            onClick={() => handleRequestAdvance(15)}
+                            disabled={isProcessing || debtState.isLocked}
+                            className="py-4 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(0,210,255,0.3)] flex items-center justify-center gap-2"
+                        >
+                            <ArrowUpRight className="w-4 h-4" /> Borrow 15 XLM Advance
+                        </button>
+                        <button
+                            onClick={handleSettleLoan}
+                            disabled={isProcessing || debtState.debt <= 0}
+                            className="py-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(52,211,153,0.3)] flex items-center justify-center gap-2"
+                        >
+                            <ShieldCheck className="w-4 h-4" /> Repay Soroban Credit Loan
+                        </button>
                     </div>
                 </div>
-            ) : (
-                <div className="w-full max-w-lg flex flex-col gap-4">
-                    <div className="bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 rounded-[2rem] p-6 shadow-xl">
-                        <div className="flex items-center gap-3 mb-4">
-                            <Coins className="w-5 h-5 text-emerald-500" />
-                            <p className="text-sm font-bold text-gray-500 dark:text-gray-400">On-Chain Debt Balance</p>
+            )}
+
+            {/* COOPERATIVE ADMIN PENDING DRIVERS QUEUE */}
+            {isAdmin && (
+                <div className="p-8 rounded-[2.5rem] bg-[#121418] border border-white/10 shadow-2xl space-y-6">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+                                <Building2 className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className="font-black text-xl text-white">Cooperative Member Queue</h3>
+                                <p className="text-xs text-gray-400">Review & approve driver registration requests for {stellarData.coopName || 'Cooperative TODA'}</p>
+                            </div>
                         </div>
-                        <div className={`border rounded-2xl p-6 text-center ${debtState === 0 ? 'bg-emerald-50 dark:bg-emerald-500/5 border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-500/5 border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400'}`}>
-                            <div className="text-4xl font-black">{formatCurrency(debtState)}</div>
-                        </div>
+                        <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-mono font-bold border border-emerald-500/20">
+                            {pendingDrivers.length} Pending
+                        </span>
                     </div>
-                    {debtState > 0 ? (
-                        <button onClick={handleSettleLoan} disabled={isProcessing} className="w-full py-5 rounded-2xl font-black text-lg tracking-wide shadow-xl transition-all bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:scale-[1.02] active:scale-[0.98]">
-                            {isProcessing ? "Processing Settlement..." : `Settle Loan + 0.5% Fee`}
-                        </button>
-                    ) : (
-                        <div className="flex flex-col gap-3">
-                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-center mt-2">
-                                Request Amount (Max limit: {borrowLimit} XLM)
-                            </label>
-                            <input
-                                type="number"
-                                value={driverRequestAmt}
-                                onChange={(e) => setDriverRequestAmt(e.target.value)}
-                                max={borrowLimit}
-                                className="w-full p-6 bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 rounded-2xl text-3xl font-black outline-none focus:border-emerald-500 text-center shadow-xl"
-                            />
-                            <button onClick={() => handleRequestAdvance(parseFloat(driverRequestAmt))} disabled={isProcessing} className="w-full py-5 mt-2 rounded-2xl font-black text-lg tracking-wide shadow-xl transition-all bg-gradient-to-r from-emerald-400 to-cyan-400 text-black hover:scale-[1.02] active:scale-[0.98]">
-                                {isProcessing ? "Signing Transaction..." : `Borrow Fuel Advance`}
-                            </button>
-                        </div>
-                    )}
+
+                    <div className="space-y-4">
+                        {loadingDrivers ? (
+                            <div className="p-6 bg-black/40 rounded-2xl text-center text-xs text-gray-400 animate-pulse">
+                                Loading pending member drivers...
+                            </div>
+                        ) : pendingDrivers.length > 0 ? (
+                            pendingDrivers.map((driver) => (
+                                <div
+                                    key={driver.uid}
+                                    className="p-5 bg-black/40 border border-white/10 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-emerald-400 flex items-center justify-center text-black font-black text-lg">
+                                            {(driver.fullName || 'Driver').charAt(0)}
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-base text-white">{driver.fullName}</h4>
+                                            <p className="text-xs text-gray-400 font-mono">🛺 Plate: {driver.plateNumber} • Phone: {driver.phone}</p>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={() => handleApproveDriver(driver.uid)}
+                                        disabled={approvingUid === driver.uid}
+                                        className="w-full sm:w-auto px-6 py-3 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-black text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(52,211,153,0.4)] flex items-center justify-center gap-2"
+                                    >
+                                        <UserCheck className="w-4 h-4" />
+                                        {approvingUid === driver.uid ? 'Approving...' : 'Approve Driver'}
+                                    </button>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="p-8 bg-black/40 rounded-2xl border border-white/5 text-center space-y-2">
+                                <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
+                                <h4 className="font-bold text-sm text-white">All Driver Requests Approved</h4>
+                                <p className="text-xs text-gray-400">No pending drivers waiting for verification in your cooperative queue.</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>

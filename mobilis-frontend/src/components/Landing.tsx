@@ -1,264 +1,204 @@
 import { useState, useEffect } from 'react';
-import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import type { Variants } from 'framer-motion';
-import { Zap, ShieldCheck, ArrowRight, Wallet, Globe } from 'lucide-react';
+import { Zap, ShieldCheck, ArrowRight, Radio, Building2 } from 'lucide-react';
 import { EarthCanvas, ShootingStar } from './EarthCanvas';
 import MobilisLogo from './common/MobilisLogo';
 
-// --- ANIMATION VARIANTS ---
-const fadeUp: Variants = {
-    hidden: { opacity: 0, y: 40 },
-    visible: {
-        opacity: 1,
-        y: 0,
-        transition: { type: "spring", stiffness: 80, damping: 20 },
-    },
-};
-
-const stagger: Variants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.15 } },
-};
-
-// --- STATIC STAR BACKGROUND ---
-const StaticStar = ({ x, y, size = 1, opacity = 0.3 }: { x: string, y: string, size?: number, opacity?: number }) => (
-    <div
-        className="absolute rounded-full bg-white pointer-events-none"
-        style={{ left: x, top: y, width: 2 * size, height: 2 * size, opacity }}
-    />
-);
-
 export default function Landing() {
-    const [activeNav, setActiveNav] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+    const [mediaMode, setMediaMode] = useState<'3d' | 'static'>('3d');
 
     useEffect(() => {
-        const onScroll = () => setActiveNav(window.scrollY > 40);
-        window.addEventListener("scroll", onScroll);
-        return () => window.removeEventListener("scroll", onScroll);
+        const onScroll = () => setScrolled(window.scrollY > 40);
+        window.addEventListener('scroll', onScroll);
+        return () => window.removeEventListener('scroll', onScroll);
     }, []);
 
-    const [backgroundNodes] = useState(() =>
-        [...Array(60)].map(() => ({
-            x: `${Math.random() * 100}%`,
-            y: `${Math.random() * 100}%`,
-            size: Math.random() * 1.5 + 0.5,
-            opacity: Math.random() * 0.5 + 0.1,
-        }))
-    );
-
     return (
-        <div className="relative min-h-screen text-white font-sans overflow-x-hidden bg-[#060610]">
-
-            {/* --- BACKGROUND EFFECTS --- */}
+        <div className="relative min-h-screen text-white font-sans overflow-x-hidden bg-[#090A0C]">
+            
+            {/* Background Glows & Shooting Stars */}
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                {backgroundNodes.map((n, i) => (
-                    <StaticStar key={i} x={n.x} y={n.y} size={n.size} opacity={n.opacity} />
-                ))}
-                {/* Core Nebula Glow */}
-                <div className="absolute top-[-10%] left-[10%] w-[60vw] h-[60vh] bg-blue-600/15 blur-[120px] rounded-full mix-blend-screen" />
-                <div className="absolute bottom-[10%] right-[-10%] w-[50vw] h-[50vh] bg-emerald-600/10 blur-[100px] rounded-full mix-blend-screen" />
-
-                {/* Shooting Stars integrated into the main background */}
+                <div className="absolute top-[-10%] left-[20%] w-[60vw] h-[60vh] bg-cyan-600/10 blur-[140px] rounded-full pointer-events-none" />
+                <div className="absolute bottom-[10%] right-[-10%] w-[50vw] h-[50vh] bg-emerald-600/10 blur-[120px] rounded-full pointer-events-none" />
                 <ShootingStar delay={1} />
-                <ShootingStar delay={4.5} />
-                <ShootingStar delay={8} />
+                <ShootingStar delay={5} />
             </div>
 
             <div className="relative z-10">
 
-                {/* --- NAVIGATION --- */}
+                {/* Glass Header Navigation */}
                 <motion.nav
                     initial={{ y: -60, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                    className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
-                    style={{
-                        background: activeNav ? "rgba(6,6,16,0.85)" : "transparent",
-                        backdropFilter: activeNav ? "blur(20px)" : "none",
-                        borderBottom: activeNav ? "1px solid rgba(255,255,255,0.05)" : "none",
-                    }}
+                    transition={{ duration: 0.5 }}
+                    className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+                        scrolled
+                            ? 'bg-[#090A0C]/80 backdrop-blur-2xl border-b border-white/10 py-3'
+                            : 'bg-transparent py-5'
+                    }`}
                 >
-                    <div className="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
+                    <div className="flex items-center justify-between px-6 max-w-7xl mx-auto">
                         <MobilisLogo size={36} showText />
 
-                        <div className="flex items-center gap-4">
-                            <Link to="/login" className="px-4 py-2 text-xs font-bold tracking-wide text-gray-300 hover:text-white transition-colors">
-                                Log In
+                        <div className="flex items-center gap-3">
+                            <Link
+                                to="/login"
+                                className="px-5 py-2.5 text-xs font-bold tracking-wide text-gray-300 hover:text-white transition-colors"
+                            >
+                                Sign In
                             </Link>
-                            <Link to="/signup" className="px-5 py-2.5 text-xs font-bold tracking-wide bg-white text-black hover:bg-gray-200 rounded-lg transition-all duration-300">
-                                Create Account
+                            <Link
+                                to="/signup"
+                                className="px-5 py-2.5 text-xs font-black tracking-wide bg-emerald-500 hover:bg-emerald-400 text-black rounded-xl transition-all shadow-[0_0_20px_rgba(52,211,153,0.3)]"
+                            >
+                                Join Mobilis
                             </Link>
                         </div>
                     </div>
                 </motion.nav>
 
-                {/* --- HERO SECTION (NOW TWO-COLUMN) --- */}
-                <motion.header className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 px-4 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-
-                    {/* Left Column: Text & CTAs */}
+                {/* HERO SECTION */}
+                <section className="relative pt-36 pb-20 lg:pt-44 lg:pb-32 px-6 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    
                     <motion.div
-                        initial="hidden"
-                        animate="visible"
-                        variants={stagger}
-                        className="text-center lg:text-left flex flex-col items-center lg:items-start z-10"
+                        initial={{ opacity: 0, x: -30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.7 }}
+                        className="space-y-6 text-left"
                     >
-                        <motion.div
-                            variants={fadeUp}
-                            className="mb-8 px-4 py-1.5 rounded-full border border-emerald-400/20 text-[11px] font-semibold tracking-widest text-emerald-300 uppercase bg-emerald-500/10 backdrop-blur-md inline-block"
-                        >
-                            ✦ Powered by the Stellar Network ✦
-                        </motion.div>
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-mono font-bold uppercase tracking-wider">
+                            <Zap className="w-3.5 h-3.5" />
+                            Stellar Transport Fintech
+                        </div>
 
-                        <motion.h1
-                            variants={fadeUp}
-                            className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight mb-6 leading-[1.05]"
-                        >
-                            Fuel your route.<br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-emerald-300 to-emerald-500 filter drop-shadow-[0_0_30px_rgba(52,211,153,0.3)]">
-                                Zero friction.
+                        <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-[1.1] text-white">
+                            Move Freely. <br />
+                            <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
+                                Earn Instantly.
                             </span>
-                        </motion.h1>
+                        </h1>
 
-                        <motion.p
-                            variants={fadeUp}
-                            className="text-gray-400 text-lg md:text-xl mb-10 max-w-xl font-medium leading-relaxed"
-                        >
-                            Instant, zero-interest fuel advances built specifically for TODA drivers. Process digital liquidity on-chain and keep your operations moving without the banking wait times.
-                        </motion.p>
+                        <p className="text-base sm:text-lg text-gray-400 max-w-lg leading-relaxed">
+                            Cashless fare payments, 50-meter transport radar, and Soroban micro-credit advances for drivers & commuters.
+                        </p>
 
-                        <motion.div
-                            variants={fadeUp}
-                            className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto"
-                        >
+                        <div className="flex flex-col sm:flex-row gap-4 pt-2">
                             <Link
                                 to="/signup"
-                                className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-sm font-bold tracking-wide text-black transition-all duration-300 group bg-gradient-to-r from-emerald-400 to-cyan-400 hover:shadow-[0_0_40px_rgba(52,211,153,0.4)]"
+                                className="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-sm rounded-2xl flex items-center justify-center gap-3 transition-all shadow-[0_0_25px_rgba(52,211,153,0.4)]"
                             >
-                                Get Started Now
-                                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                                Get Started Free <ArrowRight className="w-4 h-4" />
                             </Link>
                             <Link
-                                to="/about"
-                                className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-sm font-bold tracking-wide text-white border border-white/10 hover:bg-white/5 transition-all duration-300 backdrop-blur-sm"
+                                to="/login"
+                                className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-all"
                             >
-                                Read the Whitepaper
+                                Open Web Wallet
                             </Link>
-                        </motion.div>
+                        </div>
 
-                        {/* Stats Row */}
-                        <motion.div
-                            variants={fadeUp}
-                            className="mt-16 flex flex-wrap items-center justify-center lg:justify-start gap-10 border-t border-white/10 pt-8 w-full"
-                        >
-                            {[
-                                { label: "Interest Rate", value: "0%" },
-                                { label: "Approval Time", value: "< 5s" },
-                                { label: "Network Fees", value: "₱0.00" },
-                            ].map((stat) => (
-                                <div key={stat.label} className="text-center lg:text-left">
-                                    <div className="text-3xl font-black mb-1 text-white">{stat.value}</div>
-                                    <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{stat.label}</div>
-                                </div>
-                            ))}
-                        </motion.div>
+                        {/* Interactive Canvas Toggle Pill */}
+                        <div className="pt-4 flex items-center gap-3 text-xs text-gray-400 font-mono">
+                            <span>Display Mode:</span>
+                            <button
+                                onClick={() => setMediaMode('3d')}
+                                className={`px-3 py-1 rounded-lg border transition-all ${
+                                    mediaMode === '3d'
+                                        ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 font-bold'
+                                        : 'bg-white/5 border-white/10 text-gray-400'
+                                }`}
+                            >
+                                🌐 3D Globe
+                            </button>
+                            <button
+                                onClick={() => setMediaMode('static')}
+                                className={`px-3 py-1 rounded-lg border transition-all ${
+                                    mediaMode === 'static'
+                                        ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 font-bold'
+                                        : 'bg-white/5 border-white/10 text-gray-400'
+                                }`}
+                            >
+                                ⚡ Performance Mode
+                            </button>
+                        </div>
                     </motion.div>
 
-                    {/* Right Column: Earth Canvas */}
+                    {/* Right Media Column */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 1, delay: 0.2, type: "spring", stiffness: 50 }}
-                        className="w-full h-full flex justify-center items-center relative z-10"
+                        transition={{ duration: 0.8 }}
+                        className="relative w-full h-[380px] sm:h-[480px] rounded-[2.5rem] bg-[#121418] border border-white/10 overflow-hidden shadow-2xl flex items-center justify-center"
                     >
-                        <EarthCanvas />
+                        {mediaMode === '3d' ? (
+                            <EarthCanvas />
+                        ) : (
+                            <div className="p-8 text-center space-y-4">
+                                <div className="w-20 h-20 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
+                                    <Radio className="w-10 h-10 animate-pulse" />
+                                </div>
+                                <h3 className="text-xl font-black text-white">Live Transport Radar Active</h3>
+                                <p className="text-xs text-gray-400 max-w-xs mx-auto">
+                                    50-meter GPS radar discovery with real-time PHP to Stellar XLM fare settlement.
+                                </p>
+                            </div>
+                        )}
                     </motion.div>
+                </section>
 
-                </motion.header>
-
-                {/* --- FEATURES GRID --- */}
-                <motion.section
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, margin: "-100px" }}
-                    variants={stagger}
-                    className="max-w-7xl mx-auto px-4 sm:px-6 py-20"
-                >
-                    <motion.div variants={fadeUp} className="text-center mb-16">
-                        <h2 className="text-3xl md:text-4xl font-black mb-4">Engineered for the road.</h2>
-                        <p className="text-gray-400 max-w-xl mx-auto">Traditional finance slows you down. Mobilis uses blockchain infrastructure to provide capital exactly when your tank is empty.</p>
-                    </motion.div>
+                {/* BENTO GRID VALUE PROPOSITIONS */}
+                <section className="py-20 px-6 max-w-7xl mx-auto">
+                    <div className="text-center space-y-3 mb-12">
+                        <span className="text-xs font-mono font-bold uppercase tracking-widest text-emerald-400">
+                            Ecosystem Capabilities
+                        </span>
+                        <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
+                            Built For Public Transport
+                        </h2>
+                    </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[
-                            {
-                                icon: Zap,
-                                title: "Flash Funding",
-                                desc: "Don't wait for multi-day bank clearances. Funds hit your digital wallet instantly via the Stellar network.",
-                                glow: "rgba(59,130,246,0.15)",
-                                border: "rgba(59,130,246,0.3)",
-                                color: "text-blue-400"
-                            },
-                            {
-                                icon: ShieldCheck,
-                                title: "Zero Interest",
-                                desc: "We don't punish you for needing fuel. Pay back exactly what you borrowed at the end of your shift. No hidden cuts.",
-                                glow: "rgba(52,211,153,0.15)",
-                                border: "rgba(52,211,153,0.3)",
-                                color: "text-emerald-400"
-                            },
-                            {
-                                icon: Wallet,
-                                title: "Non-Custodial",
-                                desc: "You own your private keys and your digital assets. Complete transparency on a public ledger, giving you full control.",
-                                glow: "rgba(167,139,250,0.15)",
-                                border: "rgba(167,139,250,0.3)",
-                                color: "text-violet-400"
-                            }
-                        ].map((f, i) => (
-                            <motion.div
-                                key={i}
-                                variants={fadeUp}
-                                whileHover={{ y: -5 }}
-                                className="relative rounded-2xl p-8 bg-[#0a0a14] border border-white/5 overflow-hidden group transition-all duration-300"
-                                style={{ hover: { borderColor: f.border, boxShadow: `0 20px 40px ${f.glow}` } } as unknown as CSSProperties}
-                            >
-                                <div className="w-12 h-12 rounded-xl flex items-center justify-center border mb-6 transition-colors duration-300" style={{ background: f.glow, borderColor: f.border }}>
-                                    <f.icon className={`w-6 h-6 ${f.color}`} />
-                                </div>
-                                <h3 className="text-xl font-bold mb-3 text-white">{f.title}</h3>
-                                <p className="text-sm text-gray-400 leading-relaxed">{f.desc}</p>
-                            </motion.div>
-                        ))}
-                    </div>
-                </motion.section>
+                        
+                        {/* Bento Card 1: Radar */}
+                        <div className="p-8 rounded-[2rem] bg-[#121418] border border-white/10 space-y-4 hover:border-emerald-500/40 transition-all">
+                            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
+                                <Radio className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-xl font-black text-white">50m Sonar Radar</h3>
+                            <p className="text-xs text-gray-400 leading-relaxed">
+                                Commuters discover nearby active drivers within 50 meters and pay instant fares with real-time PHP equivalent conversion.
+                            </p>
+                        </div>
 
-                {/* --- GLOBAL INFRASTRUCTURE BANNER --- */}
-                <motion.section
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, margin: "-50px" }}
-                    variants={fadeUp}
-                    className="max-w-5xl mx-auto px-4 sm:px-6 pb-32"
-                >
-                    <div className="bg-gradient-to-r from-blue-900/20 to-emerald-900/20 border border-white/10 rounded-3xl p-8 md:p-12 text-center relative overflow-hidden">
-                        <Globe className="w-32 h-32 absolute -right-10 -bottom-10 text-white/5 rotate-12" />
-                        <h2 className="text-2xl md:text-3xl font-black mb-4">Settlements verified at the speed of light.</h2>
-                        <p className="text-gray-400 max-w-2xl mx-auto text-sm md:text-base">
-                            By leveraging Stellar Horizon, Mobilis guarantees that every fuel advance and repayment is permanently logged, instantly verifiable, and immune to local banking downtime.
-                        </p>
-                    </div>
-                </motion.section>
+                        {/* Bento Card 2: Stellar */}
+                        <div className="p-8 rounded-[2rem] bg-[#121418] border border-white/10 space-y-4 hover:border-emerald-500/40 transition-all">
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                                <ShieldCheck className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-xl font-black text-white">Stellar Blockchain</h3>
+                            <p className="text-xs text-gray-400 leading-relaxed">
+                                Sub-second transaction settlement with immutable proof receipts recorded on Stellar Testnet.
+                            </p>
+                        </div>
 
-                {/* --- FOOTER --- */}
-                <footer className="border-t border-white/10 py-10 text-center relative z-10">
-                    <div className="flex items-center justify-center mb-4 opacity-75 hover:opacity-100 transition-opacity">
-                        <MobilisLogo size={32} showText />
+                        {/* Bento Card 3: Soroban Credit */}
+                        <div className="p-8 rounded-[2rem] bg-[#121418] border border-white/10 space-y-4 hover:border-emerald-500/40 transition-all">
+                            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+                                <Building2 className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-xl font-black text-white">Cooperative Credit</h3>
+                            <p className="text-xs text-gray-400 leading-relaxed">
+                                Cooperative Admins verify member drivers and issue smart contract loan advances via Soroban.
+                            </p>
+                        </div>
                     </div>
-                    <p className="text-xs text-gray-600 font-mono">
-                        © {new Date().getFullYear()} Mobilis Protocol. Engineered for TODA.
-                    </p>
+                </section>
+
+                {/* FOOTER */}
+                <footer className="py-12 border-t border-white/10 text-center text-xs text-gray-500 font-mono">
+                    <p>© 2026 Mobilis Platform • Stellar Transport Micro-Credit</p>
                 </footer>
 
             </div>

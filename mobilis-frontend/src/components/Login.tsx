@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { auth } from '../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowLeft, Key, Mail, Lock, ShieldCheck, Zap } from 'lucide-react';
 import MobilisLogo from './common/MobilisLogo';
 
 const Login: React.FC = () => {
@@ -12,7 +12,7 @@ const Login: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
@@ -20,62 +20,117 @@ const Login: React.FC = () => {
         try {
             await signInWithEmailAndPassword(auth, email, password);
             navigate('/dashboard');
-        } catch {
-            setError("Failed to sign in. Please check your credentials.");
+        } catch (err: unknown) {
+            console.error("Login catch block:", err);
+            const msg = err instanceof Error ? err.message : "Invalid credentials. Please check your email and password.";
+            setError(msg);
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-[#060610] flex flex-col items-center justify-center p-4 sm:p-8 font-sans text-white relative overflow-hidden">
-            {/* Background Glow */}
-            <div className="absolute top-[20%] left-[50%] -translate-x-1/2 w-[80vw] h-[80vw] max-w-[600px] max-h-[600px] bg-emerald-600/10 blur-[100px] rounded-full pointer-events-none" />
+        <div className="min-h-screen bg-[#090A0C] flex flex-col justify-between p-6 sm:p-10 font-sans text-white relative overflow-hidden">
+            
+            {/* Top Navigation Bar */}
+            <div className="w-full max-w-md mx-auto flex items-center justify-between z-10">
+                <Link
+                    to="/"
+                    className="p-3 rounded-2xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-all flex items-center gap-2 text-xs font-bold"
+                >
+                    <ArrowLeft className="w-4 h-4" /> Back to Home
+                </Link>
+                <MobilisLogo size={32} showText={false} />
+            </div>
 
-            <div className="w-full max-w-md bg-[#0a0a14]/80 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 sm:p-10 shadow-2xl relative z-10">
-                <div className="flex justify-center mb-6">
-                    <MobilisLogo size={56} />
+            {/* Main Form Container */}
+            <div className="w-full max-w-md mx-auto my-auto z-10 bg-[#121418] border border-white/10 rounded-[2.5rem] p-8 shadow-2xl space-y-6">
+                
+                <div className="text-center space-y-2">
+                    <div className="w-14 h-14 bg-cyan-500/10 text-cyan-400 rounded-2xl flex items-center justify-center mx-auto border border-cyan-500/20">
+                        <ShieldCheck className="w-7 h-7" />
+                    </div>
+                    <h2 className="text-2xl font-black tracking-tight text-white">Welcome Back</h2>
+                    <p className="text-xs text-gray-400">Sign in to your Mobilis transport wallet</p>
                 </div>
 
-                <h2 className="text-2xl sm:text-3xl font-black text-center mb-2 tracking-tight">Welcome Back</h2>
-                <p className="text-gray-400 text-center text-sm mb-8">Sign in to access the Mobilis network.</p>
-
                 {error && (
-                    <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm text-center">
+                    <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl text-xs text-center font-medium">
                         {error}
                     </div>
                 )}
 
-                <form onSubmit={handleLogin} className="flex flex-col gap-4">
-                    <input
-                        type="email"
-                        placeholder="Email Address"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition-all"
-                    />
-                    <input
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition-all"
-                    />
+                {/* Primary Passkey CTA */}
+                <button
+                    type="button"
+                    onClick={() => setError("Passkey authentication requires registered device hardware. Please sign in using your account email.")}
+                    className="w-full py-4 bg-white/5 hover:bg-white/10 text-white font-bold rounded-2xl border border-white/10 text-xs flex items-center justify-center gap-2.5 transition-all"
+                >
+                    <Key className="w-4 h-4 text-cyan-400" /> Sign In with Passkey / Biometrics
+                </button>
+
+                <div className="flex items-center gap-4 text-xs text-gray-500 font-mono">
+                    <div className="h-px bg-white/10 flex-1" />
+                    <span>OR EMAIL</span>
+                    <div className="h-px bg-white/10 flex-1" />
+                </div>
+
+                <form onSubmit={handleLogin} className="space-y-4">
+                    
+                    {/* Floating Label Email Input */}
+                    <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                        <input
+                            type="email"
+                            required
+                            placeholder="Email Address"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-2xl text-sm text-white placeholder-gray-500 outline-none focus:border-cyan-500 transition-colors"
+                        />
+                    </div>
+
+                    {/* Floating Label Password Input */}
+                    <div className="relative">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                        <input
+                            type="password"
+                            required
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-2xl text-sm text-white placeholder-gray-500 outline-none focus:border-cyan-500 transition-colors"
+                        />
+                    </div>
+
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full mt-2 p-4 bg-gradient-to-r from-emerald-400 to-cyan-400 text-black font-bold rounded-xl flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(52,211,153,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        className="w-full py-4 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-black font-black rounded-2xl text-sm transition-all shadow-[0_0_20px_rgba(0,210,255,0.3)] flex items-center justify-center gap-2 mt-2"
                     >
-                        {isLoading ? 'Decrypting...' : 'Log In'}
-                        {!isLoading && <ArrowRight className="w-4 h-4" />}
+                        {isLoading ? (
+                            <span className="animate-pulse">Authenticating...</span>
+                        ) : (
+                            <>
+                                <Zap className="w-4 h-4" /> Sign In
+                            </>
+                        )}
                     </button>
                 </form>
 
-                <p className="text-center mt-8 text-sm text-gray-400">
-                    Need an account? <Link to="/signup" className="text-emerald-400 font-bold hover:text-emerald-300 hover:underline">Sign Up</Link>
-                </p>
+                <div className="text-center pt-2">
+                    <p className="text-xs text-gray-400">
+                        New to Mobilis?{' '}
+                        <Link to="/signup" className="text-cyan-400 font-bold hover:underline">
+                            Create Account
+                        </Link>
+                    </p>
+                </div>
+            </div>
+
+            {/* Bottom Footer */}
+            <div className="w-full text-center text-xs text-gray-600 font-mono z-10">
+                Mobilis Transport Fintech • Sub-Second Stellar Settlement
             </div>
         </div>
     );

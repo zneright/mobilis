@@ -1,94 +1,135 @@
-import React, { useState, useEffect } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import React, { useState } from 'react';
+import { Copy, Check, QrCode, Shield, LogOut, ChevronRight, User, Phone, MapPin } from 'lucide-react';
+import { auth } from '../../firebase';
+import { signOut } from 'firebase/auth';
 
 interface ProfileTabProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     stellarData: any;
-    isSuperAdmin: boolean;
+    isSuperAdmin?: boolean;
 }
 
-const ProfileTab: React.FC<ProfileTabProps> = ({ stellarData, isSuperAdmin }) => {
-    const [editPhone, setEditPhone] = useState(stellarData?.phone || '');
-    const [editPlate, setEditPlate] = useState(stellarData?.plateNumber || '');
-    const [editContact, setEditContact] = useState(stellarData?.contactPerson || '');
-    const [editRegNum, setEditRegNum] = useState(stellarData?.registrationNumber || '');
+export const ProfileTab: React.FC<ProfileTabProps> = ({ stellarData }) => {
+    const [copiedKey, setCopiedKey] = useState(false);
+    const [showQr, setShowQr] = useState(false);
 
-    useEffect(() => {
-        if (stellarData) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setEditPhone(stellarData.phone || '');
-            setEditPlate(stellarData.plateNumber || '');
-            setEditContact(stellarData.contactPerson || '');
-            setEditRegNum(stellarData.registrationNumber || '');
-        }
-    }, [stellarData]);
-
-    const handleUpdateProfile = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await updateDoc(doc(db, 'users', stellarData.uid), {
-                phone: editPhone,
-                ...(stellarData.role === 'driver' && { plateNumber: editPlate }),
-                ...(stellarData.role === 'admin' && { contactPerson: editContact, registrationNumber: editRegNum })
-            });
-            alert("Profile metadata updated successfully!");
-        } catch (error) {
-            console.error("[ProfileTab -> handleUpdateProfile] Error updating profile:", error);
-            alert("Failed to modify database fields. Check console for details.");
+    const handleCopyKey = () => {
+        if (stellarData?.publicKey) {
+            navigator.clipboard.writeText(stellarData.publicKey);
+            setCopiedKey(true);
+            setTimeout(() => setCopiedKey(false), 2000);
         }
     };
 
-    return (
-        <div className="w-full max-w-xl mx-auto bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 rounded-[2rem] p-6 sm:p-8 shadow-xl">
-            <h3 className="text-2xl font-black mb-6">Profile Configuration</h3>
+    const handleSignOut = () => {
+        signOut(auth).catch(console.error);
+    };
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                <div className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl">
-                    <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">User / Full Name</p>
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                    <p className="font-bold text-sm">{(stellarData as any).fullName || (stellarData as any).displayName || 'Data Unavailable'}</p>
+    const pubKey = stellarData?.publicKey || '';
+    const obfuscatedKey = pubKey ? `${pubKey.substring(0, 8)}...${pubKey.substring(pubKey.length - 8)}` : 'N/A';
+
+    return (
+        <div className="w-full max-w-2xl mx-auto space-y-6 text-white font-sans">
+            
+            {/* USER AVATAR & IDENTITY HEADER */}
+            <div className="p-8 rounded-[2.5rem] bg-[#121418] border border-white/10 shadow-2xl text-center space-y-4">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-400 via-teal-300 to-emerald-400 p-1 mx-auto shadow-[0_0_25px_rgba(0,210,255,0.4)]">
+                    <div className="w-full h-full rounded-full bg-[#090A0C] flex items-center justify-center text-white font-black text-2xl">
+                        {(stellarData?.fullName || stellarData?.coopName || 'User').charAt(0).toUpperCase()}
+                    </div>
                 </div>
-                <div className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl">
-                    <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Cooperative / Affiliation</p>
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                    <p className="font-bold text-sm">{(stellarData as any).coopName || (stellarData as any).todaAffiliation || 'Data Unavailable'}</p>
+
+                <div>
+                    <h2 className="text-2xl font-black text-white">{stellarData?.fullName || stellarData?.coopName || 'Mobilis Member'}</h2>
+                    <p className="text-xs text-gray-400 font-mono mt-0.5">{stellarData?.email || 'Registered User'}</p>
+                </div>
+
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-mono font-bold uppercase tracking-wider">
+                    <Shield className="w-3.5 h-3.5" />
+                    Role: {stellarData?.role || 'User'}
                 </div>
             </div>
 
-            {isSuperAdmin ? (
-                <p className="text-gray-500 text-sm">Super Admin infrastructure nodes do not require mutable profile fields.</p>
-            ) : (
-                <form onSubmit={handleUpdateProfile} className="space-y-4">
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Phone Number</label>
-                        <input type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="w-full p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-emerald-500" />
-                    </div>
-
-                    {stellarData.role === 'admin' && (
-                        <>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Contact Person</label>
-                                <input type="text" value={editContact} onChange={(e) => setEditContact(e.target.value)} className="w-full p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-emerald-500" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Gov Registration (CDA/SEC)</label>
-                                <input type="text" value={editRegNum} onChange={(e) => setEditRegNum(e.target.value)} className="w-full p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-emerald-500" />
-                            </div>
-                        </>
-                    )}
-
-                    {stellarData.role === 'driver' && (
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">TODA Registered Vehicle Plate</label>
-                            <input type="text" value={editPlate} onChange={(e) => setEditPlate(e.target.value)} className="w-full p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-emerald-500" />
-                        </div>
-                    )}
-                    <button type="submit" className="w-full py-4 mt-2 bg-gray-900 text-white dark:bg-white dark:text-black font-black text-sm rounded-xl transition-all hover:bg-gray-800 dark:hover:bg-gray-200">
-                        Write Structural Updates
+            {/* WALLET ADDRESS KEY CARD */}
+            <div className="p-6 rounded-3xl bg-[#121418] border border-white/10 shadow-xl space-y-4">
+                <div className="flex items-center justify-between">
+                    <h3 className="font-black text-sm text-gray-300 uppercase tracking-wider">Stellar Public Key</h3>
+                    <button
+                        onClick={handleCopyKey}
+                        className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-cyan-400 flex items-center gap-1.5 transition-all border border-white/10"
+                    >
+                        {copiedKey ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copiedKey ? 'Copied!' : 'Copy Key'}
                     </button>
-                </form>
-            )}
+                </div>
+
+                <div className="p-4 bg-black/50 border border-dashed border-white/20 rounded-2xl font-mono text-xs text-cyan-400 break-all">
+                    {obfuscatedKey}
+                </div>
+
+                <button
+                    onClick={() => setShowQr(!showQr)}
+                    className="w-full py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 transition-all border border-white/10"
+                >
+                    <QrCode className="w-4 h-4 text-cyan-400" />
+                    {showQr ? 'Hide Public Key QR' : 'Show Wallet QR Code'}
+                </button>
+
+                {showQr && (
+                    <div className="p-6 bg-white rounded-3xl text-center space-y-3 shadow-2xl">
+                        <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${pubKey}`}
+                            alt="Wallet Public Key QR"
+                            className="mx-auto rounded-xl"
+                        />
+                        <span className="text-[10px] font-mono text-slate-800 font-bold uppercase block">Scan to Receive XLM / Fares</span>
+                    </div>
+                )}
+            </div>
+
+            {/* CATEGORIZED SETTINGS LIST */}
+            <div className="p-6 rounded-3xl bg-[#121418] border border-white/10 shadow-xl space-y-2">
+                <h3 className="font-black text-xs text-gray-400 uppercase tracking-widest mb-3 px-2">Account Preferences</h3>
+
+                <div className="p-4 bg-black/30 rounded-2xl flex items-center justify-between text-xs font-medium">
+                    <div className="flex items-center gap-3">
+                        <User className="w-4 h-4 text-cyan-400" />
+                        <span>Account Type</span>
+                    </div>
+                    <span className="font-mono text-gray-300 font-bold capitalize">{stellarData?.role}</span>
+                </div>
+
+                {stellarData?.phone && (
+                    <div className="p-4 bg-black/30 rounded-2xl flex items-center justify-between text-xs font-medium">
+                        <div className="flex items-center gap-3">
+                            <Phone className="w-4 h-4 text-cyan-400" />
+                            <span>Contact Phone</span>
+                        </div>
+                        <span className="font-mono text-gray-300">{stellarData.phone}</span>
+                    </div>
+                )}
+
+                {stellarData?.todaAffiliation && (
+                    <div className="p-4 bg-black/30 rounded-2xl flex items-center justify-between text-xs font-medium">
+                        <div className="flex items-center gap-3">
+                            <MapPin className="w-4 h-4 text-cyan-400" />
+                            <span>TODA Cooperative</span>
+                        </div>
+                        <span className="font-bold text-emerald-400">{stellarData.todaAffiliation}</span>
+                    </div>
+                )}
+
+                <button
+                    onClick={handleSignOut}
+                    className="w-full p-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-2xl text-xs font-bold flex items-center justify-between transition-all mt-4"
+                >
+                    <div className="flex items-center gap-3">
+                        <LogOut className="w-4 h-4" />
+                        <span>Sign Out Safely</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4" />
+                </button>
+            </div>
         </div>
     );
 };
