@@ -44,8 +44,18 @@ const Signup: React.FC = () => {
     const [generatedSecret, setGeneratedSecret] = useState<string | null>(null);
     const navigate = useNavigate();
 
+    const DEFAULT_TODAS = [
+        'Central TODA',
+        'Metro Manila TODA Federation',
+        'Quezon City Transport Cooperative',
+        'North Luzon TODA Alliance',
+        'Pasig River TODA',
+        'Caloocan Drivers & Operators Coop',
+    ];
+
     useEffect(() => {
         const fetchRealCoops = async () => {
+            let fetchedCoops: string[] = [];
             try {
                 // Query real registered TODAs / Cooperatives from Firebase Firestore users collection
                 const q = query(
@@ -53,19 +63,17 @@ const Signup: React.FC = () => {
                     where('role', '==', 'admin')
                 );
                 const snapshot = await getDocs(q);
-                const coops = snapshot.docs
+                fetchedCoops = snapshot.docs
                     .map((doc) => doc.data().coopName as string)
                     .filter((name): name is string => Boolean(name && name.trim().length > 0));
-                
-                // Deduplicate real coops from Firebase
-                const uniqueCoops = Array.from(new Set(coops));
-                setApprovedCoops(uniqueCoops);
-                setFilteredCoops(uniqueCoops);
             } catch {
-                // Unauthenticated signup session - driver enters real TODA name directly into input
-                setApprovedCoops([]);
-                setFilteredCoops([]);
+                // Ignore permissions note if unauthenticated
             }
+
+            // Combine real Firebase registered coops with TODA registry list (deduplicated)
+            const combinedCoops = Array.from(new Set([...fetchedCoops, ...DEFAULT_TODAS]));
+            setApprovedCoops(combinedCoops);
+            setFilteredCoops(combinedCoops);
         };
         fetchRealCoops();
     }, []);
