@@ -17,7 +17,7 @@ import {
     Transaction
 } from '@stellar/stellar-sdk';
 import { requestAccess, signTransaction, isConnected, isAllowed } from '@stellar/freighter-api';
-import { Copy, ArrowUpRight, X, Wallet, Globe, Zap } from 'lucide-react';
+import { Copy, ArrowUpRight, X, Wallet, Globe, Zap, Bell, Radio, ShieldCheck } from 'lucide-react';
 import Header from './Header';
 import BottomNav from './BottomNav';
 import Sidebar from './Sidebar';
@@ -98,6 +98,7 @@ const Dashboard: React.FC = () => {
     const [showSendModal, setShowSendModal] = useState(false);
     const [showReceiveModal, setShowReceiveModal] = useState(false);
     const [showWalletModal, setShowWalletModal] = useState(false);
+    const [showNotificationModal, setShowNotificationModal] = useState(false);
     const [sendDest, setSendDest] = useState('');
     const [sendAmt, setSendAmt] = useState('');
 
@@ -650,7 +651,12 @@ const Dashboard: React.FC = () => {
 
             <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} role={stellarData.role} />
             <div className="flex-1 flex flex-col h-full overflow-y-auto relative">
-                <Header theme={theme} toggleTheme={() => setTheme(p => p === 'dark' ? 'light' : 'dark')} onSignOut={handleFullSignOut} />
+                <Header
+                    theme={theme}
+                    toggleTheme={() => setTheme(p => p === 'dark' ? 'light' : 'dark')}
+                    onSignOut={handleFullSignOut}
+                    onOpenNotifications={() => setShowNotificationModal(true)}
+                />
 
                 <div className="w-full py-1.5 px-4 text-center text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-b border-yellow-500/20">
                     <Globe className="w-3.5 h-3.5" />
@@ -765,6 +771,78 @@ const Dashboard: React.FC = () => {
                                 Freighter <ArrowUpRight className="w-4 h-4 opacity-50" />
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* INTERACTIVE NOTIFICATION CENTER MODAL */}
+            {showNotificationModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+                    <div className="w-full max-w-md bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 rounded-[2.5rem] p-6 shadow-2xl relative text-gray-900 dark:text-white space-y-5">
+                        
+                        <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-white/10">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 text-cyan-500 dark:text-cyan-400 flex items-center justify-center">
+                                    <Bell className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-lg tracking-tight">Notification Center</h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">Real-Time Transit Alerts</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowNotificationModal(false)}
+                                className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-white/10"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Notifications List */}
+                        <div className="space-y-3 max-h-72 overflow-y-auto custom-scrollbar">
+                            <div className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl space-y-1">
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                                        <Zap className="w-3.5 h-3.5" /> Stellar Testnet Connected
+                                    </span>
+                                    <span className="text-[10px] font-mono text-gray-400">Live</span>
+                                </div>
+                                <p className="text-xs text-gray-600 dark:text-gray-300">
+                                    Your Web3 transport wallet is synchronized on the Stellar Testnet ledger.
+                                </p>
+                            </div>
+
+                            <div className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl space-y-1">
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="font-bold text-cyan-600 dark:text-cyan-400 flex items-center gap-1.5">
+                                        <Radio className="w-3.5 h-3.5" /> 50m Radar Active
+                                    </span>
+                                    <span className="text-[10px] font-mono text-gray-400">Active</span>
+                                </div>
+                                <p className="text-xs text-gray-600 dark:text-gray-300">
+                                    GPS radar location broadcasts automatically when active drivers are ON TRANSIT.
+                                </p>
+                            </div>
+
+                            <div className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl space-y-1">
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                                        <ShieldCheck className="w-3.5 h-3.5" /> Account Verified
+                                    </span>
+                                    <span className="text-[10px] font-mono text-gray-400">Secured</span>
+                                </div>
+                                <p className="text-xs text-gray-600 dark:text-gray-300">
+                                    Cryptographic keypairs signed and ready for instant fare clearing.
+                                </p>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => setShowNotificationModal(false)}
+                            className="w-full py-4 bg-gray-900 text-white dark:bg-emerald-500 dark:text-black font-black text-xs rounded-2xl transition-all shadow-md"
+                        >
+                            Done & Dismiss
+                        </button>
                     </div>
                 </div>
             )}
