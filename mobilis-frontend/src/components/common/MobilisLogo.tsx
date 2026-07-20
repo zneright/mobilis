@@ -26,8 +26,8 @@ export const MobilisLogo: React.FC<MobilisLogoProps> = ({
             >
                 <img
                     src={logoImg}
-                    alt="Mobilis Official Logo"
-                    className={`w-full h-full object-contain object-center scale-125 transition-transform duration-300 hover:scale-135 ${
+                    alt="Mobilis Logo"
+                    className={`w-full h-full object-contain object-center scale-125 transition-transform duration-300 hover:scale-130 ${
                         variant === 'white'
                             ? 'brightness-0 invert'
                             : variant === 'emerald'
@@ -38,8 +38,8 @@ export const MobilisLogo: React.FC<MobilisLogoProps> = ({
             </div>
 
             {showText && (
-                <span className={`font-black tracking-widest text-gray-900 dark:text-white uppercase font-sans ${textClassName}`}>
-                    MOBILIS<span className="text-emerald-400">.PAY</span>
+                <span className={`font-black tracking-widest text-slate-900 dark:text-white uppercase font-sans ${textClassName}`}>
+                    MOBILIS
                 </span>
             )}
         </div>

@@ -7,13 +7,12 @@ interface MobilisLoaderProps {
 }
 
 const DEFAULT_MESSAGES = [
-    'Connecting...',
     'Initializing Mobilis...',
+    'Connecting...',
     'Syncing Wallet...',
-    'Verifying Identity...',
-    'Connecting to Stellar...',
     'Preparing Dashboard...',
     'Loading Secure Session...',
+    'Finalizing...',
 ];
 
 export const MobilisLoader: React.FC<MobilisLoaderProps> = ({
@@ -24,7 +23,7 @@ export const MobilisLoader: React.FC<MobilisLoaderProps> = ({
     const [fade, setFade] = useState(true);
 
     useEffect(() => {
-        if (message) return; // Use custom message if provided
+        if (message) return;
 
         const interval = setInterval(() => {
             setFade(false);
@@ -43,19 +42,19 @@ export const MobilisLoader: React.FC<MobilisLoaderProps> = ({
         <div className="flex flex-col items-center justify-center p-8 space-y-6 text-center select-none">
             {/* Animated Monogram Logo Container */}
             <div className="relative flex items-center justify-center">
-                {/* Subtle outer pulsing ring */}
+                {/* Outer subtle pulsing aura */}
                 <div className="absolute inset-0 w-24 h-24 rounded-full border border-emerald-500/20 animate-ping opacity-30 pointer-events-none" />
                 
-                {/* Logo with gentle pulse */}
+                {/* Logo with gentle micro-pulse */}
                 <div className="relative z-10 transition-transform duration-500 hover:scale-105">
-                    <MobilisLogo size={64} variant="gradient" />
+                    <MobilisLogo size={64} variant="navy" />
                 </div>
             </div>
 
             {/* Rotating Status Message */}
             <div className="space-y-1">
                 <p
-                    className={`text-sm font-bold tracking-wider text-gray-700 dark:text-gray-200 transition-opacity duration-300 font-sans ${
+                    className={`text-sm font-bold tracking-wider text-slate-800 dark:text-slate-200 transition-opacity duration-300 font-sans ${
                         fade ? 'opacity-100' : 'opacity-0'
                     }`}
                 >
@@ -70,7 +69,7 @@ export const MobilisLoader: React.FC<MobilisLoaderProps> = ({
 
     if (fullScreen) {
         return (
-            <div className="min-h-screen bg-gray-50 dark:bg-[#060610] flex items-center justify-center transition-colors">
+            <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] flex items-center justify-center transition-colors duration-300">
                 {content}
             </div>
         );

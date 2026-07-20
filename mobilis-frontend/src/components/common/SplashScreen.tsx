@@ -38,21 +38,21 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
             }`}
         >
             <div className="flex flex-col items-center gap-6 transform transition-transform duration-700 ease-out scale-100 animate-pulse">
-                {/* Centered Mobilis Logo */}
+                {/* Centered Official Mobilis Logo */}
                 <MobilisLogo size={88} variant="navy" />
                 
                 <div className="text-center space-y-1">
-                    <h1 className="text-2xl font-black tracking-[0.25em] text-[#0b3b60] uppercase">
-                        MOBILIS <span className="text-emerald-500">PAY</span>
+                    <h1 className="text-3xl font-black tracking-[0.3em] text-[#0b3b60] uppercase">
+                        MOBILIS
                     </h1>
-                    <p className="text-[11px] font-bold tracking-widest text-gray-400 uppercase">
-                        Stellar Micro-Credit & Payment Infrastructure
+                    <p className="text-[11px] font-bold tracking-widest text-slate-400 uppercase">
+                        Stellar Micro-Credit & Mobility Infrastructure
                     </p>
                 </div>
             </div>
 
-            {/* Bottom minimal progress line */}
-            <div className="absolute bottom-12 w-32 h-0.5 bg-gray-100 rounded-full overflow-hidden">
+            {/* Bottom minimal progress indicator */}
+            <div className="absolute bottom-12 w-32 h-0.5 bg-slate-100 rounded-full overflow-hidden">
                 <div className="w-full h-full bg-[#0b3b60] animate-pulse" />
             </div>
         </div>

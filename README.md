@@ -1,4 +1,4 @@
-# 🚙⚡ Mobilis Pay
+# 🚙⚡ Mobilis
 
 > **A Soroban-Powered Automated Micro-Credit Treasury and Non-Custodial Liquidity Routing Infrastructure for Unbanked Transport Drivers and Commuters in the Philippines.**
 
@@ -16,7 +16,7 @@ To bridge this daily gap, drivers are systemically forced to rely on predatory l
 ### The Mobilis Infrastructure Solution
 Mobilis introduces an automated, Web3 high-efficiency liquidity framework powered by **Stellar and Soroban Smart Contracts**. Local transport cooperatives and **TODAs** (Tricycle Operators and Drivers' Associations) establish decentralized, non-custodial treasuries.
 
-With **Level 4 Mobilis Pay**, commuters can now discover nearby drivers on a real-time radar UI and pay transport fares directly using instant, micro-fee Stellar payments.
+With **Mobilis**, commuters can now discover nearby drivers on a real-time radar UI and pay transport fares directly using instant, micro-fee Stellar payments.
 
 ---
 
