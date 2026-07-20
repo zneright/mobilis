@@ -45,25 +45,29 @@ const Signup: React.FC = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchCoops = async () => {
+        const fetchRealCoops = async () => {
             try {
+                // Query real registered TODAs / Cooperatives from Firebase Firestore users collection
                 const q = query(
                     collection(db, 'users'),
-                    where('role', '==', 'admin'),
-                    where('status', '==', 'approved')
+                    where('role', '==', 'admin')
                 );
                 const snapshot = await getDocs(q);
-                const coops = snapshot.docs.map(doc => doc.data().coopName as string);
-                setApprovedCoops(coops);
-                setFilteredCoops(coops);
+                const coops = snapshot.docs
+                    .map((doc) => doc.data().coopName as string)
+                    .filter((name): name is string => Boolean(name && name.trim().length > 0));
+                
+                // Deduplicate real coops from Firebase
+                const uniqueCoops = Array.from(new Set(coops));
+                setApprovedCoops(uniqueCoops);
+                setFilteredCoops(uniqueCoops);
             } catch (err) {
-                console.warn("Using default cooperative list", err);
-                const defaultCoops = ['Central TODA', 'Metro Manila TODA', 'Quezon City Transport Coop', 'North Luzon TODA'];
-                setApprovedCoops(defaultCoops);
-                setFilteredCoops(defaultCoops);
+                console.error("Firestore TODA fetch note:", err);
+                setApprovedCoops([]);
+                setFilteredCoops([]);
             }
         };
-        fetchCoops();
+        fetchRealCoops();
     }, []);
 
     const handleTodaSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -256,7 +260,9 @@ const Signup: React.FC = () => {
                                                 </li>
                                             ))
                                         ) : (
-                                            <li className="p-4 text-gray-500 text-sm">No matching cooperatives</li>
+                                            <li className="p-4 text-slate-400 text-xs italic">
+                                                Type your real TODA name above if not listed in Firebase.
+                                            </li>
                                         )}
                                     </ul>
                                 )}
