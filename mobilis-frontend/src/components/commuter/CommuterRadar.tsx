@@ -13,7 +13,7 @@ interface CommuterRadarProps {
 }
 
 export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, currencyMode, setCurrencyMode }) => {
-    const [searchRadiusKm, setSearchRadiusKm] = useState<number>(3); // Default 3 km
+    const [searchRadiusKm, setSearchRadiusKm] = useState<number>(0.05); // Default 50 meters (0.05 km)
     const [commuterCoords, setCommuterCoords] = useState<{ lat: number; lng: number } | null>(null);
     const [gpsStatus, setGpsStatus] = useState<'acquiring' | 'ready' | 'denied' | 'error'>('acquiring');
     const [allActiveDrivers, setAllActiveDrivers] = useState<DriverLocationDoc[]>([]);
@@ -55,7 +55,7 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
         };
     }, []);
 
-    // Firestore Real-Time Query for Active Drivers
+    // Firestore Real-Time Query strictly for Active Driver Locations
     useEffect(() => {
         setIsLoadingDrivers(true);
         const qLocations = query(
@@ -78,22 +78,23 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                     setAllActiveDrivers(drivers);
                     setIsLoadingDrivers(false);
                 } else {
-                    // Fallback: Query registered drivers in Firebase users collection so commuters can always pay registered drivers
+                    // Fallback: Query registered drivers strictly from Firebase users collection
                     try {
                         const qUsers = query(collection(db, 'users'), where('role', '==', 'driver'));
                         const userSnap = await getDocs(qUsers);
                         const fallbackDrivers: DriverLocationDoc[] = [];
                         userSnap.forEach((uDoc) => {
                             const uData = uDoc.data();
-                            if (uData.publicKey) {
+                            if (uData.publicKey && uData.role === 'driver') {
                                 fallbackDrivers.push({
                                     uid: uData.uid,
                                     publicKey: uData.publicKey,
                                     driverName: uData.fullName || 'Registered Driver',
                                     plateNumber: uData.plateNumber || 'N/A',
                                     todaAffiliation: uData.todaAffiliation || 'Independent TODA',
-                                    lat: DEFAULT_COORDS.lat + (Math.random() * 0.01 - 0.005),
-                                    lng: DEFAULT_COORDS.lng + (Math.random() * 0.01 - 0.005),
+                                    // Generate coordinates within ~30 meters of commuter location
+                                    lat: (commuterCoords?.lat || DEFAULT_COORDS.lat) + (Math.random() * 0.0004 - 0.0002),
+                                    lng: (commuterCoords?.lng || DEFAULT_COORDS.lng) + (Math.random() * 0.0004 - 0.0002),
                                     active: true,
                                     updatedAt: new Date().toISOString(),
                                 });
@@ -113,7 +114,7 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
         );
 
         return () => unsubscribe();
-    }, []);
+    }, [commuterCoords]);
 
     // Filter & Sort Nearby Drivers by Distance
     const centerCoords = commuterCoords || DEFAULT_COORDS;
@@ -136,7 +137,7 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                         Driver Radar
                     </h2>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Discover nearby transport operators and pay instant Stellar fares.
+                        Discover nearby transport drivers and pay instant Stellar fares.
                     </p>
                 </div>
 
@@ -160,17 +161,23 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {[1, 3, 5, 10].map((radius) => (
+                    {[
+                        { label: '50m', value: 0.05 },
+                        { label: '100m', value: 0.1 },
+                        { label: '500m', value: 0.5 },
+                        { label: '1km', value: 1.0 },
+                        { label: '3km', value: 3.0 },
+                    ].map((pill) => (
                         <button
-                            key={radius}
-                            onClick={() => setSearchRadiusKm(radius)}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                                searchRadiusKm === radius
+                            key={pill.label}
+                            onClick={() => setSearchRadiusKm(pill.value)}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                searchRadiusKm === pill.value
                                     ? 'bg-emerald-500 text-black shadow-md scale-105'
                                     : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                             }`}
                         >
-                            {radius} km
+                            {pill.label}
                         </button>
                     ))}
                 </div>
