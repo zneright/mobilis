@@ -90,40 +90,40 @@ export const HubTab: React.FC<HubTabProps> = ({
     const usedDebtPercentage = Math.min((debtState.debt / borrowLimit) * 100, 100);
 
     return (
-        <div className="w-full max-w-4xl mx-auto space-y-6 text-white font-sans">
+        <div className="w-full max-w-4xl mx-auto space-y-6 text-slate-900 dark:text-white font-sans">
             
             {/* DRIVER / MEMBER SOROBAN CREDIT HERO GAUGE CARD */}
             {isDriver && (
-                <div className="p-8 rounded-[2.5rem] bg-[#121418] border border-white/10 shadow-2xl relative overflow-hidden space-y-6">
+                <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 shadow-2xl relative overflow-hidden space-y-6 transition-colors duration-300">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
                                 <Fuel className="w-6 h-6" />
                             </div>
                             <div>
-                                <h3 className="font-black text-xl text-white">Soroban Micro-Credit Line</h3>
-                                <p className="text-xs text-gray-400 font-mono">Affiliated with {stellarData.todaAffiliation || 'Cooperative TODA'}</p>
+                                <h3 className="font-black text-xl text-slate-900 dark:text-white">Soroban Micro-Credit Line</h3>
+                                <p className="text-xs text-slate-500 dark:text-gray-400 font-mono">Affiliated with {stellarData.todaAffiliation || 'Cooperative TODA'}</p>
                             </div>
                         </div>
-                        <div className="px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-bold">
+                        <div className="px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold">
                             Active Gauge
                         </div>
                     </div>
 
                     {/* Circular Debt Gauge Visualizer */}
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-8 p-6 bg-black/40 border border-white/5 rounded-3xl">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-8 p-6 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-3xl">
                         
                         <div className="relative w-36 h-36 flex items-center justify-center">
                             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                                 <path
-                                    className="text-white/10"
+                                    className="text-slate-200 dark:text-white/10"
                                     strokeWidth="3.5"
                                     stroke="currentColor"
                                     fill="none"
                                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                 />
                                 <path
-                                    className="text-cyan-400 transition-all duration-1000"
+                                    className="text-cyan-500 dark:text-cyan-400 transition-all duration-1000"
                                     strokeDasharray={`${usedDebtPercentage}, 100`}
                                     strokeWidth="3.5"
                                     strokeLinecap="round"
@@ -133,23 +133,23 @@ export const HubTab: React.FC<HubTabProps> = ({
                                 />
                             </svg>
                             <div className="absolute text-center">
-                                <span className="text-xl font-black text-white block">{borrowLimit - debtState.debt}</span>
-                                <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest block font-bold">Available XLM</span>
+                                <span className="text-xl font-black text-slate-900 dark:text-white block">{borrowLimit - debtState.debt}</span>
+                                <span className="text-[9px] font-mono text-slate-500 dark:text-gray-400 uppercase tracking-widest block font-bold">Available XLM</span>
                             </div>
                         </div>
 
                         <div className="space-y-3 flex-1 text-center sm:text-left">
                             <div className="flex justify-between items-baseline text-sm">
-                                <span className="text-gray-400 font-medium">Used Credit Debt:</span>
-                                <span className="font-mono font-bold text-amber-400">{formatCurrency(debtState.debt)}</span>
+                                <span className="text-slate-500 dark:text-gray-400 font-medium">Used Credit Debt:</span>
+                                <span className="font-mono font-bold text-amber-600 dark:text-amber-400">{formatCurrency(debtState.debt)}</span>
                             </div>
                             <div className="flex justify-between items-baseline text-sm">
-                                <span className="text-gray-400 font-medium">Total Credit Limit:</span>
-                                <span className="font-mono font-bold text-white">{formatCurrency(borrowLimit)}</span>
+                                <span className="text-slate-500 dark:text-gray-400 font-medium">Total Credit Limit:</span>
+                                <span className="font-mono font-bold text-slate-900 dark:text-white">{formatCurrency(borrowLimit)}</span>
                             </div>
-                            <div className="pt-2 border-t border-white/10 flex justify-between items-center text-xs">
-                                <span className="text-gray-500 font-mono">Smart Contract:</span>
-                                <span className="font-mono text-cyan-400 font-bold">Soroban Verified</span>
+                            <div className="pt-2 border-t border-slate-200 dark:border-white/10 flex justify-between items-center text-xs">
+                                <span className="text-slate-400 dark:text-gray-500 font-mono">Smart Contract:</span>
+                                <span className="font-mono text-cyan-600 dark:text-cyan-400 font-bold">Soroban Verified</span>
                             </div>
                         </div>
                     </div>
@@ -176,40 +176,40 @@ export const HubTab: React.FC<HubTabProps> = ({
 
             {/* COOPERATIVE ADMIN PENDING DRIVERS QUEUE */}
             {isAdmin && (
-                <div className="p-8 rounded-[2.5rem] bg-[#121418] border border-white/10 shadow-2xl space-y-6">
+                <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 shadow-2xl space-y-6 transition-colors duration-300">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
                                 <Building2 className="w-6 h-6" />
                             </div>
                             <div>
-                                <h3 className="font-black text-xl text-white">Cooperative Member Queue</h3>
-                                <p className="text-xs text-gray-400">Review & approve driver registration requests for {stellarData.coopName || 'Cooperative TODA'}</p>
+                                <h3 className="font-black text-xl text-slate-900 dark:text-white">Cooperative Member Queue</h3>
+                                <p className="text-xs text-slate-500 dark:text-gray-400">Review & approve driver registration requests for {stellarData.coopName || 'Cooperative TODA'}</p>
                             </div>
                         </div>
-                        <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-mono font-bold border border-emerald-500/20">
+                        <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold border border-emerald-500/20">
                             {pendingDrivers.length} Pending
                         </span>
                     </div>
 
                     <div className="space-y-4">
                         {loadingDrivers ? (
-                            <div className="p-6 bg-black/40 rounded-2xl text-center text-xs text-gray-400 animate-pulse">
+                            <div className="p-6 bg-slate-50 dark:bg-black/40 rounded-2xl text-center text-xs text-slate-500 dark:text-gray-400 animate-pulse">
                                 Loading pending member drivers...
                             </div>
                         ) : pendingDrivers.length > 0 ? (
                             pendingDrivers.map((driver) => (
                                 <div
                                     key={driver.uid}
-                                    className="p-5 bg-black/40 border border-white/10 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                                    className="p-5 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                                 >
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-emerald-400 flex items-center justify-center text-black font-black text-lg">
                                             {(driver.fullName || 'Driver').charAt(0)}
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-base text-white">{driver.fullName}</h4>
-                                            <p className="text-xs text-gray-400 font-mono">🛺 Plate: {driver.plateNumber} • Phone: {driver.phone}</p>
+                                            <h4 className="font-bold text-base text-slate-900 dark:text-white">{driver.fullName}</h4>
+                                            <p className="text-xs text-slate-500 dark:text-gray-400 font-mono">🛺 Plate: {driver.plateNumber} • Phone: {driver.phone}</p>
                                         </div>
                                     </div>
 
@@ -224,10 +224,10 @@ export const HubTab: React.FC<HubTabProps> = ({
                                 </div>
                             ))
                         ) : (
-                            <div className="p-8 bg-black/40 rounded-2xl border border-white/5 text-center space-y-2">
-                                <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
-                                <h4 className="font-bold text-sm text-white">All Driver Requests Approved</h4>
-                                <p className="text-xs text-gray-400">No pending drivers waiting for verification in your cooperative queue.</p>
+                            <div className="p-8 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5 text-center space-y-2">
+                                <CheckCircle2 className="w-8 h-8 text-emerald-500 dark:text-emerald-400 mx-auto" />
+                                <h4 className="font-bold text-sm text-slate-900 dark:text-white">All Driver Requests Approved</h4>
+                                <p className="text-xs text-slate-500 dark:text-gray-400">No pending drivers waiting for verification in your cooperative queue.</p>
                             </div>
                         )}
                     </div>

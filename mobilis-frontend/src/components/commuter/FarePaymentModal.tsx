@@ -151,7 +151,7 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({ driver, comm
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-            <div className="w-full max-w-md bg-[#0a0a14] border border-white/10 rounded-3xl p-6 shadow-2xl relative text-white my-auto">
+            <div className="w-full max-w-md bg-white dark:bg-[#0a0a14] border border-slate-200 dark:border-white/10 rounded-3xl p-6 shadow-2xl relative text-slate-900 dark:text-white my-auto">
 
                 {/* Header */}
                 <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">

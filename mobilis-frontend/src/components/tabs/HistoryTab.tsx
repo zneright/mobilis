@@ -191,14 +191,14 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ txHistory, appNetwork, s
             {/* DIGITAL RECEIPT MODAL */}
             {selectedReceipt && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-                    <div className="w-full max-w-md bg-[#0a0a14] border border-white/10 rounded-3xl p-6 shadow-2xl relative text-white">
+                    <div className="w-full max-w-md bg-white dark:bg-[#0a0a14] border border-slate-200 dark:border-white/10 rounded-3xl p-6 shadow-2xl relative text-slate-900 dark:text-white">
                         
-                        <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
+                        <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-200 dark:border-white/10">
                             <div className="flex items-center gap-2">
-                                <Receipt className="w-5 h-5 text-emerald-400" />
+                                <Receipt className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                                 <h4 className="text-lg font-black">Official Digital Receipt</h4>
                             </div>
-                            <button onClick={() => setSelectedReceipt(null)} className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-white/10">
+                            <button onClick={() => setSelectedReceipt(null)} className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-white/10">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
