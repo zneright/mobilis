@@ -3,6 +3,7 @@ import { auth, db } from '../firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Keypair } from '@stellar/stellar-sdk';
 import { requestAccess, isConnected } from '@stellar/freighter-api';
 import { AlertTriangle, Copy, CheckCircle2, Wallet, UserCheck, Building2, ArrowRight, ArrowLeft } from 'lucide-react';
@@ -176,13 +177,13 @@ const Signup: React.FC = () => {
         }
     };
 
-    const inputClasses = "w-full p-4 bg-black/50 border border-white/10 rounded-2xl text-white placeholder-gray-500 outline-none focus:border-cyan-500 transition-colors text-sm font-sans";
+    const inputClasses = "w-full p-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 outline-none focus:border-cyan-500 transition-colors text-sm font-sans";
 
     return (
-        <div className="min-h-screen bg-[#090A0C] flex flex-col justify-between p-6 sm:p-10 font-sans text-white relative overflow-hidden">
+        <div className="min-h-screen bg-slate-50 dark:bg-[#090A0C] flex flex-col justify-between p-6 sm:p-10 font-sans text-slate-900 dark:text-white relative overflow-hidden transition-colors duration-300">
             
             {/* Top Progress Bar */}
-            <div className="fixed top-0 left-0 right-0 h-1 bg-white/10 z-50">
+            <div className="fixed top-0 left-0 right-0 h-1.5 bg-slate-200 dark:bg-white/10 z-50">
                 <div
                     className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-all duration-300"
                     style={{ width: `${(step / 3) * 100}%` }}
@@ -194,12 +195,12 @@ const Signup: React.FC = () => {
                 {step > 1 ? (
                     <button
                         onClick={() => setStep((s) => (s - 1) as 1 | 2)}
-                        className="p-3 rounded-2xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-all flex items-center gap-2 text-xs font-bold"
+                        className="p-3 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-all flex items-center gap-2 text-xs font-bold shadow-sm"
                     >
                         <ArrowLeft className="w-4 h-4" /> Back
                     </button>
                 ) : (
-                    <Link to="/" className="p-3 rounded-2xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-all text-xs font-bold">
+                    <Link to="/" className="p-3 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-all text-xs font-bold shadow-sm">
                         Home
                     </Link>
                 )}
@@ -209,21 +210,21 @@ const Signup: React.FC = () => {
             {/* Modal for Admin Secret Key */}
             {generatedSecret && (
                 <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-                    <div className="bg-[#121418] border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl">
-                        <div className="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center mb-4">
+                    <div className="bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-4">
+                        <div className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center mb-2">
                             <AlertTriangle className="w-6 h-6" />
                         </div>
-                        <h3 className="text-xl font-black mb-2">Save Treasury Key</h3>
-                        <p className="text-gray-400 text-xs mb-6">
+                        <h3 className="text-xl font-black text-slate-900 dark:text-white">Save Treasury Key</h3>
+                        <p className="text-slate-500 dark:text-gray-400 text-xs">
                             This key provides full control over your Cooperative Treasury wallet. Store it securely.
                         </p>
                         
-                        <div className="p-4 bg-black/60 border border-white/10 rounded-2xl font-mono text-xs text-amber-300 break-all mb-6">
+                        <div className="p-4 bg-slate-100 dark:bg-black/60 border border-slate-200 dark:border-white/10 rounded-2xl font-mono text-xs text-amber-600 dark:text-amber-300 break-all">
                             {generatedSecret}
                         </div>
 
-                        <div className="flex flex-col sm:flex-row gap-3">
-                            <button onClick={() => navigator.clipboard.writeText(generatedSecret)} className="flex-1 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl flex items-center justify-center gap-2 text-xs transition-all">
+                        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                            <button onClick={() => navigator.clipboard.writeText(generatedSecret)} className="flex-1 py-4 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-900 dark:text-white font-bold rounded-2xl flex items-center justify-center gap-2 text-xs transition-all">
                                 <Copy className="w-4 h-4" /> Copy Key
                             </button>
                             <button onClick={() => navigate('/dashboard')} className="flex-1 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-black rounded-2xl flex items-center justify-center gap-2 text-xs transition-all shadow-[0_0_15px_rgba(52,211,153,0.4)]">
@@ -235,19 +236,25 @@ const Signup: React.FC = () => {
             )}
 
             {/* Wizard Card Container */}
-            <div className="w-full max-w-lg mx-auto my-auto z-10 bg-[#121418] border border-white/10 rounded-[2.5rem] p-8 shadow-2xl space-y-6">
+            <motion.div
+                key={step}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="w-full max-w-lg mx-auto my-auto z-10 bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 shadow-2xl space-y-6 transition-colors duration-300"
+            >
                 
                 <div className="text-center space-y-2">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400">
                         Step {step} of 3
                     </span>
-                    <h2 className="text-2xl font-black tracking-tight text-white">
+                    <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
                         {step === 1 ? 'Select Your Account Role' : step === 2 ? 'Account Credentials' : 'Role Specifications'}
                     </h2>
                 </div>
 
                 {error && (
-                    <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl text-xs text-center font-medium">
+                    <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-2xl text-xs text-center font-medium">
                         {error}
                     </div>
                 )}
@@ -255,67 +262,70 @@ const Signup: React.FC = () => {
                 {/* STEP 1: ROLE SELECTION CARDS */}
                 {step === 1 && (
                     <div className="space-y-3">
-                        <button
+                        <motion.button
                             type="button"
+                            whileHover={{ scale: 1.02 }}
                             onClick={() => setRole('driver')}
                             className={`w-full p-5 rounded-2xl border text-left transition-all flex items-center justify-between ${
                                 role === 'driver'
-                                    ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400 shadow-md'
-                                    : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
+                                    ? 'bg-cyan-500/10 border-cyan-500 text-cyan-600 dark:text-cyan-400 shadow-md font-bold'
+                                    : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/10'
                             }`}
                         >
                             <div className="flex items-center gap-4">
                                 <span className="text-3xl">🛺</span>
                                 <div>
-                                    <h4 className="font-black text-base text-white">Transport Driver</h4>
-                                    <p className="text-xs text-gray-400">Receive fares & request micro-loans</p>
+                                    <h4 className="font-black text-base text-slate-900 dark:text-white">Transport Driver</h4>
+                                    <p className="text-xs text-slate-500 dark:text-gray-400">Receive fares & request micro-loans</p>
                                 </div>
                             </div>
-                            {role === 'driver' && <CheckCircle2 className="w-6 h-6 text-cyan-400" />}
-                        </button>
+                            {role === 'driver' && <CheckCircle2 className="w-6 h-6 text-cyan-500 dark:text-cyan-400" />}
+                        </motion.button>
 
-                        <button
+                        <motion.button
                             type="button"
+                            whileHover={{ scale: 1.02 }}
                             onClick={() => setRole('commuter')}
                             className={`w-full p-5 rounded-2xl border text-left transition-all flex items-center justify-between ${
                                 role === 'commuter'
-                                    ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400 shadow-md'
-                                    : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
+                                    ? 'bg-cyan-500/10 border-cyan-500 text-cyan-600 dark:text-cyan-400 shadow-md font-bold'
+                                    : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/10'
                             }`}
                         >
                             <div className="flex items-center gap-4">
                                 <span className="text-3xl">🚶</span>
                                 <div>
-                                    <h4 className="font-black text-base text-white">Commuter</h4>
-                                    <p className="text-xs text-gray-400">Pay transport fares via radar</p>
+                                    <h4 className="font-black text-base text-slate-900 dark:text-white">Commuter</h4>
+                                    <p className="text-xs text-slate-500 dark:text-gray-400">Pay transport fares via radar</p>
                                 </div>
                             </div>
-                            {role === 'commuter' && <CheckCircle2 className="w-6 h-6 text-cyan-400" />}
-                        </button>
+                            {role === 'commuter' && <CheckCircle2 className="w-6 h-6 text-cyan-500 dark:text-cyan-400" />}
+                        </motion.button>
 
-                        <button
+                        <motion.button
                             type="button"
+                            whileHover={{ scale: 1.02 }}
                             onClick={() => setRole('admin')}
                             className={`w-full p-5 rounded-2xl border text-left transition-all flex items-center justify-between ${
                                 role === 'admin'
-                                    ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400 shadow-md'
-                                    : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
+                                    ? 'bg-cyan-500/10 border-cyan-500 text-cyan-600 dark:text-cyan-400 shadow-md font-bold'
+                                    : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/10'
                             }`}
                         >
                             <div className="flex items-center gap-4">
                                 <span className="text-3xl">🏢</span>
                                 <div>
-                                    <h4 className="font-black text-base text-white">Cooperative Admin</h4>
-                                    <p className="text-xs text-gray-400">Verify drivers & manage TODA fleet</p>
+                                    <h4 className="font-black text-base text-slate-900 dark:text-white">Cooperative Admin</h4>
+                                    <p className="text-xs text-slate-500 dark:text-gray-400">Verify drivers & manage TODA fleet</p>
                                 </div>
                             </div>
-                            {role === 'admin' && <CheckCircle2 className="w-6 h-6 text-cyan-400" />}
-                        </button>
+                            {role === 'admin' && <CheckCircle2 className="w-6 h-6 text-cyan-500 dark:text-cyan-400" />}
+                        </motion.button>
 
                         <button
                             type="button"
                             onClick={() => setStep(2)}
-                            className="w-full py-4 mt-4 bg-cyan-500 hover:bg-cyan-400 text-black font-black rounded-2xl text-sm transition-all shadow-[0_0_20px_rgba(0,210,255,0.3)] flex items-center justify-center gap-2"
+                            className="w-full py-4 mt-4 bg-cyan-500 hover:bg-cyan-400 text-black font-black rounded-2xl text-sm transition-all shadow-[0_0_20px_rgba(0,210,255,0.3)] flex items-center justify-center gap-2 hover:scale-[1.02]"
                         >
                             Continue <ArrowRight className="w-4 h-4" />
                         </button>
@@ -352,7 +362,7 @@ const Signup: React.FC = () => {
                                 setError("");
                                 setStep(3);
                             }}
-                            className="w-full py-4 bg-cyan-500 hover:bg-cyan-400 text-black font-black rounded-2xl text-sm transition-all shadow-[0_0_20px_rgba(0,210,255,0.3)] flex items-center justify-center gap-2"
+                            className="w-full py-4 bg-cyan-500 hover:bg-cyan-400 text-black font-black rounded-2xl text-sm transition-all shadow-[0_0_20px_rgba(0,210,255,0.3)] flex items-center justify-center gap-2 hover:scale-[1.02]"
                         >
                             Next Step <ArrowRight className="w-4 h-4" />
                         </button>
@@ -369,7 +379,7 @@ const Signup: React.FC = () => {
                                 <input type="text" placeholder="Plate Number (e.g., ABC-1234)" value={plateNumber} onChange={(e) => setPlateNumber(e.target.value)} required className={inputClasses} />
                                 
                                 <div className="relative">
-                                    <label className="block text-[10px] text-cyan-400 font-bold uppercase tracking-wider mb-1.5">
+                                    <label className="block text-[10px] text-cyan-600 dark:text-cyan-400 font-bold uppercase tracking-wider mb-1.5">
                                         Select Firebase Registered Cooperative
                                     </label>
                                     <input
@@ -382,20 +392,20 @@ const Signup: React.FC = () => {
                                         className={inputClasses}
                                     />
                                     {showDropdown && (
-                                        <ul className="absolute top-[105%] left-0 w-full bg-[#1A1D24] border border-white/10 rounded-2xl max-h-48 overflow-y-auto z-50 shadow-2xl custom-scrollbar">
+                                        <ul className="absolute top-[105%] left-0 w-full bg-white dark:bg-[#1A1D24] border border-slate-200 dark:border-white/10 rounded-2xl max-h-48 overflow-y-auto z-50 shadow-2xl custom-scrollbar text-slate-900 dark:text-white">
                                             {filteredCoops.length > 0 ? (
                                                 filteredCoops.map((coop, idx) => (
                                                     <li
                                                         key={idx}
                                                         onClick={() => handleSelectCoop(coop)}
-                                                        className="p-4 cursor-pointer hover:bg-cyan-500/20 text-white font-semibold border-b border-white/5 last:border-none transition-colors flex items-center gap-2"
+                                                        className="p-4 cursor-pointer hover:bg-cyan-500/20 font-semibold border-b border-slate-100 dark:border-white/5 last:border-none transition-colors flex items-center gap-2"
                                                     >
-                                                        <Building2 className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                                                        <Building2 className="w-4 h-4 text-cyan-500 flex-shrink-0" />
                                                         <span>{coop}</span>
                                                     </li>
                                                 ))
                                             ) : (
-                                                <li className="p-4 text-slate-400 text-xs italic">
+                                                <li className="p-4 text-slate-500 dark:text-slate-400 text-xs italic">
                                                     No Cooperative Admin registered in Firebase yet. Your Cooperative Admin must register a Coop Admin account first.
                                                 </li>
                                             )}
@@ -408,7 +418,7 @@ const Signup: React.FC = () => {
                         {role === 'commuter' && (
                             <>
                                 <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} required className={inputClasses} />
-                                <div className="p-4 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl text-xs text-cyan-400 flex items-center gap-3">
+                                <div className="p-4 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl text-xs text-cyan-600 dark:text-cyan-400 flex items-center gap-3">
                                     <UserCheck className="w-5 h-5 flex-shrink-0" />
                                     <span>Instant Commuter Pass: Your Stellar transport wallet will be provisioned automatically.</span>
                                 </div>
@@ -423,15 +433,15 @@ const Signup: React.FC = () => {
                                 <input type="text" placeholder="CDA Registration / TODA License No." value={registrationNumber} onChange={(e) => setRegistrationNumber(e.target.value)} required className={inputClasses} />
 
                                 <div className="flex flex-col gap-2 mt-2">
-                                    <label className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">Treasury Key Provisioning</label>
+                                    <label className="text-[10px] text-cyan-600 dark:text-cyan-400 font-bold uppercase tracking-wider">Treasury Key Provisioning</label>
                                     <div className="grid grid-cols-3 gap-2">
-                                        <button type="button" onClick={() => setAdminWalletMethod('generate')} className={`p-3 rounded-xl border text-xs font-bold transition-all ${adminWalletMethod === 'generate' ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}>
+                                        <button type="button" onClick={() => setAdminWalletMethod('generate')} className={`p-3 rounded-xl border text-xs font-bold transition-all ${adminWalletMethod === 'generate' ? 'bg-cyan-500/20 border-cyan-500 text-cyan-600 dark:text-cyan-400' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-400'}`}>
                                             🔑 Auto Generate
                                         </button>
-                                        <button type="button" onClick={() => setAdminWalletMethod('freighter')} className={`p-3 rounded-xl border text-xs font-bold transition-all ${adminWalletMethod === 'freighter' ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}>
+                                        <button type="button" onClick={() => setAdminWalletMethod('freighter')} className={`p-3 rounded-xl border text-xs font-bold transition-all ${adminWalletMethod === 'freighter' ? 'bg-cyan-500/20 border-cyan-500 text-cyan-600 dark:text-cyan-400' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-400'}`}>
                                             🚀 Freighter
                                         </button>
-                                        <button type="button" onClick={() => setAdminWalletMethod('lobstr')} className={`p-3 rounded-xl border text-xs font-bold transition-all ${adminWalletMethod === 'lobstr' ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}>
+                                        <button type="button" onClick={() => setAdminWalletMethod('lobstr')} className={`p-3 rounded-xl border text-xs font-bold transition-all ${adminWalletMethod === 'lobstr' ? 'bg-cyan-500/20 border-cyan-500 text-cyan-600 dark:text-cyan-400' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-400'}`}>
                                             🦞 LOBSTR
                                         </button>
                                     </div>
@@ -439,7 +449,7 @@ const Signup: React.FC = () => {
                             </>
                         )}
 
-                        <button type="submit" disabled={isLoading} className="w-full py-4 mt-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-black rounded-2xl text-sm transition-all shadow-[0_0_20px_rgba(52,211,153,0.3)] flex items-center justify-center gap-2">
+                        <button type="submit" disabled={isLoading} className="w-full py-4 mt-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-black rounded-2xl text-sm transition-all shadow-[0_0_20px_rgba(52,211,153,0.3)] flex items-center justify-center gap-2 hover:scale-[1.02]">
                             {isLoading ? (
                                 <span className="animate-pulse">Provisioning Custodial Wallet...</span>
                             ) : (
@@ -452,17 +462,17 @@ const Signup: React.FC = () => {
                 )}
 
                 <div className="text-center pt-2">
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-slate-500 dark:text-gray-400">
                         Already have an account?{' '}
-                        <Link to="/login" className="text-cyan-400 font-bold hover:underline">
+                        <Link to="/login" className="text-cyan-600 dark:text-cyan-400 font-bold hover:underline">
                             Sign In
                         </Link>
                     </p>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Bottom Footer */}
-            <div className="w-full text-center text-xs text-gray-600 font-mono z-10">
+            <div className="w-full text-center text-xs text-slate-400 dark:text-gray-600 font-mono z-10">
                 Mobilis Onboarding Wizard • Encrypted Key Provisioning
             </div>
         </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import {
     Zap,
     ShieldCheck,
@@ -15,10 +15,38 @@ import {
     Receipt,
     Megaphone,
     Activity,
-    Code
+    Code,
+    Sparkles
 } from 'lucide-react';
 import { EarthCanvas, ShootingStar } from './EarthCanvas';
 import MobilisLogo from './common/MobilisLogo';
+
+// Professional Motion Variants
+const fadeInUp: Variants = {
+    hidden: { opacity: 0, y: 35 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
+    }
+};
+
+const staggerContainer: Variants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: { staggerChildren: 0.15, delayChildren: 0.1 }
+    }
+};
+
+const scaleIn: Variants = {
+    hidden: { opacity: 0, scale: 0.92 },
+    visible: {
+        opacity: 1,
+        scale: 1,
+        transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] }
+    }
+};
 
 export default function Landing() {
     const [scrolled, setScrolled] = useState(false);
@@ -34,12 +62,13 @@ export default function Landing() {
     return (
         <div className="relative min-h-screen text-slate-900 dark:text-white font-sans overflow-x-hidden bg-slate-50 dark:bg-[#090A0C] transition-colors duration-300">
             
-            {/* Background Glows & Shooting Stars */}
+            {/* Ambient Background Glows & Shooting Stars */}
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-[-10%] left-[20%] w-[60vw] h-[60vh] bg-cyan-600/10 dark:bg-cyan-600/10 blur-[140px] rounded-full pointer-events-none" />
-                <div className="absolute bottom-[10%] right-[-10%] w-[50vw] h-[50vh] bg-emerald-600/10 dark:bg-emerald-600/10 blur-[120px] rounded-full pointer-events-none" />
+                <div className="absolute top-[-10%] left-[20%] w-[60vw] h-[60vh] bg-cyan-500/10 dark:bg-cyan-500/15 blur-[150px] rounded-full pointer-events-none" />
+                <div className="absolute bottom-[10%] right-[-10%] w-[50vw] h-[50vh] bg-emerald-500/10 dark:bg-emerald-500/15 blur-[130px] rounded-full pointer-events-none" />
                 <ShootingStar delay={1} />
-                <ShootingStar delay={5} />
+                <ShootingStar delay={4.5} />
+                <ShootingStar delay={8} />
             </div>
 
             <div className="relative z-10">
@@ -48,10 +77,10 @@ export default function Landing() {
                 <motion.nav
                     initial={{ y: -60, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.5 }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
                     className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
                         scrolled
-                            ? 'bg-white/90 dark:bg-[#090A0C]/85 backdrop-blur-2xl border-b border-slate-200 dark:border-white/10 py-3'
+                            ? 'bg-white/90 dark:bg-[#090A0C]/85 backdrop-blur-2xl border-b border-slate-200 dark:border-white/10 py-3 shadow-md'
                             : 'bg-transparent py-5'
                     }`}
                 >
@@ -67,7 +96,7 @@ export default function Landing() {
                             </Link>
                             <Link
                                 to="/signup"
-                                className="px-5 py-2.5 text-xs font-black tracking-wide bg-emerald-500 hover:bg-emerald-400 text-black rounded-xl transition-all shadow-[0_0_20px_rgba(52,211,153,0.3)]"
+                                className="px-5 py-2.5 text-xs font-black tracking-wide bg-emerald-500 hover:bg-emerald-400 text-black rounded-xl transition-all shadow-[0_0_20px_rgba(52,211,153,0.3)] hover:scale-105"
                             >
                                 Join Mobilis
                             </Link>
@@ -79,51 +108,51 @@ export default function Landing() {
                 <section className="relative pt-36 pb-20 lg:pt-44 lg:pb-32 px-6 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                     
                     <motion.div
-                        initial={{ opacity: 0, x: -30 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.7 }}
+                        variants={staggerContainer}
+                        initial="hidden"
+                        animate="visible"
                         className="space-y-6 text-left"
                     >
-                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs font-mono font-bold uppercase tracking-wider">
-                            <Zap className="w-3.5 h-3.5" />
+                        <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs font-mono font-bold uppercase tracking-wider">
+                            <Sparkles className="w-3.5 h-3.5 animate-spin" />
                             Stellar Transport Fintech Ecosystem
-                        </div>
+                        </motion.div>
 
-                        <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-[1.1] text-slate-900 dark:text-white">
+                        <motion.h1 variants={fadeInUp} className="text-4xl sm:text-6xl font-black tracking-tight leading-[1.1] text-slate-900 dark:text-white">
                             Move Freely. <br />
-                            <span className="bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 bg-clip-text text-transparent">
+                            <span className="bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 bg-clip-text text-transparent animate-pulse">
                                 Earn Instantly.
                             </span>
-                        </h1>
+                        </motion.h1>
 
-                        <p className="text-base sm:text-lg text-slate-600 dark:text-gray-400 max-w-lg leading-relaxed">
+                        <motion.p variants={fadeInUp} className="text-base sm:text-lg text-slate-600 dark:text-gray-400 max-w-lg leading-relaxed">
                             The Philippine transport fintech powered by Stellar Horizon RPC, 50-meter GPS Sonar Radar, Soroban Micro-Credit Advances, and real-time ₱ PHP fare settlements.
-                        </p>
+                        </motion.p>
 
-                        <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                        <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 pt-2">
                             <Link
                                 to="/signup"
-                                className="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-sm rounded-2xl flex items-center justify-center gap-3 transition-all shadow-[0_0_25px_rgba(52,211,153,0.4)]"
+                                className="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-sm rounded-2xl flex items-center justify-center gap-3 transition-all shadow-[0_0_25px_rgba(52,211,153,0.4)] hover:scale-105"
                             >
                                 Launch App Free <ArrowRight className="w-4 h-4" />
                             </Link>
                             <Link
                                 to="/login"
-                                className="px-8 py-4 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-all"
+                                className="px-8 py-4 bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-all hover:scale-105"
                             >
                                 Open Web Wallet
                             </Link>
-                        </div>
+                        </motion.div>
 
                         {/* Interactive Display Mode Selector */}
-                        <div className="pt-4 flex items-center gap-3 text-xs text-slate-500 dark:text-gray-400 font-mono">
+                        <motion.div variants={fadeInUp} className="pt-4 flex items-center gap-3 text-xs text-slate-500 dark:text-gray-400 font-mono">
                             <span>Display Canvas:</span>
                             <button
                                 onClick={() => setMediaMode('3d')}
                                 className={`px-3 py-1 rounded-lg border transition-all ${
                                     mediaMode === '3d'
-                                        ? 'bg-cyan-500/20 border-cyan-500 text-cyan-600 dark:text-cyan-400 font-bold'
-                                        : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-gray-400'
+                                        ? 'bg-cyan-500/20 border-cyan-500 text-cyan-600 dark:text-cyan-400 font-bold shadow-sm'
+                                        : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-gray-400'
                                 }`}
                             >
                                 🌐 3D Globe Mode
@@ -132,20 +161,20 @@ export default function Landing() {
                                 onClick={() => setMediaMode('static')}
                                 className={`px-3 py-1 rounded-lg border transition-all ${
                                     mediaMode === 'static'
-                                        ? 'bg-cyan-500/20 border-cyan-500 text-cyan-600 dark:text-cyan-400 font-bold'
-                                        : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-gray-400'
+                                        ? 'bg-cyan-500/20 border-cyan-500 text-cyan-600 dark:text-cyan-400 font-bold shadow-sm'
+                                        : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-gray-400'
                                 }`}
                             >
                                 ⚡ Performance Radar
                             </button>
-                        </div>
+                        </motion.div>
                     </motion.div>
 
                     {/* Right Media Canvas */}
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.8 }}
+                        variants={scaleIn}
+                        initial="hidden"
+                        animate="visible"
                         className="relative w-full h-[380px] sm:h-[480px] rounded-[2.5rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl flex items-center justify-center transition-colors duration-300"
                     >
                         {mediaMode === '3d' ? (
@@ -164,21 +193,37 @@ export default function Landing() {
                     </motion.div>
                 </section>
 
-                {/* BENTO GRID VALUE PROPOSITIONS */}
+                {/* BENTO GRID VALUE PROPOSITIONS WITH HOVER SCALING */}
                 <section className="py-20 px-6 max-w-7xl mx-auto space-y-12">
-                    <div className="text-center space-y-3">
+                    <motion.div
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: true, margin: "-100px" }}
+                        variants={fadeInUp}
+                        className="text-center space-y-3"
+                    >
                         <span className="text-xs font-mono font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
                             Core Capabilities
                         </span>
                         <h2 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
                             Built For Public Transport Ecosystems
                         </h2>
-                    </div>
+                    </motion.div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <motion.div
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: true, margin: "-50px" }}
+                        variants={staggerContainer}
+                        className="grid grid-cols-1 md:grid-cols-3 gap-6"
+                    >
                         
                         {/* Bento Card 1: Radar */}
-                        <div className="p-8 rounded-[2rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 space-y-4 hover:border-emerald-500/40 transition-all shadow-xl">
+                        <motion.div
+                            variants={fadeInUp}
+                            whileHover={{ y: -8, scale: 1.02 }}
+                            className="p-8 rounded-[2rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 space-y-4 hover:border-emerald-500/50 transition-all shadow-xl hover:shadow-2xl"
+                        >
                             <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
                                 <Radio className="w-6 h-6" />
                             </div>
@@ -186,10 +231,14 @@ export default function Landing() {
                             <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed">
                                 Commuters discover nearby active drivers broadcasting GPS within a 50-meter radius, paying instant fares with ₱ PHP real-time equivalency.
                             </p>
-                        </div>
+                        </motion.div>
 
                         {/* Bento Card 2: Stellar */}
-                        <div className="p-8 rounded-[2rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 space-y-4 hover:border-emerald-500/40 transition-all shadow-xl">
+                        <motion.div
+                            variants={fadeInUp}
+                            whileHover={{ y: -8, scale: 1.02 }}
+                            className="p-8 rounded-[2rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 space-y-4 hover:border-emerald-500/50 transition-all shadow-xl hover:shadow-2xl"
+                        >
                             <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                                 <ShieldCheck className="w-6 h-6" />
                             </div>
@@ -197,10 +246,14 @@ export default function Landing() {
                             <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed">
                                 Sub-second transaction settlement on the Stellar Testnet ledger with official digital payment receipt cards (`OR-XXXXX`).
                             </p>
-                        </div>
+                        </motion.div>
 
                         {/* Bento Card 3: Soroban Credit */}
-                        <div className="p-8 rounded-[2rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 space-y-4 hover:border-emerald-500/40 transition-all shadow-xl">
+                        <motion.div
+                            variants={fadeInUp}
+                            whileHover={{ y: -8, scale: 1.02 }}
+                            className="p-8 rounded-[2rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 space-y-4 hover:border-emerald-500/50 transition-all shadow-xl hover:shadow-2xl"
+                        >
                             <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
                                 <Building2 className="w-6 h-6" />
                             </div>
@@ -208,8 +261,8 @@ export default function Landing() {
                             <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed">
                                 Cooperative Admins verify member drivers and issue automated Soroban smart contract micro-loan advances.
                             </p>
-                        </div>
-                    </div>
+                        </motion.div>
+                    </motion.div>
                 </section>
 
                 {/* ARCHITECTURE & TECHNICAL MATRIX SHOWCASE */}
@@ -261,7 +314,13 @@ export default function Landing() {
                     </div>
 
                     {/* Architecture Details Box */}
-                    <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 shadow-2xl transition-colors duration-300">
+                    <motion.div
+                        key={activeArchTab}
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                        className="p-8 rounded-[2.5rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 shadow-2xl transition-colors duration-300"
+                    >
                         {activeArchTab === 'frontend' && (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
                                 <div className="p-5 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-2xl space-y-2">
@@ -321,7 +380,7 @@ export default function Landing() {
                                 </div>
                             </div>
                         )}
-                    </div>
+                    </motion.div>
                 </section>
 
                 {/* ROLE ECOSYSTEM SUMMARY */}
@@ -336,7 +395,7 @@ export default function Landing() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-                        <div className="p-8 rounded-[2rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 space-y-4 shadow-xl">
+                        <motion.div whileHover={{ y: -6, scale: 1.02 }} className="p-8 rounded-[2rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 space-y-4 shadow-xl">
                             <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center font-black text-2xl">
                                 🚶
                             </div>
@@ -346,9 +405,9 @@ export default function Landing() {
                                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> 50m Sonar driver radar</li>
                                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Printable digital receipts (`OR-XXXXX`)</li>
                             </ul>
-                        </div>
+                        </motion.div>
 
-                        <div className="p-8 rounded-[2rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 space-y-4 shadow-xl">
+                        <motion.div whileHover={{ y: -6, scale: 1.02 }} className="p-8 rounded-[2rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 space-y-4 shadow-xl">
                             <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-black text-2xl">
                                 🛺
                             </div>
@@ -358,9 +417,9 @@ export default function Landing() {
                                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Web Audio payment chime sound</li>
                                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Soroban credit loan advances</li>
                             </ul>
-                        </div>
+                        </motion.div>
 
-                        <div className="p-8 rounded-[2rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 space-y-4 shadow-xl">
+                        <motion.div whileHover={{ y: -6, scale: 1.02 }} className="p-8 rounded-[2rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 space-y-4 shadow-xl">
                             <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-black text-2xl">
                                 🏢
                             </div>
@@ -370,7 +429,7 @@ export default function Landing() {
                                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Targeted broadcast notification center</li>
                                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Multisig treasury vault management</li>
                             </ul>
-                        </div>
+                        </motion.div>
                     </div>
                 </section>
 
