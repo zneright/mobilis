@@ -60,8 +60,7 @@ const Signup: React.FC = () => {
                 const uniqueCoops = Array.from(new Set(realCoops));
                 setApprovedCoops(uniqueCoops);
                 setFilteredCoops(uniqueCoops);
-            } catch (err) {
-                console.warn("Firebase Cooperative fetch note:", err);
+            } catch {
                 setApprovedCoops([]);
                 setFilteredCoops([]);
             }
