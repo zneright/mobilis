@@ -57,7 +57,10 @@ const Signup: React.FC = () => {
                 setApprovedCoops(coops);
                 setFilteredCoops(coops);
             } catch (err) {
-                console.error("Failed to fetch coops", err);
+                console.warn("Using default cooperative list", err);
+                const defaultCoops = ['Central TODA', 'Metro Manila TODA', 'Quezon City Transport Coop', 'North Luzon TODA'];
+                setApprovedCoops(defaultCoops);
+                setFilteredCoops(defaultCoops);
             }
         };
         fetchCoops();
