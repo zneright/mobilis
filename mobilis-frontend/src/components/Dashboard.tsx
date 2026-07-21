@@ -697,31 +697,55 @@ const Dashboard: React.FC = () => {
         );
     }
 
+    const isDriverRole = stellarData?.role === 'driver';
+    const isSuperAdminRole = stellarData?.role === 'superadmin';
+    const isCoopAdminRole = (stellarData?.role as string) === 'admin' || (stellarData?.role as string) === 'cooperative';
+
+    const rootRoleBgClass = isSuperAdminRole
+        ? 'bg-[#fff1f2] dark:bg-[#120408]'
+        : isCoopAdminRole
+        ? 'bg-[#eef2ff] dark:bg-[#060618]'
+        : isDriverRole
+        ? 'bg-[#f0fdfa] dark:bg-[#030914]'
+        : 'bg-[#ecfdf5] dark:bg-[#02120a]';
+
     return (
-        <div className="h-screen w-full overflow-hidden relative flex bg-slate-50 dark:bg-[#07090E] text-slate-900 dark:text-white font-sans transition-colors duration-300">
+        <div className={`h-screen w-full overflow-hidden relative flex text-slate-900 dark:text-white font-sans transition-colors duration-500 ${rootRoleBgClass}`}>
+            
+            {/* RICH ROLE-BASED MESH GRADIENT OVERLAY */}
+            <div className={`pointer-events-none fixed inset-0 z-0 opacity-70 transition-all duration-700 ${
+                isSuperAdminRole
+                    ? 'bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-rose-500/25 via-orange-500/10 to-transparent'
+                    : isCoopAdminRole
+                    ? 'bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-indigo-500/25 via-purple-500/10 to-transparent'
+                    : isDriverRole
+                    ? 'bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-cyan-500/25 via-amber-500/10 to-transparent'
+                    : 'bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-emerald-500/25 via-teal-500/10 to-transparent'
+            }`} />
+
             {/* DYNAMIC ROLE-BASED AMBIENT BACKGROUND GLOW BLOBS */}
             {stellarData.role === 'driver' && (
                 <>
-                    <div className="pointer-events-none fixed -top-32 -left-32 w-[30rem] h-[30rem] bg-cyan-500/20 dark:bg-cyan-500/15 rounded-full blur-[120px] z-0 animate-pulse" />
-                    <div className="pointer-events-none fixed -bottom-32 -right-32 w-[30rem] h-[30rem] bg-amber-500/20 dark:bg-amber-500/10 rounded-full blur-[120px] z-0 animate-pulse" />
+                    <div className="pointer-events-none fixed -top-32 -left-32 w-[35rem] h-[35rem] bg-cyan-500/25 dark:bg-cyan-500/20 rounded-full blur-[140px] z-0 animate-pulse" />
+                    <div className="pointer-events-none fixed -bottom-32 -right-32 w-[35rem] h-[35rem] bg-amber-500/25 dark:bg-amber-500/15 rounded-full blur-[140px] z-0 animate-pulse" />
                 </>
             )}
             {stellarData.role === 'commuter' && (
                 <>
-                    <div className="pointer-events-none fixed -top-32 -left-32 w-[30rem] h-[30rem] bg-emerald-500/20 dark:bg-emerald-500/15 rounded-full blur-[120px] z-0 animate-pulse" />
-                    <div className="pointer-events-none fixed -bottom-32 -right-32 w-[30rem] h-[30rem] bg-teal-500/20 dark:bg-teal-500/10 rounded-full blur-[120px] z-0 animate-pulse" />
+                    <div className="pointer-events-none fixed -top-32 -left-32 w-[35rem] h-[35rem] bg-emerald-500/25 dark:bg-emerald-500/20 rounded-full blur-[140px] z-0 animate-pulse" />
+                    <div className="pointer-events-none fixed -bottom-32 -right-32 w-[35rem] h-[35rem] bg-teal-500/25 dark:bg-teal-500/15 rounded-full blur-[140px] z-0 animate-pulse" />
                 </>
             )}
             {((stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative') && (
                 <>
-                    <div className="pointer-events-none fixed -top-32 -left-32 w-[30rem] h-[30rem] bg-indigo-600/25 dark:bg-indigo-600/20 rounded-full blur-[120px] z-0 animate-pulse" />
-                    <div className="pointer-events-none fixed -bottom-32 -right-32 w-[30rem] h-[30rem] bg-purple-600/20 dark:bg-purple-600/15 rounded-full blur-[120px] z-0 animate-pulse" />
+                    <div className="pointer-events-none fixed -top-32 -left-32 w-[35rem] h-[35rem] bg-indigo-600/30 dark:bg-indigo-600/25 rounded-full blur-[140px] z-0 animate-pulse" />
+                    <div className="pointer-events-none fixed -bottom-32 -right-32 w-[35rem] h-[35rem] bg-purple-600/25 dark:bg-purple-600/20 rounded-full blur-[140px] z-0 animate-pulse" />
                 </>
             )}
             {stellarData.role === 'superadmin' && (
                 <>
-                    <div className="pointer-events-none fixed -top-32 -left-32 w-[30rem] h-[30rem] bg-rose-500/25 dark:bg-rose-500/20 rounded-full blur-[120px] z-0 animate-pulse" />
-                    <div className="pointer-events-none fixed -bottom-32 -right-32 w-[30rem] h-[30rem] bg-orange-500/20 dark:bg-orange-500/15 rounded-full blur-[120px] z-0 animate-pulse" />
+                    <div className="pointer-events-none fixed -top-32 -left-32 w-[35rem] h-[35rem] bg-rose-500/30 dark:bg-rose-500/25 rounded-full blur-[140px] z-0 animate-pulse" />
+                    <div className="pointer-events-none fixed -bottom-32 -right-32 w-[35rem] h-[35rem] bg-orange-500/25 dark:bg-orange-500/20 rounded-full blur-[140px] z-0 animate-pulse" />
                 </>
             )}
             
