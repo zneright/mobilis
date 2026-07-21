@@ -16,7 +16,7 @@ interface DriverOperationsMapProps {
 }
 
 export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driverData }) => {
-    const searchRadiusKm = 0.5;
+    const searchRadiusKm = 5.0; // 5-kilometer passenger discovery radius
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<maplibregl.Map | null>(null);
     const driverMarkerRef = useRef<maplibregl.Marker | null>(null);

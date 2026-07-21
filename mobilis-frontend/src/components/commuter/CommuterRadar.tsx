@@ -18,7 +18,7 @@ interface CommuterRadarProps {
 }
 
 export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, currencyMode, setCurrencyMode }) => {
-    const searchRadiusKm = 0.05; // Fixed 50-meter GPS radar radius
+    const searchRadiusKm = 5.0; // 5-kilometer GPS transit discovery radius
     const [viewMode, setViewMode] = useState<'radar' | 'map'>('radar');
     const [commuterCoords, setCommuterCoords] = useState<{ lat: number; lng: number } | null>(null);
     const [gpsStatus, setGpsStatus] = useState<'acquiring' | 'ready' | 'denied' | 'error'>('acquiring');
