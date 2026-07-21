@@ -81,8 +81,20 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ txHistory, appNetwork, s
         setTimeout(() => setCopiedHash(false), 2000);
     };
 
+    const isDriver = stellarData?.role === 'driver';
+    const isSuperAdmin = stellarData?.role === 'superadmin';
+    const isCoopAdmin = stellarData?.role === 'admin' || stellarData?.role === 'cooperative';
+
+    const cardBorderAccent = isSuperAdmin
+        ? 'border-t-4 border-t-rose-500 border-x border-b border-rose-500/30 shadow-[0_10px_40px_rgba(244,63,94,0.15)]'
+        : isCoopAdmin
+        ? 'border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30 shadow-[0_10px_40px_rgba(99,102,241,0.15)]'
+        : isDriver
+        ? 'border-t-4 border-t-cyan-500 border-x border-b border-cyan-500/30 shadow-[0_10px_40px_rgba(6,182,212,0.15)]'
+        : 'border-t-4 border-t-emerald-500 border-x border-b border-emerald-500/30 shadow-[0_10px_40px_rgba(16,185,129,0.15)]';
+
     return (
-        <div className="w-full max-w-4xl mx-auto bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 rounded-[2rem] p-6 sm:p-8 shadow-xl">
+        <div className={`w-full max-w-4xl mx-auto bg-white dark:bg-[#0a0a14] rounded-[2rem] p-6 sm:p-8 transition-colors duration-300 ${cardBorderAccent}`}>
             <div className="mb-6 flex items-center justify-between">
                 <div>
                     <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-1">

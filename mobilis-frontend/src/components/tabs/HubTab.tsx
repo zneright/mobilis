@@ -197,10 +197,10 @@ export const HubTab: React.FC<HubTabProps> = ({
             
             {/* DRIVER / MEMBER SOROBAN CREDIT HERO GAUGE CARD */}
             {isDriver && (
-                <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 shadow-2xl relative overflow-hidden space-y-6 transition-colors duration-300">
+                <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#0c1322] border-t-4 border-t-cyan-500 border-x border-b border-slate-200 dark:border-cyan-500/20 shadow-[0_10px_40px_rgba(6,182,212,0.15)] relative overflow-hidden space-y-6 transition-colors duration-300">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 flex items-center justify-center">
                                 <Fuel className="w-6 h-6" />
                             </div>
                             <div>
@@ -352,9 +352,9 @@ export const HubTab: React.FC<HubTabProps> = ({
 
             {/* ADMIN BROADCAST ANNOUNCEMENT CENTER BUTTON */}
             {isAdmin && (
-                <div className="p-6 rounded-[2.5rem] bg-gradient-to-r from-cyan-500/10 via-emerald-500/10 to-indigo-500/10 border border-cyan-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+                <div className="p-6 rounded-[2.5rem] bg-gradient-to-r from-indigo-900/30 via-purple-900/20 to-slate-900/40 border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_10px_40px_rgba(99,102,241,0.15)]">
                     <div className="flex items-center gap-3 text-center sm:text-left">
-                        <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30 flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0">
+                        <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0">
                             <Megaphone className="w-6 h-6 animate-pulse" />
                         </div>
                         <div>
@@ -369,7 +369,7 @@ export const HubTab: React.FC<HubTabProps> = ({
 
                     <button
                         onClick={() => setShowBroadcastModal(true)}
-                        className="px-6 py-3.5 bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(0,210,255,0.4)] flex items-center gap-2 flex-shrink-0"
+                        className="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(99,102,241,0.4)] flex items-center gap-2 flex-shrink-0"
                     >
                         <BellRing className="w-4 h-4" /> Send Announcement
                     </button>
@@ -378,10 +378,10 @@ export const HubTab: React.FC<HubTabProps> = ({
 
             {/* COOPERATIVE ADMIN VEHICLE TYPE CHANGE REQUESTS QUEUE */}
             {isAdmin && vehicleChangeRequests.length > 0 && (
-                <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#121418] border border-cyan-500/30 shadow-2xl space-y-6 transition-colors duration-300">
+                <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#0d0f1a] border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30 shadow-[0_10px_40px_rgba(99,102,241,0.15)] space-y-6 transition-colors duration-300">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
                                 <Truck className="w-6 h-6" />
                             </div>
                             <div>
@@ -389,7 +389,7 @@ export const HubTab: React.FC<HubTabProps> = ({
                                 <p className="text-xs text-slate-500 dark:text-gray-400">Review & approve driver vehicle designation change requests</p>
                             </div>
                         </div>
-                        <span className="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 text-xs font-mono font-bold border border-cyan-500/20">
+                        <span className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-mono font-bold border border-indigo-500/20">
                             {vehicleChangeRequests.length} Pending
                         </span>
                     </div>
@@ -401,13 +401,13 @@ export const HubTab: React.FC<HubTabProps> = ({
                                 className="p-5 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-400 flex items-center justify-center text-black font-black text-lg">
+                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-400 flex items-center justify-center text-white font-black text-lg">
                                         {(driver.fullName || 'Driver').charAt(0)}
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-base text-slate-900 dark:text-white">{driver.fullName}</h4>
                                         <p className="text-xs text-slate-500 dark:text-gray-400 font-mono">
-                                            Current: <span className="font-bold">{driver.vehicleType || 'Tricycle'}</span> ➔ Requested: <span className="font-black text-cyan-500">{driver.pendingVehicleType}</span>
+                                            Current: <span className="font-bold">{driver.vehicleType || 'Tricycle'}</span> ➔ Requested: <span className="font-black text-indigo-400">{driver.pendingVehicleType}</span>
                                         </p>
                                     </div>
                                 </div>
@@ -415,7 +415,7 @@ export const HubTab: React.FC<HubTabProps> = ({
                                 <button
                                     onClick={() => handleApproveVehicleChange(driver.uid, driver.pendingVehicleType)}
                                     disabled={approvingVehicleUid === driver.uid}
-                                    className="w-full sm:w-auto px-6 py-3 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-black font-black text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(0,210,255,0.4)] flex items-center justify-center gap-2"
+                                    className="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-black text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(99,102,241,0.4)] flex items-center justify-center gap-2"
                                 >
                                     <CheckCircle2 className="w-4 h-4" />
                                     {approvingVehicleUid === driver.uid ? 'Approving...' : `Approve ${driver.pendingVehicleType}`}
@@ -428,7 +428,7 @@ export const HubTab: React.FC<HubTabProps> = ({
 
             {/* COOPERATIVE ADMIN PENDING DRIVERS QUEUE */}
             {isAdmin && (
-                <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 shadow-2xl space-y-6 transition-colors duration-300">
+                <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#0d0f1a] border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30 shadow-[0_10px_40px_rgba(99,102,241,0.15)] space-y-6 transition-colors duration-300">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center">

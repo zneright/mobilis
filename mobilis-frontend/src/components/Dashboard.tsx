@@ -689,6 +689,31 @@ const Dashboard: React.FC = () => {
 
     return (
         <div className="h-screen w-full overflow-hidden relative flex bg-slate-50 dark:bg-[#07090E] text-slate-900 dark:text-white font-sans transition-colors duration-300">
+            {/* DYNAMIC ROLE-BASED AMBIENT BACKGROUND GLOW BLOBS */}
+            {stellarData.role === 'driver' && (
+                <>
+                    <div className="pointer-events-none fixed -top-32 -left-32 w-[30rem] h-[30rem] bg-cyan-500/20 dark:bg-cyan-500/15 rounded-full blur-[120px] z-0 animate-pulse" />
+                    <div className="pointer-events-none fixed -bottom-32 -right-32 w-[30rem] h-[30rem] bg-amber-500/20 dark:bg-amber-500/10 rounded-full blur-[120px] z-0 animate-pulse" />
+                </>
+            )}
+            {stellarData.role === 'commuter' && (
+                <>
+                    <div className="pointer-events-none fixed -top-32 -left-32 w-[30rem] h-[30rem] bg-emerald-500/20 dark:bg-emerald-500/15 rounded-full blur-[120px] z-0 animate-pulse" />
+                    <div className="pointer-events-none fixed -bottom-32 -right-32 w-[30rem] h-[30rem] bg-teal-500/20 dark:bg-teal-500/10 rounded-full blur-[120px] z-0 animate-pulse" />
+                </>
+            )}
+            {((stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative') && (
+                <>
+                    <div className="pointer-events-none fixed -top-32 -left-32 w-[30rem] h-[30rem] bg-indigo-600/25 dark:bg-indigo-600/20 rounded-full blur-[120px] z-0 animate-pulse" />
+                    <div className="pointer-events-none fixed -bottom-32 -right-32 w-[30rem] h-[30rem] bg-purple-600/20 dark:bg-purple-600/15 rounded-full blur-[120px] z-0 animate-pulse" />
+                </>
+            )}
+            {stellarData.role === 'superadmin' && (
+                <>
+                    <div className="pointer-events-none fixed -top-32 -left-32 w-[30rem] h-[30rem] bg-rose-500/25 dark:bg-rose-500/20 rounded-full blur-[120px] z-0 animate-pulse" />
+                    <div className="pointer-events-none fixed -bottom-32 -right-32 w-[30rem] h-[30rem] bg-orange-500/20 dark:bg-orange-500/15 rounded-full blur-[120px] z-0 animate-pulse" />
+                </>
+            )}
             
             {/* IN-APP REALTIME DRIVER PAYMENT TOAST ALERT */}
             {paymentToast && (

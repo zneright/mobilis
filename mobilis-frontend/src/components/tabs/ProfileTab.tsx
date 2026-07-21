@@ -58,12 +58,39 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ stellarData }) => {
     const pubKey = stellarData?.publicKey || '';
     const obfuscatedKey = pubKey ? `${pubKey.substring(0, 8)}...${pubKey.substring(pubKey.length - 8)}` : 'N/A';
 
+    const isSuperAdmin = stellarData?.role === 'superadmin';
+    const isCoopAdmin = stellarData?.role === 'admin' || stellarData?.role === 'cooperative';
+
+    const roleBadgeClass = isSuperAdmin
+        ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30'
+        : isCoopAdmin
+        ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/30'
+        : isDriver
+        ? 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/30'
+        : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
+
+    const avatarGradient = isSuperAdmin
+        ? 'from-rose-500 via-pink-400 to-orange-400'
+        : isCoopAdmin
+        ? 'from-indigo-500 via-purple-400 to-indigo-600'
+        : isDriver
+        ? 'from-cyan-400 via-teal-300 to-amber-400'
+        : 'from-emerald-400 via-teal-300 to-cyan-400';
+
+    const cardBorderAccent = isSuperAdmin
+        ? 'border-t-4 border-t-rose-500 border-x border-b border-rose-500/30 shadow-[0_10px_40px_rgba(244,63,94,0.15)]'
+        : isCoopAdmin
+        ? 'border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30 shadow-[0_10px_40px_rgba(99,102,241,0.15)]'
+        : isDriver
+        ? 'border-t-4 border-t-cyan-500 border-x border-b border-cyan-500/30 shadow-[0_10px_40px_rgba(6,182,212,0.15)]'
+        : 'border-t-4 border-t-emerald-500 border-x border-b border-emerald-500/30 shadow-[0_10px_40px_rgba(16,185,129,0.15)]';
+
     return (
         <div className="w-full max-w-2xl mx-auto space-y-6 text-slate-900 dark:text-white font-sans">
             
             {/* USER AVATAR & IDENTITY HEADER */}
-            <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 shadow-2xl text-center space-y-4 transition-colors duration-300">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-400 via-teal-300 to-emerald-400 p-1 mx-auto shadow-[0_0_25px_rgba(0,210,255,0.4)]">
+            <div className={`p-8 rounded-[2.5rem] bg-white dark:bg-[#0e121a] text-center space-y-4 transition-colors duration-300 ${cardBorderAccent}`}>
+                <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${avatarGradient} p-1 mx-auto shadow-lg`}>
                     <div className="w-full h-full rounded-full bg-slate-100 dark:bg-[#090A0C] flex items-center justify-center text-slate-900 dark:text-white font-black text-2xl">
                         {(stellarData?.fullName || stellarData?.coopName || 'User').charAt(0).toUpperCase()}
                     </div>
@@ -74,7 +101,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ stellarData }) => {
                     <p className="text-xs text-slate-500 dark:text-gray-400 font-mono mt-0.5">{stellarData?.email || 'Registered User'}</p>
                 </div>
 
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs font-mono font-bold uppercase tracking-wider">
+                <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-xs font-mono font-bold uppercase tracking-wider ${roleBadgeClass}`}>
                     <Shield className="w-3.5 h-3.5" />
                     Role: {stellarData?.role || 'User'}
                 </div>

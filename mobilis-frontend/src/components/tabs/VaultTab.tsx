@@ -37,11 +37,23 @@ export const VaultTab: React.FC<VaultTabProps> = ({
     const xlmNum = parseFloat(xlmBalance || '0');
     const phpEquivalent = (xlmNum * PHP_RATE).toFixed(2);
 
+    const isDriver = stellarData?.role === 'driver';
+    const isSuperAdmin = stellarData?.role === 'superadmin';
+    const isCoopAdmin = stellarData?.role === 'admin' || stellarData?.role === 'cooperative';
+
+    const cardRoleAccent = isSuperAdmin
+        ? 'border-t-4 border-t-rose-500 border-x border-b border-rose-500/30 shadow-[0_10px_40px_rgba(244,63,94,0.15)]'
+        : isCoopAdmin
+        ? 'border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30 shadow-[0_10px_40px_rgba(99,102,241,0.15)]'
+        : isDriver
+        ? 'border-t-4 border-t-cyan-500 border-x border-b border-cyan-500/30 shadow-[0_10px_40px_rgba(6,182,212,0.15)]'
+        : 'border-t-4 border-t-emerald-500 border-x border-b border-emerald-500/30 shadow-[0_10px_40px_rgba(16,185,129,0.15)]';
+
     return (
         <div className="w-full max-w-4xl mx-auto space-y-6 text-slate-900 dark:text-white font-sans">
             
             {/* REVOLUT / APPLE WALLET BALANCE HERO CARD */}
-            <div className="p-8 sm:p-10 rounded-[2.5rem] bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-[#121418] dark:to-[#1C1F26] border border-slate-200 dark:border-white/10 shadow-2xl relative overflow-hidden text-center space-y-6 transition-colors duration-300">
+            <div className={`p-8 sm:p-10 rounded-[2.5rem] bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-[#0d111a] dark:to-[#151a26] relative overflow-hidden text-center space-y-6 transition-colors duration-300 ${cardRoleAccent}`}>
                 
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs font-mono font-bold">

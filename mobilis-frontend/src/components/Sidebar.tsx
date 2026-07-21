@@ -19,7 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, role }) => {
         : isCoopAdmin
         ? { label: 'COOPERATIVE ADMIN', color: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/30', activeTab: 'bg-indigo-500/10 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-l-2 border-indigo-500 font-extrabold', dot: 'bg-indigo-500', Icon: Building2 }
         : isDriver
-        ? { label: 'ON DUTY DRIVER', color: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30', activeTab: 'bg-amber-500/10 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 border-l-2 border-amber-500 font-extrabold', dot: 'bg-amber-500', Icon: ShieldCheck }
+        ? { label: 'ON DUTY DRIVER', color: 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/30', activeTab: 'bg-cyan-500/10 dark:bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-l-4 border-cyan-500 font-extrabold', dot: 'bg-cyan-500', Icon: ShieldCheck }
         : { label: 'COMMUTER', color: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30', activeTab: 'bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-l-2 border-emerald-500 font-extrabold', dot: 'bg-emerald-500', Icon: Radio };
 
     const RoleIcon = roleConfig.Icon;

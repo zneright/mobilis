@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Sun, Moon, Bell, ShieldCheck, Navigation, Radio, Building2, ShieldAlert } from 'lucide-react';
 import MobilisLogo from './common/MobilisLogo';
+import { motion } from 'framer-motion';
+import { playCommuterChime, playDriverAlertChime, playStartupChime } from '../utils/webAudio';
 
 interface HeaderProps {
     theme: 'dark' | 'light';
@@ -21,13 +23,30 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onOpenNotifications
         : isCoopAdmin
         ? { label: 'COOP TREASURY', color: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/30', dot: 'bg-indigo-500', Icon: Building2 }
         : isDriver
-        ? { label: 'DRIVER COCKPIT', color: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30', dot: 'bg-amber-500', Icon: Navigation }
+        ? { label: 'DRIVER COCKPIT', color: 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/30', dot: 'bg-cyan-500', Icon: Navigation }
         : { label: 'COMMUTER TRANSIT', color: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30', dot: 'bg-emerald-500', Icon: Radio };
+
+    // Play role‑specific chime when role changes
+    useEffect(() => {
+        if (!role) return;
+        switch (role) {
+            case 'driver':
+                playDriverAlertChime();
+                break;
+            case 'superadmin':
+            case 'admin':
+            case 'cooperative':
+                playStartupChime();
+                break;
+            default:
+                playCommuterChime();
+        }
+    }, [role]);
 
     const RoleIcon = roleConfig.Icon;
 
     return (
-        <header className="fixed top-3 left-4 right-4 max-w-5xl mx-auto z-50 rounded-full transition-all duration-300 h-14 px-5 flex items-center justify-between border font-sans bg-white/85 dark:bg-[#07090E]/85 text-slate-900 dark:text-white border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-md">
+        <motion.header className="fixed top-3 left-4 right-4 max-w-5xl mx-auto z-50 rounded-full transition-all duration-300 h-14 px-5 flex items-center justify-between border font-sans bg-white/85 dark:bg-[#07090E]/85 text-slate-900 dark:text-white border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-md" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
             {/* Left: Brand & Dynamic Role Indicator */}
             <div className="flex items-center gap-3">
                 <MobilisLogo size={28} showText />
@@ -68,7 +87,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onOpenNotifications
                     {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
                 </button>
             </div>
-        </header>
+        </motion.header>
     );
 };
 

@@ -29,7 +29,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, role }) 
         : isCoopAdmin
         ? 'text-indigo-600 dark:text-indigo-400 font-bold'
         : isDriver
-        ? 'text-amber-500 dark:text-amber-400 font-bold'
+        ? 'text-cyan-600 dark:text-cyan-400 font-bold'
         : 'text-emerald-500 dark:text-emerald-400 font-bold';
 
     const activeDotClass = isSuperAdmin
@@ -37,7 +37,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, role }) 
         : isCoopAdmin
         ? 'bg-indigo-600 dark:bg-indigo-400'
         : isDriver
-        ? 'bg-amber-500'
+        ? 'bg-cyan-600 dark:bg-cyan-400'
         : 'bg-emerald-500';
 
     return (
