@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, Component } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { doc, setDoc } from 'firebase/firestore';
@@ -503,7 +503,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
     );
 };
 
-export class LiveTransitMapErrorBoundary extends React.Component<
+export class LiveTransitMapErrorBoundary extends Component<
     { children: React.ReactNode; fallback?: React.ReactNode },
     { hasError: boolean }
 > {
