@@ -8,7 +8,7 @@ interface MobilisLoaderProps {
 
 const DEFAULT_MESSAGES = [
     'Initializing Mobilis...',
-    'Connecting...',
+    'Connecting to Network...',
     'Syncing Wallet...',
     'Preparing Dashboard...',
     'Loading Secure Session...',
@@ -20,18 +20,19 @@ export const MobilisLoader: React.FC<MobilisLoaderProps> = ({
     fullScreen = true,
 }) => {
     const [msgIndex, setMsgIndex] = useState(0);
-    const [fade, setFade] = useState(true);
+    const [isFading, setIsFading] = useState(false);
 
     useEffect(() => {
         if (message) return;
 
         const interval = setInterval(() => {
-            setFade(false);
+            setIsFading(true); // Trigger the exit animation
+
             setTimeout(() => {
                 setMsgIndex((prev) => (prev + 1) % DEFAULT_MESSAGES.length);
-                setFade(true);
-            }, 300);
-        }, 2200);
+                setIsFading(false); // Trigger the entrance animation
+            }, 500); // Matches the Tailwind duration-500 class
+        }, 2500);
 
         return () => clearInterval(interval);
     }, [message]);
@@ -39,37 +40,49 @@ export const MobilisLoader: React.FC<MobilisLoaderProps> = ({
     const displayMessage = message || DEFAULT_MESSAGES[msgIndex];
 
     const content = (
-        <div className="flex flex-col items-center justify-center p-8 space-y-6 text-center select-none">
-            {/* Animated Monogram Logo Container */}
-            <div className="relative flex items-center justify-center">
-                {/* Outer subtle pulsing aura */}
-                <div className="absolute inset-0 w-24 h-24 rounded-full border border-emerald-500/20 animate-ping opacity-30 pointer-events-none" />
-                
-                {/* Logo with gentle micro-pulse */}
-                <div className="relative z-10 transition-transform duration-500 hover:scale-105">
+        <div className="flex flex-col items-center justify-center p-8 space-y-8 text-center select-none">
+
+            {/* Animated Logo & Spinner Container */}
+            <div className="relative flex items-center justify-center w-32 h-32">
+                {/* Outer slow-spinning dashed ring (Infrastructure) */}
+                <div className="absolute inset-0 rounded-full border-[3px] border-dashed border-slate-200 dark:border-slate-800 animate-[spin_8s_linear_infinite]" />
+
+                {/* Inner fast-spinning gradient ring (Active Processing) */}
+                <div className="absolute inset-3 rounded-full border-[3px] border-transparent border-t-emerald-500 border-r-emerald-500/40 animate-[spin_1.5s_linear_infinite]" />
+
+                {/* Ambient glowing pulse behind the logo */}
+                <div className="absolute inset-6 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 blur-md animate-pulse" />
+
+                {/* Core Logo - Stable to imply security */}
+                <div className="relative z-10">
                     <MobilisLogo size={64} variant="navy" />
                 </div>
             </div>
 
-            {/* Rotating Status Message */}
-            <div className="space-y-1">
+            {/* Status Messages Area */}
+            <div className="space-y-3 h-14 flex flex-col justify-center">
+                {/* Rotating Primary Message */}
                 <p
-                    className={`text-sm font-bold tracking-wider text-slate-800 dark:text-slate-200 transition-opacity duration-300 font-sans ${
-                        fade ? 'opacity-100' : 'opacity-0'
-                    }`}
+                    className={`text-sm font-bold tracking-wider text-slate-800 dark:text-slate-200 transform transition-all duration-500 ease-out font-sans ${isFading ? 'opacity-0 translate-y-2 scale-95' : 'opacity-100 translate-y-0 scale-100'
+                        }`}
                 >
                     {displayMessage}
                 </p>
-                <p className="text-[10px] font-mono uppercase tracking-widest text-emerald-500">
-                    Stellar Soroban Network
-                </p>
+
+                {/* Network Sub-label with Live Node Dot */}
+                <div className="flex items-center justify-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_5px_rgba(16,185,129,0.5)]" />
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                        Stellar Soroban Network
+                    </p>
+                </div>
             </div>
         </div>
     );
 
     if (fullScreen) {
         return (
-            <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] flex items-center justify-center transition-colors duration-300">
+            <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] flex items-center justify-center transition-colors duration-500">
                 {content}
             </div>
         );

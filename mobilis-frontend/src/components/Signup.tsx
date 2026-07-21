@@ -27,6 +27,7 @@ const Signup: React.FC = () => {
     const [fullName, setFullName] = useState('');
     const [phone, setPhone] = useState('');
     const [plateNumber, setPlateNumber] = useState('');
+    const [vehicleType, setVehicleType] = useState<'Jeepney' | 'Tricycle' | 'UV Express' | 'Bus' | 'E-Vehicle' | 'Motorcycle'>('Tricycle');
 
     // TODA / Cooperative Selection strictly from Firebase Firestore
     const [todaAffiliation, setTodaAffiliation] = useState('');
@@ -140,7 +141,8 @@ const Signup: React.FC = () => {
                     fullName: fullName.trim(),
                     phone: phone.trim(),
                     plateNumber: plateNumber.trim(),
-                    todaAffiliation: todaAffiliation.trim()
+                    todaAffiliation: todaAffiliation.trim(),
+                    vehicleType: vehicleType
                 } as UserData;
             } else if (role === 'commuter') {
                 finalUserData = {
@@ -377,6 +379,25 @@ const Signup: React.FC = () => {
                                 <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} required className={inputClasses} />
                                 <input type="tel" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} required className={inputClasses} />
                                 <input type="text" placeholder="Plate Number (e.g., ABC-1234)" value={plateNumber} onChange={(e) => setPlateNumber(e.target.value)} required className={inputClasses} />
+                                
+                                <div>
+                                    <label className="block text-[10px] text-cyan-600 dark:text-cyan-400 font-bold uppercase tracking-wider mb-1.5">
+                                        Select Cooperative Transportation Vehicle Type
+                                    </label>
+                                    <select
+                                        value={vehicleType}
+                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                        onChange={(e) => setVehicleType(e.target.value as any)}
+                                        className={inputClasses}
+                                    >
+                                        <option value="Jeepney">🛻 Jeepney / Modern PUJ (JODA Cooperative)</option>
+                                        <option value="Tricycle">🛺 Tricycle (TODA Cooperative)</option>
+                                        <option value="UV Express">🚐 UV Express / Shuttle Van (UVODA)</option>
+                                        <option value="Bus">🚌 Public Utility Bus (PUB Cooperative)</option>
+                                        <option value="E-Vehicle">🚙 E-Vehicle / E-Trike (Electric Mobility)</option>
+                                        <option value="Motorcycle">🛵 Motorcycle Taxi (Habal-Habal Coop)</option>
+                                    </select>
+                                </div>
                                 
                                 <div className="relative">
                                     <label className="block text-[10px] text-cyan-600 dark:text-cyan-400 font-bold uppercase tracking-wider mb-1.5">

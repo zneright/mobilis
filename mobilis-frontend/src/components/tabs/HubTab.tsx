@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { collection, query, where, onSnapshot, doc, updateDoc, addDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Fuel, Building2, UserCheck, ArrowUpRight, ShieldCheck, CheckCircle2, Megaphone, Send, BellRing, X } from 'lucide-react';
+import { Fuel, Building2, UserCheck, ArrowUpRight, ShieldCheck, CheckCircle2, Megaphone, Send, BellRing, X, Truck } from 'lucide-react';
 
 interface HubTabProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -37,6 +37,11 @@ export const HubTab: React.FC<HubTabProps> = ({
     const [pendingDrivers, setPendingDrivers] = useState<any[]>([]);
     const [loadingDrivers, setLoadingDrivers] = useState<boolean>(false);
     const [approvingUid, setApprovingUid] = useState<string | null>(null);
+
+    // Vehicle Change Requests State
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [vehicleChangeRequests, setVehicleChangeRequests] = useState<any[]>([]);
+    const [approvingVehicleUid, setApprovingVehicleUid] = useState<string | null>(null);
 
     // Broadcast Notification Form State
     const [showBroadcastModal, setShowBroadcastModal] = useState<boolean>(false);
@@ -80,6 +85,57 @@ export const HubTab: React.FC<HubTabProps> = ({
 
         return () => unsubscribe();
     }, [isAdmin, stellarData, isSuperAdmin]);
+
+    // Fetch Pending Vehicle Change Requests
+    React.useEffect(() => {
+        if (!isAdmin) return;
+        const q = query(
+            collection(db, 'users'),
+            where('role', '==', 'driver'),
+            where('vehicleChangeStatus', '==', 'pending')
+        );
+
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const list: any[] = [];
+                snapshot.forEach((docSnap) => {
+                    const d = docSnap.data();
+                    if (d.todaAffiliation === stellarData.coopName || isSuperAdmin) {
+                        list.push({ uid: docSnap.id, ...d });
+                    }
+                });
+                setVehicleChangeRequests(list);
+            },
+            (err) => {
+                console.warn("Error fetching vehicle change requests:", err);
+            }
+        );
+
+        return () => unsubscribe();
+    }, [isAdmin, stellarData, isSuperAdmin]);
+
+    const handleApproveVehicleChange = async (driverUid: string, newVehicleType: string) => {
+        setApprovingVehicleUid(driverUid);
+        try {
+            await updateDoc(doc(db, 'users', driverUid), {
+                vehicleType: newVehicleType,
+                pendingVehicleType: null,
+                vehicleChangeStatus: 'approved',
+                vehicleApprovedAt: new Date().toISOString(),
+                vehicleApprovedBy: stellarData.uid,
+            });
+            // Also sync active location document if driver is currently on transit
+            await updateDoc(doc(db, 'driver_locations', driverUid), {
+                vehicleType: newVehicleType,
+            }).catch(() => {});
+        } catch (err) {
+            console.error("Failed to approve vehicle change:", err);
+        } finally {
+            setApprovingVehicleUid(null);
+        }
+    };
 
     const handleApproveDriver = async (driverUid: string) => {
         setApprovingUid(driverUid);
@@ -237,6 +293,56 @@ export const HubTab: React.FC<HubTabProps> = ({
                     >
                         <BellRing className="w-4 h-4" /> Send Announcement
                     </button>
+                </div>
+            )}
+
+            {/* COOPERATIVE ADMIN VEHICLE TYPE CHANGE REQUESTS QUEUE */}
+            {isAdmin && vehicleChangeRequests.length > 0 && (
+                <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#121418] border border-cyan-500/30 shadow-2xl space-y-6 transition-colors duration-300">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 flex items-center justify-center">
+                                <Truck className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className="font-black text-xl text-slate-900 dark:text-white">Vehicle Change Approvals</h3>
+                                <p className="text-xs text-slate-500 dark:text-gray-400">Review & approve driver vehicle designation change requests</p>
+                            </div>
+                        </div>
+                        <span className="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 text-xs font-mono font-bold border border-cyan-500/20">
+                            {vehicleChangeRequests.length} Pending
+                        </span>
+                    </div>
+
+                    <div className="space-y-4">
+                        {vehicleChangeRequests.map((driver) => (
+                            <div
+                                key={driver.uid}
+                                className="p-5 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-400 flex items-center justify-center text-black font-black text-lg">
+                                        {(driver.fullName || 'Driver').charAt(0)}
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-base text-slate-900 dark:text-white">{driver.fullName}</h4>
+                                        <p className="text-xs text-slate-500 dark:text-gray-400 font-mono">
+                                            Current: <span className="font-bold">{driver.vehicleType || 'Tricycle'}</span> ➔ Requested: <span className="font-black text-cyan-500">{driver.pendingVehicleType}</span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => handleApproveVehicleChange(driver.uid, driver.pendingVehicleType)}
+                                    disabled={approvingVehicleUid === driver.uid}
+                                    className="w-full sm:w-auto px-6 py-3 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-black font-black text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(0,210,255,0.4)] flex items-center justify-center gap-2"
+                                >
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    {approvingVehicleUid === driver.uid ? 'Approving...' : `Approve ${driver.pendingVehicleType}`}
+                                </button>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 

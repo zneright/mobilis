@@ -29,6 +29,7 @@ export const DriverDutyToggle: React.FC<DriverDutyToggleProps> = ({ userData }) 
                 driverName: userData.fullName || 'Driver',
                 plateNumber: userData.plateNumber || 'N/A',
                 todaAffiliation: userData.todaAffiliation || 'Independent',
+                vehicleType: userData.vehicleType || 'Tricycle',
                 lat,
                 lng,
                 active: true,

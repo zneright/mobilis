@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Copy, Check, QrCode, Shield, LogOut, ChevronRight, User, Phone, MapPin } from 'lucide-react';
-import { auth } from '../../firebase';
+import { Copy, Check, QrCode, Shield, LogOut, ChevronRight, User, Phone, MapPin, Truck, Clock, CheckCircle2 } from 'lucide-react';
+import { auth, db } from '../../firebase';
 import { signOut } from 'firebase/auth';
+import { doc, updateDoc } from 'firebase/firestore';
 
 interface ProfileTabProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -13,6 +14,15 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ stellarData }) => {
     const [copiedKey, setCopiedKey] = useState(false);
     const [showQr, setShowQr] = useState(false);
 
+    // Driver Vehicle Change State
+    const [selectedNewVehicle, setSelectedNewVehicle] = useState<'Jeepney' | 'Tricycle' | 'UV Express' | 'Bus' | 'E-Vehicle' | 'Motorcycle'>(
+        stellarData?.vehicleType || 'Tricycle'
+    );
+    const [isSubmittingChange, setIsSubmittingChange] = useState(false);
+    const [changeSuccessMsg, setChangeSuccessMsg] = useState('');
+
+    const isDriver = stellarData?.role === 'driver';
+
     const handleCopyKey = () => {
         if (stellarData?.publicKey) {
             navigator.clipboard.writeText(stellarData.publicKey);
@@ -23,6 +33,26 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ stellarData }) => {
 
     const handleSignOut = () => {
         signOut(auth).catch(console.error);
+    };
+
+    const handleRequestVehicleChange = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!stellarData?.uid) return;
+        setIsSubmittingChange(true);
+        setChangeSuccessMsg('');
+
+        try {
+            await updateDoc(doc(db, 'users', stellarData.uid), {
+                pendingVehicleType: selectedNewVehicle,
+                vehicleChangeStatus: 'pending',
+                vehicleChangeRequestedAt: new Date().toISOString(),
+            });
+            setChangeSuccessMsg(`Vehicle change request to ${selectedNewVehicle} submitted to ${stellarData.todaAffiliation || 'Cooperative'} for approval.`);
+        } catch (err) {
+            console.error("Failed to request vehicle change:", err);
+        } finally {
+            setIsSubmittingChange(false);
+        }
     };
 
     const pubKey = stellarData?.publicKey || '';
@@ -49,6 +79,67 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ stellarData }) => {
                     Role: {stellarData?.role || 'User'}
                 </div>
             </div>
+
+            {/* DRIVER VEHICLE TYPE & COOPERATIVE APPROVAL SECTION */}
+            {isDriver && (
+                <div className="p-6 rounded-3xl bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 shadow-xl space-y-4 transition-colors duration-300">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Truck className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+                            <h3 className="font-black text-sm text-slate-900 dark:text-white uppercase tracking-wider">Transport Vehicle Designation</h3>
+                        </div>
+                        <span className="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-mono font-bold text-xs border border-cyan-500/20">
+                            {stellarData?.vehicleType || 'Tricycle'}
+                        </span>
+                    </div>
+
+                    {stellarData?.vehicleChangeStatus === 'pending' ? (
+                        <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl space-y-1">
+                            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold text-xs">
+                                <Clock className="w-4 h-4 animate-spin" />
+                                <span>Cooperative Approval Pending</span>
+                            </div>
+                            <p className="text-xs text-slate-600 dark:text-gray-300">
+                                Request to change vehicle to <strong className="text-amber-500">{stellarData.pendingVehicleType}</strong> is awaiting approval from <strong>{stellarData.todaAffiliation || 'your Cooperative Admin'}</strong>.
+                            </p>
+                        </div>
+                    ) : (
+                        <form onSubmit={handleRequestVehicleChange} className="space-y-3 pt-2">
+                            <label className="block text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">
+                                Request Vehicle Type Change (Cooperative Verification Required)
+                            </label>
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <select
+                                    value={selectedNewVehicle}
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    onChange={(e) => setSelectedNewVehicle(e.target.value as any)}
+                                    className="flex-1 p-3 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-cyan-500"
+                                >
+                                    <option value="Jeepney">🛻 Jeepney / Modern PUJ (JODA)</option>
+                                    <option value="Tricycle">🛺 Tricycle (TODA)</option>
+                                    <option value="UV Express">🚐 UV Express / Shuttle Van</option>
+                                    <option value="Bus">🚌 Public Utility Bus (PUB)</option>
+                                    <option value="E-Vehicle">🚙 E-Vehicle / E-Trike</option>
+                                    <option value="Motorcycle">🛵 Motorcycle Taxi (Habal-Habal)</option>
+                                </select>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmittingChange || selectedNewVehicle === stellarData?.vehicleType}
+                                    className="px-5 py-3 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-black font-black text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5"
+                                >
+                                    {isSubmittingChange ? 'Requesting...' : 'Submit Request'}
+                                </button>
+                            </div>
+
+                            {changeSuccessMsg && (
+                                <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 pt-1">
+                                    <CheckCircle2 className="w-4 h-4" /> {changeSuccessMsg}
+                                </p>
+                            )}
+                        </form>
+                    )}
+                </div>
+            )}
 
             {/* WALLET ADDRESS KEY CARD */}
             <div className="p-6 rounded-3xl bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 shadow-xl space-y-4 transition-colors duration-300">

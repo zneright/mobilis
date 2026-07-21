@@ -13,7 +13,7 @@ interface CommuterRadarProps {
 }
 
 export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, currencyMode, setCurrencyMode }) => {
-    const [searchRadiusKm, setSearchRadiusKm] = useState<number>(0.05); // Default 50 meters
+    const searchRadiusKm = 0.05; // Fixed 50-meter GPS radar radius
     const [commuterCoords, setCommuterCoords] = useState<{ lat: number; lng: number } | null>(null);
     const [gpsStatus, setGpsStatus] = useState<'acquiring' | 'ready' | 'denied' | 'error'>('acquiring');
     const [allActiveDrivers, setAllActiveDrivers] = useState<DriverLocationDoc[]>([]);
@@ -127,36 +127,18 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                 </div>
             </div>
 
-            {/* Radius Selector Controls */}
+            {/* Fixed 50-Meter Radar Status Banner */}
             <div className="w-full bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 rounded-2xl p-4 mb-6 shadow-md flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-2">
-                    <Compass className="w-4 h-4 text-emerald-500" />
+                    <Compass className="w-4 h-4 text-emerald-500 animate-spin" />
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                        Search Radius:
+                        🛰️ Active GPS Radar Radius: <span className="text-emerald-500 font-mono font-black">50 METERS ONLY</span>
                     </span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    {[
-                        { label: '50m', value: 0.05 },
-                        { label: '100m', value: 0.1 },
-                        { label: '500m', value: 0.5 },
-                        { label: '1km', value: 1.0 },
-                        { label: '3km', value: 3.0 },
-                    ].map((pill) => (
-                        <button
-                            key={pill.label}
-                            onClick={() => setSearchRadiusKm(pill.value)}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                                searchRadiusKm === pill.value
-                                    ? 'bg-emerald-500 text-black shadow-md scale-105'
-                                    : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                            }`}
-                        >
-                            {pill.label}
-                        </button>
-                    ))}
-                </div>
+                <span className="px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs font-mono font-bold">
+                    GPS Broadcast Lock • 50m Radius
+                </span>
             </div>
 
             {/* GPS Status Banner */}
@@ -271,7 +253,11 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                                             </span>
                                         </div>
                                         <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-1">
-                                            🛺 Plate: {drv.plateNumber} • {drv.todaAffiliation}
+                                            {drv.vehicleType === 'Jeepney' ? '🛻 Modern Jeepney' :
+                                             drv.vehicleType === 'UV Express' ? '🚐 UV Express' :
+                                             drv.vehicleType === 'Bus' ? '🚌 Public Bus' :
+                                             drv.vehicleType === 'E-Vehicle' ? '🚙 E-Trike' :
+                                             drv.vehicleType === 'Motorcycle' ? '🛵 Habal-Habal' : '🛺 Tricycle'} • Plate: {drv.plateNumber} ({drv.todaAffiliation})
                                         </p>
                                     </div>
                                 </div>
