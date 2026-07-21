@@ -756,6 +756,63 @@ const Dashboard: React.FC = () => {
 
                 <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-8 flex flex-col items-center">
 
+                    {/* VIBRANT ROLE ENVIRONMENT HERO BANNER AT TOP OF EVERY TAB */}
+                    <div className={`w-full max-w-4xl mb-6 p-4 sm:p-5 rounded-3xl border flex items-center justify-between backdrop-blur-xl shadow-lg transition-all duration-300 ${
+                        stellarData.role === 'driver'
+                            ? 'bg-gradient-to-r from-cyan-950/40 via-amber-950/20 to-slate-950/60 border-cyan-500/40 text-cyan-300 shadow-[0_4px_20px_rgba(6,182,212,0.15)]'
+                            : (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'
+                            ? 'bg-gradient-to-r from-indigo-950/40 via-purple-950/20 to-slate-950/60 border-indigo-500/40 text-indigo-300 shadow-[0_4px_20px_rgba(99,102,241,0.15)]'
+                            : stellarData.role === 'superadmin'
+                            ? 'bg-gradient-to-r from-rose-950/40 via-orange-950/20 to-slate-950/60 border-rose-500/40 text-rose-300 shadow-[0_4px_20px_rgba(244,63,94,0.15)]'
+                            : 'bg-gradient-to-r from-emerald-950/40 via-teal-950/20 to-slate-950/60 border-emerald-500/40 text-emerald-300 shadow-[0_4px_20px_rgba(16,185,129,0.15)]'
+                    }`}>
+                        <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-base shadow-inner ${
+                                stellarData.role === 'driver'
+                                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                                    : (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'
+                                    ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
+                                    : stellarData.role === 'superadmin'
+                                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            }`}>
+                                {stellarData.role === 'driver' ? '🛺' : (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative' ? '🏢' : stellarData.role === 'superadmin' ? '🛡️' : '🚶'}
+                            </div>
+                            <div>
+                                <h2 className="text-sm sm:text-base font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                                    <span>{stellarData.role === 'driver' ? 'Driver Cockpit HUD' : (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative' ? 'Coop Treasury Command' : stellarData.role === 'superadmin' ? 'Super Admin Portal' : 'Commuter Transit Hub'}</span>
+                                    <span className={`text-[10px] font-mono font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${
+                                        stellarData.role === 'driver'
+                                            ? 'bg-cyan-500/15 border-cyan-500/30 text-cyan-400'
+                                            : (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'
+                                            ? 'bg-indigo-500/15 border-indigo-500/30 text-indigo-400'
+                                            : stellarData.role === 'superadmin'
+                                            ? 'bg-rose-500/15 border-rose-500/30 text-rose-400'
+                                            : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                                    }`}>
+                                        {stellarData.role || 'Member'}
+                                    </span>
+                                </h2>
+                                <p className="text-[11px] font-mono text-slate-500 dark:text-gray-400 leading-tight mt-0.5">
+                                    {stellarData.role === 'driver' 
+                                        ? `Affiliated with ${stellarData.todaAffiliation || 'Cooperative TODA'} • Vehicle: ${stellarData.vehicleType || 'Tricycle'}`
+                                        : (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'
+                                        ? `Managing TODA Fleet & Liquidity for ${stellarData.coopName || 'Cooperative'}`
+                                        : stellarData.role === 'superadmin'
+                                        ? 'Global Soroban Protocol Operations & Settlement'
+                                        : 'Real-time Transport Radar & Cashless Soroban Payments'}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="hidden sm:flex items-center gap-2">
+                            <div className="px-3 py-1 rounded-full text-[10px] font-mono font-bold border border-white/20 bg-black/20 text-white flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                                <span>Stellar Testnet Live</span>
+                            </div>
+                        </div>
+                    </div>
+
                     {activeTab === 'hub' && (
                         stellarData.role === 'commuter' ? (
                             <CommuterRadar
