@@ -171,7 +171,7 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
             console.warn("Driver marker render error:", e);
         }
 
-        // Passenger Pulse Echo Markers
+        // Passenger Pulse Echo Markers (Cyberpunk Beacon Waves)
         try {
             const currentKeys = new Set<string>();
             nearbyPassengers.forEach((p) => {
@@ -182,10 +182,14 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
                     const el = document.createElement('div');
                     el.className = 'cursor-pointer group relative flex items-center justify-center';
                     el.innerHTML = `
-                        <div class="w-10 h-10 rounded-full bg-white text-black font-black flex items-center justify-center shadow-[0_0_25px_rgba(255,255,255,0.9)] border-2 border-amber-400 text-lg group-hover:scale-125 transition-transform animate-bounce">
-                            👤
+                        <div class="absolute w-12 h-12 rounded-full bg-cyan-400/20 border border-cyan-400/50 animate-ping"></div>
+                        <div class="absolute w-8 h-8 rounded-full bg-amber-400/30 border border-amber-400/60 animate-pulse"></div>
+                        <div class="relative z-10 w-6 h-6 rounded-full bg-gradient-to-tr from-cyan-300 via-emerald-200 to-white shadow-[0_0_20px_rgba(0,210,255,1)] border-2 border-white group-hover:scale-130 transition-transform flex items-center justify-center">
+                            <div class="w-2 h-2 rounded-full bg-cyan-500 animate-ping"></div>
                         </div>
-                        <div class="absolute -inset-2 rounded-full border border-amber-400/60 animate-ping"></div>
+                        <div class="absolute -bottom-6 px-2 py-0.5 rounded-md bg-[#090C14]/90 border border-cyan-400/40 text-[9px] font-mono font-black text-cyan-300 shadow-lg whitespace-nowrap">
+                            📍 PASSENGER WAITING
+                        </div>
                     `;
                     el.addEventListener('click', () => handleAcceptPickup(p));
                     const marker = new maplibregl.Marker({ element: el })
@@ -350,8 +354,8 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
                                     className="p-5 rounded-3xl bg-[#090C12] border border-orange-500/30 shadow-xl flex items-center justify-between gap-4 transition-all hover:border-orange-400"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-black flex items-center justify-center font-black text-xl shadow-[0_0_15px_rgba(255,107,0,0.5)]">
-                                            👤
+                                        <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-400/30 text-cyan-400 flex items-center justify-center font-black text-xl shadow-[0_0_15px_rgba(0,210,255,0.4)]">
+                                            📡
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
