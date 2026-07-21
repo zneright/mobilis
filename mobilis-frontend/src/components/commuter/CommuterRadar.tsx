@@ -5,7 +5,7 @@ import { calculateDistanceKm } from '../../utils/geo';
 import { Compass, Navigation, Radio, RefreshCw, Fuel, Zap, MapPin } from 'lucide-react';
 import type { DriverLocationDoc, UserData } from '../../types';
 import FarePaymentModal from './FarePaymentModal';
-import LiveTransitMap from './LiveTransitMap';
+import LiveTransitMap, { LiveTransitMapErrorBoundary } from './LiveTransitMap';
 
 interface CommuterRadarProps {
     commuterData: UserData;
@@ -242,11 +242,13 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
             {/* VIEW MODE 2: PRIVACY-FIRST LIVE TRANSIT MAP */}
             {viewMode === 'map' && (
                 <div className="w-full mb-8">
-                    <LiveTransitMap
-                        commuterCoords={centerCoords}
-                        activeDrivers={nearbyDrivers}
-                        onSelectVehicleToPay={(drv) => setSelectedDriver(drv)}
-                    />
+                    <LiveTransitMapErrorBoundary>
+                        <LiveTransitMap
+                            commuterCoords={centerCoords}
+                            activeDrivers={nearbyDrivers}
+                            onSelectVehicleToPay={(drv) => setSelectedDriver(drv)}
+                        />
+                    </LiveTransitMapErrorBoundary>
                 </div>
             )}
 

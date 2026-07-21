@@ -24,6 +24,18 @@ interface AnonymizedVehicle {
     rawDoc: DriverLocationDoc;
 }
 
+function isWebGlAvailable(): boolean {
+    try {
+        const canvas = document.createElement('canvas');
+        return Boolean(
+            window.WebGLRenderingContext &&
+            (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+        );
+    } catch {
+        return false;
+    }
+}
+
 export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
     commuterCoords,
     activeDrivers,
@@ -36,7 +48,19 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
 
     const [selectedAnonId, setSelectedAnonId] = useState<string | null>(null);
     const [vehicleFilter, setVehicleFilter] = useState<string>('all');
-    const [displayMode, setDisplayMode] = useState<'maplibre' | 'sonar'>('maplibre');
+    const [webGlSupported, setWebGlSupported] = useState<boolean>(true);
+    const [displayMode, setDisplayMode] = useState<'maplibre' | 'sonar'>('sonar');
+
+    // Check WebGL availability on mount
+    useEffect(() => {
+        const supported = isWebGlAvailable();
+        setWebGlSupported(supported);
+        if (supported) {
+            setDisplayMode('maplibre');
+        } else {
+            setDisplayMode('sonar');
+        }
+    }, []);
 
     // Transform raw driver documents into Privacy-First Anonymized Vehicles
     const anonymizedVehicles: AnonymizedVehicle[] = useMemo(() => {
@@ -98,52 +122,73 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
         return filteredVehicles.find((v) => v.anonId === selectedAnonId) || filteredVehicles[0] || null;
     }, [filteredVehicles, selectedAnonId]);
 
-    // Initialize MapLibre GL Vector Map
+    // Initialize MapLibre GL Vector Map safely with WebGL fallback
     useEffect(() => {
-        if (!mapContainerRef.current || mapRef.current) return;
+        if (displayMode !== 'maplibre' || !mapContainerRef.current || mapRef.current) return;
 
-        const isDarkMode = document.documentElement.classList.contains('dark');
-        const styleUrl = isDarkMode
-            ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
-            : 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
+        // Check WebGL availability before constructing map
+        if (!isWebGlAvailable()) {
+            console.warn("MapLibre GL WebGL context unavailable in current environment. Falling back to Sonar Radar.");
+            setWebGlSupported(false);
+            setDisplayMode('sonar');
+            return;
+        }
 
-        const map = new maplibregl.Map({
-            container: mapContainerRef.current,
-            style: styleUrl,
-            center: [commuterCoords.lng, commuterCoords.lat],
-            zoom: 16.5,
-            pitch: 35,
-            bearing: 0,
-            attributionControl: false,
-        });
+        try {
+            const isDarkMode = document.documentElement.classList.contains('dark');
+            const styleUrl = isDarkMode
+                ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+                : 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
 
-        map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
-        mapRef.current = map;
+            const map = new maplibregl.Map({
+                container: mapContainerRef.current,
+                style: styleUrl,
+                center: [commuterCoords.lng, commuterCoords.lat],
+                zoom: 16.5,
+                pitch: 35,
+                bearing: 0,
+                attributionControl: false,
+            });
+
+            map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
+            mapRef.current = map;
+            setWebGlSupported(true);
+        } catch (err) {
+            console.warn("WebGL initialization failed:", err);
+            setWebGlSupported(false);
+            setDisplayMode('sonar');
+        }
 
         return () => {
-            map.remove();
-            mapRef.current = null;
+            if (mapRef.current) {
+                mapRef.current.remove();
+                mapRef.current = null;
+            }
         };
-    }, []);
+    }, [displayMode, commuterCoords]);
 
     // Update Commuter Marker & Center Map on GPS updates
     useEffect(() => {
         if (!mapRef.current) return;
         const map = mapRef.current;
 
-        if (!commuterMarkerRef.current) {
-            const el = document.createElement('div');
-            el.className = 'w-10 h-10 rounded-full bg-cyan-500 text-black flex items-center justify-center font-black shadow-[0_0_20px_rgba(0,210,255,0.8)] border-2 border-white animate-pulse';
-            el.innerHTML = '📍';
+        try {
+            if (!commuterMarkerRef.current) {
+                const el = document.createElement('div');
+                el.className = 'w-10 h-10 rounded-full bg-cyan-500 text-black flex items-center justify-center font-black shadow-[0_0_20px_rgba(0,210,255,0.8)] border-2 border-white animate-pulse';
+                el.innerHTML = '📍';
 
-            commuterMarkerRef.current = new maplibregl.Marker({ element: el })
-                .setLngLat([commuterCoords.lng, commuterCoords.lat])
-                .addTo(map);
-        } else {
-            commuterMarkerRef.current.setLngLat([commuterCoords.lng, commuterCoords.lat]);
+                commuterMarkerRef.current = new maplibregl.Marker({ element: el })
+                    .setLngLat([commuterCoords.lng, commuterCoords.lat])
+                    .addTo(map);
+            } else {
+                commuterMarkerRef.current.setLngLat([commuterCoords.lng, commuterCoords.lat]);
+            }
+
+            map.easeTo({ center: [commuterCoords.lng, commuterCoords.lat], duration: 1000 });
+        } catch (err) {
+            console.warn("Error updating commuter marker:", err);
         }
-
-        map.easeTo({ center: [commuterCoords.lng, commuterCoords.lat], duration: 1000 });
     }, [commuterCoords]);
 
     // Update Vehicle Markers on MapLibre Canvas
@@ -152,45 +197,46 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
         const map = mapRef.current;
         const currentMarkerKeys = new Set<string>();
 
-        filteredVehicles.forEach((v) => {
-            currentMarkerKeys.add(v.anonId);
-            const isSelected = selectedAnonId === v.anonId;
+        try {
+            filteredVehicles.forEach((v) => {
+                currentMarkerKeys.add(v.anonId);
+                const isSelected = selectedAnonId === v.anonId;
 
-            if (markersRef.current.has(v.anonId)) {
-                // Smooth position & rotation update
-                const marker = markersRef.current.get(v.anonId)!;
-                marker.setLngLat([v.lng, v.lat]);
-                marker.setRotation(v.bearing.angle);
-            } else {
-                // Create New Anonymized Vehicle Marker Element
-                const el = document.createElement('div');
-                el.className = `cursor-pointer transition-all duration-300 p-2.5 rounded-2xl flex items-center gap-1.5 shadow-2xl ${
-                    isSelected
-                        ? 'bg-emerald-500 text-black scale-110 shadow-[0_0_25px_rgba(52,211,153,0.9)] border-2 border-white'
-                        : 'bg-[#0B0F19] text-white border border-white/20 hover:scale-105'
-                }`;
-                el.innerHTML = `<span style="font-size: 20px;">${v.icon}</span><span style="font-size: 10px; font-weight: 900; font-family: monospace;">${v.anonId}</span>`;
+                if (markersRef.current.has(v.anonId)) {
+                    const marker = markersRef.current.get(v.anonId)!;
+                    marker.setLngLat([v.lng, v.lat]);
+                    marker.setRotation(v.bearing.angle);
+                } else {
+                    const el = document.createElement('div');
+                    el.className = `cursor-pointer transition-all duration-300 p-2.5 rounded-2xl flex items-center gap-1.5 shadow-2xl ${
+                        isSelected
+                            ? 'bg-emerald-500 text-black scale-110 shadow-[0_0_25px_rgba(52,211,153,0.9)] border-2 border-white'
+                            : 'bg-[#0B0F19] text-white border border-white/20 hover:scale-105'
+                    }`;
+                    el.innerHTML = `<span style="font-size: 20px;">${v.icon}</span><span style="font-size: 10px; font-weight: 900; font-family: monospace;">${v.anonId}</span>`;
 
-                el.addEventListener('click', () => {
-                    setSelectedAnonId(v.anonId);
-                });
+                    el.addEventListener('click', () => {
+                        setSelectedAnonId(v.anonId);
+                    });
 
-                const marker = new maplibregl.Marker({ element: el, rotationAlignment: 'map' })
-                    .setLngLat([v.lng, v.lat])
-                    .setRotation(v.bearing.angle)
-                    .addTo(map);
+                    const marker = new maplibregl.Marker({ element: el, rotationAlignment: 'map' })
+                        .setLngLat([v.lng, v.lat])
+                        .setRotation(v.bearing.angle)
+                        .addTo(map);
 
-                markersRef.current.set(v.anonId, marker);
-            }
-        });
+                    markersRef.current.set(v.anonId, marker);
+                }
+            });
 
-        // Cleanup offline markers
-        markersRef.current.forEach((marker, key) => {
-            if (!currentMarkerKeys.has(key)) {
-                marker.remove();
-                markersRef.current.delete(key);
-            }
-        });
+            markersRef.current.forEach((marker, key) => {
+                if (!currentMarkerKeys.has(key)) {
+                    marker.remove();
+                    markersRef.current.delete(key);
+                }
+            });
+        } catch (err) {
+            console.warn("Error updating vehicle markers on map:", err);
+        }
     }, [filteredVehicles, selectedAnonId]);
 
     // Sonar Radar Offsets Calculation
@@ -214,7 +260,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-bold">
-                                MapLibre Vector Engine
+                                {webGlSupported ? 'MapLibre Vector Engine' : '50m Sonar Engine'}
                             </span>
                             <span className="text-xs text-slate-500 dark:text-gray-400 font-mono">100% Privacy Redacted</span>
                         </div>
@@ -226,14 +272,18 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
 
                 <div className="flex items-center gap-2 flex-shrink-0">
                     <button
-                        onClick={() => setDisplayMode('maplibre')}
+                        onClick={() => {
+                            if (!webGlSupported) return;
+                            setDisplayMode('maplibre');
+                        }}
+                        disabled={!webGlSupported}
                         className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all border ${
                             displayMode === 'maplibre'
                                 ? 'bg-emerald-500 text-black border-emerald-400 font-black shadow-md'
-                                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-400'
+                                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-400 disabled:opacity-40'
                         }`}
                     >
-                        🗺️ MapLibre GL Map
+                        🗺️ MapLibre GL Map {!webGlSupported && '(WebGL Unavailable)'}
                     </button>
                     <button
                         onClick={() => setDisplayMode('sonar')}
@@ -277,11 +327,10 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
             </div>
 
             {/* DISPLAY MODE 1: MAPLIBRE GL JS VECTOR MAP */}
-            {displayMode === 'maplibre' ? (
+            {displayMode === 'maplibre' && webGlSupported ? (
                 <div className="relative w-full h-[420px] rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl">
                     <div ref={mapContainerRef} className="w-full h-full" />
                     
-                    {/* Floating Map Legend Overlay */}
                     <div className="absolute top-4 left-4 z-10 p-3 bg-slate-900/90 dark:bg-black/80 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl text-[11px] text-white space-y-1">
                         <div className="flex items-center gap-1.5 font-bold text-cyan-400">
                             <Navigation className="w-3.5 h-3.5" /> Live Vector Transit Map
@@ -292,7 +341,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                     </div>
                 </div>
             ) : (
-                /* DISPLAY MODE 2: SONAR RADAR CANVAS */
+                /* DISPLAY MODE 2: SONAR RADAR CANVAS (FALLBACK & NATIVE DISPLAY) */
                 <div className="relative w-full h-[420px] rounded-[2.5rem] bg-white dark:bg-[#07090E] border border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl flex items-center justify-center transition-colors duration-300">
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="w-[340px] h-[340px] rounded-full border border-emerald-500/10 animate-pulse" />
@@ -389,7 +438,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                         </div>
                     </div>
 
-                    {/* Privacy Guarantee Footer */}
+            {/* Privacy Guarantee Footer */}
                     <div className="pt-4 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-[11px] text-slate-400 dark:text-gray-500 font-mono">
                         <span className="flex items-center gap-1">
                             <EyeOff className="w-3.5 h-3.5 text-slate-400" /> Driver personal info redacted by Mobilis Privacy Layer
@@ -401,5 +450,39 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
         </div>
     );
 };
+
+export class LiveTransitMapErrorBoundary extends React.Component<
+    { children: React.ReactNode; fallback?: React.ReactNode },
+    { hasError: boolean }
+> {
+    constructor(props: { children: React.ReactNode; fallback?: React.ReactNode }) {
+        super(props);
+        this.state = { hasError: false };
+    }
+
+    static getDerivedStateFromError() {
+        return { hasError: true };
+    }
+
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+        console.warn("LiveTransitMap Error Boundary caught rendering error:", error, errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return this.props.fallback || (
+                <div className="p-6 bg-slate-900 border border-slate-800 rounded-3xl text-center space-y-2 text-white font-mono text-xs">
+                    <p className="text-amber-400 font-bold">
+                        ⚠️ Live Vector Map Engine Unavailable in Current Environment
+                    </p>
+                    <p className="text-slate-400">
+                        Active drivers remain visible on the 50m Sonar Radar canvas.
+                    </p>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
 
 export default LiveTransitMap;
