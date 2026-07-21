@@ -21,6 +21,7 @@ import { Copy, ArrowUpRight, X, Wallet, Zap, Bell, Radio, ShieldCheck, Megaphone
 import Header from './Header';
 import BottomNav from './BottomNav';
 import Sidebar from './Sidebar';
+import { motion } from 'framer-motion';
 
 import HubTab from './tabs/HubTab';
 import VaultTab from './tabs/VaultTab';
@@ -723,31 +724,53 @@ const Dashboard: React.FC = () => {
                     : 'bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-emerald-500/25 via-teal-500/10 to-transparent'
             }`} />
 
-            {/* DYNAMIC ROLE-BASED AMBIENT BACKGROUND GLOW BLOBS */}
-            {stellarData.role === 'driver' && (
-                <>
-                    <div className="pointer-events-none fixed -top-32 -left-32 w-[35rem] h-[35rem] bg-cyan-500/25 dark:bg-cyan-500/20 rounded-full blur-[140px] z-0 animate-pulse" />
-                    <div className="pointer-events-none fixed -bottom-32 -right-32 w-[35rem] h-[35rem] bg-amber-500/25 dark:bg-amber-500/15 rounded-full blur-[140px] z-0 animate-pulse" />
-                </>
-            )}
-            {stellarData.role === 'commuter' && (
-                <>
-                    <div className="pointer-events-none fixed -top-32 -left-32 w-[35rem] h-[35rem] bg-emerald-500/25 dark:bg-emerald-500/20 rounded-full blur-[140px] z-0 animate-pulse" />
-                    <div className="pointer-events-none fixed -bottom-32 -right-32 w-[35rem] h-[35rem] bg-teal-500/25 dark:bg-teal-500/15 rounded-full blur-[140px] z-0 animate-pulse" />
-                </>
-            )}
-            {((stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative') && (
-                <>
-                    <div className="pointer-events-none fixed -top-32 -left-32 w-[35rem] h-[35rem] bg-indigo-600/30 dark:bg-indigo-600/25 rounded-full blur-[140px] z-0 animate-pulse" />
-                    <div className="pointer-events-none fixed -bottom-32 -right-32 w-[35rem] h-[35rem] bg-purple-600/25 dark:bg-purple-600/20 rounded-full blur-[140px] z-0 animate-pulse" />
-                </>
-            )}
-            {stellarData.role === 'superadmin' && (
-                <>
-                    <div className="pointer-events-none fixed -top-32 -left-32 w-[35rem] h-[35rem] bg-rose-500/30 dark:bg-rose-500/25 rounded-full blur-[140px] z-0 animate-pulse" />
-                    <div className="pointer-events-none fixed -bottom-32 -right-32 w-[35rem] h-[35rem] bg-orange-500/25 dark:bg-orange-500/20 rounded-full blur-[140px] z-0 animate-pulse" />
-                </>
-            )}
+            {/* CLEAN GEOMETRIC BACKGROUND DOT GRID PATTERN */}
+            <div className="pointer-events-none fixed inset-0 z-0 opacity-20 dark:opacity-15 bg-[radial-gradient(#94a3b8_1px,transparent_1px)] dark:bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:28px_28px]" />
+
+            {/* ANIMATED FLOATING ROLE-BASED AURA SPHERES */}
+            <motion.div
+                className={`pointer-events-none fixed -top-32 -left-32 w-[36rem] h-[36rem] rounded-full blur-[140px] z-0 opacity-60 ${
+                    isDriverRole
+                        ? 'bg-cyan-500/25 dark:bg-cyan-500/20'
+                        : isCoopAdminRole
+                        ? 'bg-indigo-600/30 dark:bg-indigo-600/25'
+                        : isSuperAdminRole
+                        ? 'bg-rose-500/30 dark:bg-rose-500/25'
+                        : 'bg-emerald-500/25 dark:bg-emerald-500/20'
+                }`}
+                animate={{
+                    x: [0, 40, 0],
+                    y: [0, 30, 0],
+                    scale: [1, 1.15, 1],
+                }}
+                transition={{
+                    duration: 12,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                }}
+            />
+
+            <motion.div
+                className={`pointer-events-none fixed -bottom-32 -right-32 w-[36rem] h-[36rem] rounded-full blur-[140px] z-0 opacity-60 ${
+                    isDriverRole
+                        ? 'bg-amber-500/25 dark:bg-amber-500/15'
+                        : isCoopAdminRole
+                        ? 'bg-purple-600/25 dark:bg-purple-600/20'
+                        : isSuperAdminRole
+                        ? 'bg-orange-500/25 dark:bg-orange-500/20'
+                        : 'bg-teal-500/25 dark:bg-teal-500/15'
+                }`}
+                animate={{
+                    x: [0, -40, 0],
+                    y: [0, -30, 0],
+                    scale: [1, 1.2, 1],
+                }}
+                transition={{
+                    duration: 14,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                }}
+            />
             
             {/* IN-APP REALTIME DRIVER PAYMENT TOAST ALERT */}
             {paymentToast && (
