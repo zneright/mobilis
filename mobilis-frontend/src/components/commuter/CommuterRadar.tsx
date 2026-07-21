@@ -7,7 +7,9 @@ import type { DriverLocationDoc, UserData } from '../../types';
 import FarePaymentModal from './FarePaymentModal';
 import LiveTransitMap, { LiveTransitMapErrorBoundary } from './LiveTransitMap';
 import WaitingBeaconButton from './WaitingBeaconButton';
+import LiveApproachStatus from './LiveApproachStatus';
 import DriverApproachNotifier from '../driver/DriverApproachNotifier';
+import DriverPickupDispatch from '../driver/DriverPickupDispatch';
 
 interface CommuterRadarProps {
     commuterData: UserData;
@@ -154,6 +156,26 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                     </button>
                 </div>
             </div>
+
+            {/* Live Accepted Pickup Approach Status */}
+            <div className="w-full mb-6">
+                <LiveApproachStatus
+                    commuterUid={commuterData.uid}
+                    commuterCoords={centerCoords}
+                />
+            </div>
+
+            {/* Driver Passenger Discovery & Dispatch Section */}
+            {commuterData.role === 'driver' && Boolean(commuterData.isDuty) && (
+                <div className="w-full mb-6">
+                    <DriverPickupDispatch
+                        driverUid={commuterData.uid}
+                        driverVehicleType={commuterData.vehicleType || 'Tricycle'}
+                        driverCoords={commuterCoords}
+                        isOnDuty={true}
+                    />
+                </div>
+            )}
 
             {/* Driver Approach Proximity Notifier (200m, 100m, 50m, 10m alerts) */}
             <DriverApproachNotifier

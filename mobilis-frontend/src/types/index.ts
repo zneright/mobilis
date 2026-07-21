@@ -54,8 +54,23 @@ export interface WaitingBeaconDoc {
     lat: number;
     lng: number;
     active: boolean;
+    preferredVehicleType?: string;
     createdAt: string;
     expiresAt: string;
+}
+
+export interface PickupSessionDoc {
+    id: string;
+    driverUid: string;
+    commuterUid: string;
+    status: 'accepted' | 'approaching' | 'arrived' | 'completed' | 'cancelled';
+    vehicleType: string;
+    driverLat: number;
+    driverLng: number;
+    commuterLat: number;
+    commuterLng: number;
+    acceptedAt: string;
+    updatedAt: string;
 }
 
 export interface FareTransaction {

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { calculateDistanceKm } from '../../utils/geo';
-import { playDoubleChime } from '../../utils/webAudio';
+import { playDriverAlertChime } from '../../utils/webAudio';
 import { Bell, X } from 'lucide-react';
 import type { WaitingBeaconDoc } from '../../types';
 
@@ -80,7 +80,7 @@ export const DriverApproachNotifier: React.FC<DriverApproachNotifierProps> = ({
 
             if (thresholdValue > 0) {
                 triggeredSet.add(thresholdValue);
-                playDoubleChime();
+                playDriverAlertChime();
                 setProximityAlert({ message: thresholdLabel, distanceMeters: distMeters });
                 setTimeout(() => setProximityAlert(null), 6000);
             }

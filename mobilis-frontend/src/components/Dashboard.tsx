@@ -748,8 +748,17 @@ const Dashboard: React.FC = () => {
                         ) : (
                             <div className="w-full space-y-6 flex flex-col items-center">
                                 {stellarData.role === 'driver' && (
-                                    <div className="w-full max-w-lg">
-                                        <DriverDutyToggle userData={stellarData} />
+                                    <div className="w-full space-y-6">
+                                        <div className="w-full max-w-lg mx-auto">
+                                            <DriverDutyToggle userData={stellarData} />
+                                        </div>
+                                        <div className="w-full">
+                                            <CommuterRadar
+                                                commuterData={stellarData}
+                                                currencyMode={currencyMode}
+                                                setCurrencyMode={setCurrencyMode}
+                                            />
+                                        </div>
                                     </div>
                                 )}
                                 <HubTab
