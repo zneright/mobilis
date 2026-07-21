@@ -19,7 +19,7 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <SplashScreen />
-      <div className="h-screen w-full overflow-hidden relative bg-gray-50 dark:bg-[#07090E] text-gray-900 dark:text-white font-sans">
+      <div className="h-screen w-full overflow-hidden relative bg-transparent font-sans">
         <Router>
           <Routes>
             <Route path="/" element={<Landing />} />

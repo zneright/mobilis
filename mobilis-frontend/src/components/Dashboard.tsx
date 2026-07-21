@@ -28,9 +28,9 @@ import VaultTab from './tabs/VaultTab';
 import HistoryTab from './tabs/HistoryTab';
 import ProfileTab from './tabs/ProfileTab';
 
-import CommuterRadar from './commuter/CommuterRadar';
-import DriverDutyToggle from './driver/DriverDutyToggle';
-import DriverRadar from './driver/DriverRadar';
+import { CommuterRadar } from './commuter/CommuterRadar';
+import { DriverDutyToggle } from './driver/DriverDutyToggle';
+import { DriverRadar } from './driver/DriverRadar';
 import MobilisLoader from './common/MobilisLoader';
 import { playDoubleChime } from '../utils/webAudio';
 import { setupFcmNotifications } from '../services/fcm';
@@ -815,37 +815,34 @@ const Dashboard: React.FC = () => {
 
                     {activeTab === 'hub' && (
                         stellarData.role === 'commuter' ? (
-                            <CommuterRadar
-                                commuterData={stellarData}
-                                currencyMode={currencyMode}
-                                setCurrencyMode={setCurrencyMode}
-                            />
+                            <div className="w-full max-w-4xl mx-auto py-2">
+                                <CommuterRadar
+                                    commuterData={stellarData}
+                                    currencyMode={currencyMode}
+                                    setCurrencyMode={setCurrencyMode}
+                                />
+                            </div>
+                        ) : stellarData.role === 'driver' ? (
+                            <div className="w-full max-w-4xl mx-auto space-y-8 py-2">
+                                <DriverDutyToggle userData={stellarData} />
+                                <DriverRadar
+                                    driverData={stellarData}
+                                    currencyMode={currencyMode}
+                                    setCurrencyMode={setCurrencyMode}
+                                />
+                            </div>
                         ) : (
-                            <div className="w-full space-y-6 flex flex-col items-center">
-                                {stellarData.role === 'driver' && (
-                                    <div className="w-full space-y-6">
-                                        <div className="w-full max-w-lg mx-auto">
-                                            <DriverDutyToggle userData={stellarData} />
-                                        </div>
-                                        <div className="w-full">
-                                            <DriverRadar
-                                                driverData={stellarData}
-                                                currencyMode={currencyMode}
-                                                setCurrencyMode={setCurrencyMode}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
+                            <div className="w-full max-w-4xl mx-auto py-2">
                                 <HubTab
                                     stellarData={stellarData}
-                                    isAdmin={stellarData.role === 'superadmin' || stellarData.role === 'admin'}
+                                    isAdmin={stellarData.role === 'superadmin' || (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'}
                                     currencyMode={currencyMode}
                                     setCurrencyMode={setCurrencyMode}
                                     formatCurrency={formatCurrency}
                                     debtState={debtState}
                                     isProcessing={isProcessing}
                                     handleRequestAdvance={handleRequestAdvance}
-                                    handleInjectLiquidity={async () => { }} // Disabled as requested
+                                    handleInjectLiquidity={async () => { }}
                                     handleSettleLoan={handleSettleLoan}
                                     appNetwork={appNetwork}
                                     treasuryBalance={treasuryBalance}
@@ -856,11 +853,23 @@ const Dashboard: React.FC = () => {
                         )
                     )}
 
-                    {activeTab === 'vault' && <VaultTab stellarData={stellarData} externalWallet={externalWallet} activePubKey={activePubKey || null} xlmBalance={xlmBalance} assetBalances={assetBalances} currencyMode={currencyMode} setCurrencyMode={setCurrencyMode} formatCurrency={formatCurrency} setShowWalletModal={setShowWalletModal} handleDisconnectWallet={handleDisconnectWallet} setShowReceiveModal={setShowReceiveModal} setShowSendModal={setShowSendModal} appNetwork={appNetwork} refreshData={fetchLedgerData} />}
+                    {activeTab === 'vault' && (
+                        <div className="w-full max-w-4xl mx-auto py-2">
+                            <VaultTab stellarData={stellarData} externalWallet={externalWallet} activePubKey={activePubKey || null} xlmBalance={xlmBalance} assetBalances={assetBalances} currencyMode={currencyMode} setCurrencyMode={setCurrencyMode} formatCurrency={formatCurrency} setShowWalletModal={setShowWalletModal} handleDisconnectWallet={handleDisconnectWallet} setShowReceiveModal={setShowReceiveModal} setShowSendModal={setShowSendModal} appNetwork={appNetwork} refreshData={fetchLedgerData} />
+                        </div>
+                    )}
 
-                    {activeTab === 'history' && <HistoryTab txHistory={firebaseHistory} appNetwork={appNetwork} stellarData={stellarData} />}
+                    {activeTab === 'history' && (
+                        <div className="w-full max-w-4xl mx-auto py-2">
+                            <HistoryTab txHistory={firebaseHistory} appNetwork={appNetwork} stellarData={stellarData} />
+                        </div>
+                    )}
 
-                    {activeTab === 'profile' && <ProfileTab stellarData={stellarData} isSuperAdmin={stellarData.role === 'superadmin'} />}
+                    {activeTab === 'profile' && (
+                        <div className="w-full max-w-4xl mx-auto py-2">
+                            <ProfileTab stellarData={stellarData} isSuperAdmin={stellarData.role === 'superadmin'} />
+                        </div>
+                    )}
 
                 </main>
             </div>

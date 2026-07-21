@@ -9,7 +9,12 @@ body,
   padding: 0;
   min-height: 100vh;
   width: 100%;
-  background-color: #060610;
-  /* Base dark color for Mobilis */
-  color: white;
+}
+
+html {
+  background-color: #f8fafc;
+}
+
+html.dark {
+  background-color: #040812;
 }

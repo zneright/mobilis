@@ -143,9 +143,9 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex flex-col justify-end bg-black/60 backdrop-blur-sm animate-fadeIn">
-            {/* Pull-Up Bottom Sheet Card */}
-            <div className="w-full max-w-lg mx-auto bg-white dark:bg-[#07090E] rounded-t-[40px] p-6 shadow-[0_-20px_60px_rgba(0,0,0,0.15)] relative border-t border-gray-100 dark:border-white/10 text-gray-900 dark:text-white font-sans max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 bg-black/70 backdrop-blur-md animate-fadeIn">
+            {/* Pull-Up Bottom Sheet Card / Centered Modal */}
+            <div className="w-full max-w-lg bg-white dark:bg-[#0c121e] rounded-t-[32px] sm:rounded-[2.5rem] p-6 shadow-2xl relative border-t-4 border-t-emerald-500 border-x border-b border-emerald-500/20 text-slate-900 dark:text-white font-sans max-h-[85vh] sm:max-h-[90vh] overflow-y-auto custom-scrollbar">
                 
                 {/* Gray Drag Handle Pill */}
                 <div className="w-12 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mb-4" />
