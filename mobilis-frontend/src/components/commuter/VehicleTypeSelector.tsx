@@ -6,13 +6,13 @@ interface VehicleTypeSelectorProps {
 }
 
 export const vehicleTypes = [
-    { id: 'all', label: 'All Vehicles', icon: '🚗' },
-    { id: 'Tricycle', label: 'Tricycle', icon: '🛺' },
-    { id: 'Jeepney', label: 'Jeepney', icon: '🛻' },
-    { id: 'UV Express', label: 'UV Express', icon: '🚐' },
-    { id: 'Bus', label: 'Bus', icon: '🚌' },
-    { id: 'Taxi', label: 'Taxi', icon: '🚖' },
-    { id: 'Motorcycle', label: 'Motorcycle', icon: '🛵' },
+    { id: 'all', label: 'All Vehicles', icon: '🚗', color: 'from-cyan-500 to-emerald-400 text-cyan-400 border-cyan-400/40' },
+    { id: 'Tricycle', label: 'Tricycle', icon: '🛺', color: 'from-emerald-500 to-teal-400 text-emerald-400 border-emerald-400/40' },
+    { id: 'Jeepney', label: 'Jeepney', icon: '🛻', color: 'from-blue-600 to-cyan-500 text-blue-400 border-blue-400/40' },
+    { id: 'UV Express', label: 'UV Express', icon: '🚐', color: 'from-amber-500 to-yellow-400 text-amber-400 border-amber-400/40' },
+    { id: 'Bus', label: 'Bus', icon: '🚌', color: 'from-purple-600 to-indigo-500 text-purple-400 border-purple-400/40' },
+    { id: 'Taxi', label: 'Taxi', icon: '🚖', color: 'from-yellow-400 to-amber-300 text-yellow-400 border-yellow-400/40' },
+    { id: 'Motorcycle', label: 'Motorcycle', icon: '🛵', color: 'from-rose-500 to-red-400 text-rose-400 border-rose-400/40' },
 ] as const;
 
 export const VehicleTypeSelector: React.FC<VehicleTypeSelectorProps> = ({
@@ -27,10 +27,10 @@ export const VehicleTypeSelector: React.FC<VehicleTypeSelectorProps> = ({
                     <button
                         key={vt.id}
                         onClick={() => onSelectType(vt.id)}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-mono font-black transition-all flex-shrink-0 border ${
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-mono font-black transition-all flex-shrink-0 border shadow-md ${
                             isActive
-                                ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_20px_rgba(0,210,255,0.4)] scale-105'
-                                : 'bg-[#0B0F19]/90 text-slate-300 border-white/10 hover:bg-white/10'
+                                ? `bg-gradient-to-r ${vt.color.split(' ')[0]} ${vt.color.split(' ')[1]} text-black border-white scale-105 shadow-lg`
+                                : `bg-white/90 dark:bg-[#0B0F19]/90 ${vt.color.split(' ')[2]} ${vt.color.split(' ')[3]} hover:scale-102`
                         }`}
                     >
                         <span className="text-base">{vt.icon}</span>

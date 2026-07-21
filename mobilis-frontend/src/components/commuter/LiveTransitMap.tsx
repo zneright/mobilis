@@ -240,18 +240,46 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                 currentMarkerKeys.add(v.anonId);
                 const isSelected = selectedAnonId === v.anonId;
 
+                const vt = v.vehicleType.toLowerCase();
+                let gradientClass = 'from-cyan-400 to-emerald-400';
+                let glowClass = 'shadow-[0_0_20px_rgba(0,210,255,0.9)]';
+
+                if (vt.includes('jeepney')) {
+                    gradientClass = 'from-blue-600 to-cyan-500';
+                    glowClass = 'shadow-[0_0_20px_rgba(0,136,255,0.9)]';
+                } else if (vt.includes('tricycle')) {
+                    gradientClass = 'from-emerald-500 to-teal-400';
+                    glowClass = 'shadow-[0_0_20px_rgba(0,210,106,0.9)]';
+                } else if (vt.includes('express') || vt.includes('uv') || vt.includes('shuttle')) {
+                    gradientClass = 'from-amber-500 to-yellow-400';
+                    glowClass = 'shadow-[0_0_20px_rgba(255,153,0,0.9)]';
+                } else if (vt.includes('bus')) {
+                    gradientClass = 'from-purple-600 to-indigo-500';
+                    glowClass = 'shadow-[0_0_20px_rgba(139,92,246,0.9)]';
+                } else if (vt.includes('motorcycle') || vt.includes('habal')) {
+                    gradientClass = 'from-rose-500 to-red-400';
+                    glowClass = 'shadow-[0_0_20px_rgba(255,59,48,0.9)]';
+                } else if (vt.includes('taxi')) {
+                    gradientClass = 'from-yellow-400 to-amber-300';
+                    glowClass = 'shadow-[0_0_20px_rgba(255,204,0,0.9)]';
+                }
+
                 if (markersRef.current.has(v.anonId)) {
                     const marker = markersRef.current.get(v.anonId)!;
                     marker.setLngLat([v.lng, v.lat]);
                     marker.setRotation(v.bearing.angle);
                 } else {
                     const el = document.createElement('div');
-                    el.className = `cursor-pointer transition-all duration-300 p-2.5 rounded-2xl flex items-center gap-1.5 shadow-2xl ${
-                        isSelected
-                            ? 'bg-emerald-500 text-black scale-110 shadow-[0_0_25px_rgba(52,211,153,0.9)] border-2 border-white'
-                            : 'bg-[#0B0F19] text-white border border-white/20 hover:scale-105'
-                    }`;
-                    el.innerHTML = `<span style="font-size: 20px;">${v.icon}</span><span style="font-size: 10px; font-weight: 900; font-family: monospace;">${v.anonId}</span>`;
+                    el.className = 'cursor-pointer group relative flex items-center justify-center';
+                    el.innerHTML = `
+                        <div class="absolute w-12 h-12 rounded-full bg-white/20 border border-white/50 animate-ping"></div>
+                        <div class="relative z-10 w-11 h-11 rounded-full bg-gradient-to-tr ${gradientClass} p-0.5 ${glowClass} ${isSelected ? 'scale-125 border-4 border-white' : 'border-2 border-white'} group-hover:scale-125 transition-transform flex items-center justify-center shadow-2xl">
+                            <span class="text-xl">${v.icon}</span>
+                        </div>
+                        <div class="absolute -bottom-6 px-2 py-0.5 rounded-full bg-[#070A12]/95 border border-white/20 text-[9px] font-mono font-black text-white shadow-xl whitespace-nowrap">
+                            ${v.vehicleType} (${v.anonId})
+                        </div>
+                    `;
 
                     el.addEventListener('click', () => {
                         setSelectedAnonId(v.anonId);
