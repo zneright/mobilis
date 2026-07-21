@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sun, Moon, Bell, ShieldCheck, Navigation, Radio, Building2 } from 'lucide-react';
+import { Sun, Moon, Bell, ShieldCheck, Navigation, Radio, Building2, ShieldAlert } from 'lucide-react';
 import MobilisLogo from './common/MobilisLogo';
 
 interface HeaderProps {
@@ -13,7 +13,18 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onOpenNotifications, unreadCount = 2, role }) => {
     const isDriver = role === 'driver';
-    const isAdmin = role === 'superadmin' || role === 'admin' || role === 'cooperative';
+    const isSuperAdmin = role === 'superadmin';
+    const isCoopAdmin = role === 'admin' || role === 'cooperative';
+
+    const roleConfig = isSuperAdmin
+        ? { label: 'SUPER ADMIN', color: 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30', dot: 'bg-rose-500', Icon: ShieldAlert }
+        : isCoopAdmin
+        ? { label: 'COOP TREASURY', color: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/30', dot: 'bg-indigo-500', Icon: Building2 }
+        : isDriver
+        ? { label: 'DRIVER COCKPIT', color: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30', dot: 'bg-amber-500', Icon: Navigation }
+        : { label: 'COMMUTER TRANSIT', color: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30', dot: 'bg-emerald-500', Icon: Radio };
+
+    const RoleIcon = roleConfig.Icon;
 
     return (
         <header className="fixed top-3 left-4 right-4 max-w-5xl mx-auto z-50 rounded-full transition-all duration-300 h-14 px-5 flex items-center justify-between border font-sans bg-white/85 dark:bg-[#07090E]/85 text-slate-900 dark:text-white border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-md">
@@ -22,25 +33,17 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onOpenNotifications
                 <MobilisLogo size={28} showText />
                 
                 {/* Role-Based Pill Badge */}
-                <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wide border transition-all duration-200 ${
-                    isDriver
-                        ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20'
-                        : isAdmin
-                        ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border-indigo-500/20'
-                        : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full animate-ping ${
-                        isDriver ? 'bg-cyan-500' : isAdmin ? 'bg-indigo-500' : 'bg-emerald-500'
-                    }`} />
-                    {isDriver ? <Navigation className="w-3 h-3" /> : isAdmin ? <Building2 className="w-3 h-3" /> : <Radio className="w-3 h-3" />}
-                    <span>{isDriver ? 'DRIVER HUD COCKPIT' : isAdmin ? 'COOP COMMAND CENTER' : 'COMMUTER TRANSIT'}</span>
+                <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wide border transition-all duration-200 ${roleConfig.color}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full animate-ping ${roleConfig.dot}`} />
+                    <RoleIcon className="w-3 h-3" />
+                    <span>{roleConfig.label}</span>
                 </div>
             </div>
 
             {/* Right: Actions & Controls */}
             <div className="flex items-center gap-2">
-                <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                    <ShieldCheck className="w-3 h-3 text-emerald-500" />
+                <div className={`hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold border transition-all ${roleConfig.color}`}>
+                    <ShieldCheck className="w-3 h-3" />
                     <span>STELLAR TESTNET</span>
                 </div>
 
@@ -52,7 +55,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onOpenNotifications
                 >
                     <Bell className="w-4 h-4" />
                     {unreadCount > 0 && (
-                        <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#07090E] animate-pulse" />
+                        <span className={`absolute top-1 right-1 w-2 h-2 rounded-full ring-2 ring-white dark:ring-[#07090E] animate-pulse ${roleConfig.dot}`} />
                     )}
                 </button>
 
