@@ -39,26 +39,50 @@ export const VaultTab: React.FC<VaultTabProps> = ({
 
     const isDriver = stellarData?.role === 'driver';
     const isSuperAdmin = stellarData?.role === 'superadmin';
-    const isCoopAdmin = stellarData?.role === 'admin' || stellarData?.role === 'cooperative';
+    const isCoopAdmin = (stellarData?.role as string) === 'admin' || (stellarData?.role as string) === 'cooperative';
 
     const cardRoleAccent = isSuperAdmin
-        ? 'border-t-4 border-t-rose-500 border-x border-b border-rose-500/30 shadow-[0_10px_40px_rgba(244,63,94,0.15)]'
+        ? 'border-t-4 border-t-rose-500 border-x border-b border-slate-200 dark:border-rose-500/30 shadow-[0_10px_40px_rgba(244,63,94,0.15)]'
         : isCoopAdmin
-        ? 'border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30 shadow-[0_10px_40px_rgba(99,102,241,0.15)]'
+        ? 'border-t-4 border-t-indigo-500 border-x border-b border-slate-200 dark:border-indigo-500/30 shadow-[0_10px_40px_rgba(99,102,241,0.15)]'
         : isDriver
-        ? 'border-t-4 border-t-cyan-500 border-x border-b border-cyan-500/30 shadow-[0_10px_40px_rgba(6,182,212,0.15)]'
-        : 'border-t-4 border-t-emerald-500 border-x border-b border-emerald-500/30 shadow-[0_10px_40px_rgba(16,185,129,0.15)]';
+        ? 'border-t-4 border-t-cyan-500 border-x border-b border-slate-200 dark:border-cyan-500/30 shadow-[0_10px_40px_rgba(6,182,212,0.15)]'
+        : 'border-t-4 border-t-emerald-500 border-x border-b border-slate-200 dark:border-emerald-500/30 shadow-[0_10px_40px_rgba(16,185,129,0.15)]';
+
+    const rolePill = isSuperAdmin
+        ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+        : isCoopAdmin
+        ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+        : isDriver
+        ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20'
+        : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
+
+    const roleAccentText = isSuperAdmin
+        ? 'text-rose-600 dark:text-rose-400'
+        : isCoopAdmin
+        ? 'text-indigo-600 dark:text-indigo-400'
+        : isDriver
+        ? 'text-cyan-600 dark:text-cyan-400'
+        : 'text-emerald-600 dark:text-emerald-400';
+
+    const roleCtaBg = isSuperAdmin
+        ? 'bg-rose-600 text-white shadow-[0_0_20px_rgba(244,63,94,0.4)]'
+        : isCoopAdmin
+        ? 'bg-indigo-600 text-white shadow-[0_0_20px_rgba(99,102,241,0.4)]'
+        : isDriver
+        ? 'bg-cyan-500 text-black shadow-[0_0_20px_rgba(6,182,212,0.4)]'
+        : 'bg-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.4)]';
 
     return (
         <div className="w-full max-w-4xl mx-auto space-y-6 text-slate-900 dark:text-white font-sans">
             
             {/* REVOLUT / APPLE WALLET BALANCE HERO CARD */}
-            <div className={`p-8 sm:p-10 rounded-[2.5rem] bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-[#0d111a] dark:to-[#151a26] relative overflow-hidden text-center space-y-6 transition-colors duration-300 ${cardRoleAccent}`}>
+            <div className={`p-8 sm:p-10 rounded-[2.5rem] bg-white dark:bg-[#0c121e] relative overflow-hidden text-center space-y-6 transition-all duration-300 ${cardRoleAccent}`}>
                 
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs font-mono font-bold">
+                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-mono font-bold ${rolePill}`}>
                         <Wallet className="w-3.5 h-3.5" />
-                        <span>Mobilis Web3 Vault</span>
+                        <span>Mobilis Soroban Vault</span>
                     </div>
                     <button
                         onClick={refreshData}
@@ -74,7 +98,7 @@ export const VaultTab: React.FC<VaultTabProps> = ({
                     <h2 className="text-4xl sm:text-6xl font-black tracking-tight text-slate-900 dark:text-white font-mono">
                         {currencyMode === 'PHP' ? `₱${phpEquivalent} PHP` : `${xlmNum.toFixed(2)} XLM`}
                     </h2>
-                    <p className="text-xs font-mono text-cyan-600 dark:text-cyan-400 font-bold">
+                    <p className={`text-xs font-mono font-bold ${roleAccentText}`}>
                         {currencyMode === 'PHP' ? `≈ ${xlmNum.toFixed(4)} XLM` : `≈ ₱${phpEquivalent} PHP`}
                     </p>
                 </div>
@@ -85,7 +109,7 @@ export const VaultTab: React.FC<VaultTabProps> = ({
                         onClick={() => setCurrencyMode('PHP')}
                         className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                             currencyMode === 'PHP'
-                                ? 'bg-cyan-500 text-black shadow-md font-black'
+                                ? `${roleCtaBg} font-black`
                                 : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                         }`}
                     >
@@ -95,7 +119,7 @@ export const VaultTab: React.FC<VaultTabProps> = ({
                         onClick={() => setCurrencyMode('XLM')}
                         className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                             currencyMode === 'XLM'
-                                ? 'bg-cyan-500 text-black shadow-md font-black'
+                                ? `${roleCtaBg} font-black`
                                 : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                         }`}
                     >
@@ -109,7 +133,7 @@ export const VaultTab: React.FC<VaultTabProps> = ({
                         onClick={() => setShowSendModal(true)}
                         className="flex flex-col items-center gap-2 group"
                     >
-                        <div className="w-14 h-14 rounded-2xl bg-cyan-500 text-black flex items-center justify-center font-black transition-all group-hover:scale-110 shadow-[0_0_20px_rgba(0,210,255,0.4)]">
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black transition-all group-hover:scale-110 ${roleCtaBg}`}>
                             <ArrowUpRight className="w-6 h-6" />
                         </div>
                         <span className="text-xs font-bold text-slate-700 dark:text-gray-300">Send</span>
@@ -119,7 +143,7 @@ export const VaultTab: React.FC<VaultTabProps> = ({
                         onClick={() => setShowReceiveModal(true)}
                         className="flex flex-col items-center gap-2 group"
                     >
-                        <div className="w-14 h-14 rounded-2xl bg-emerald-500 text-black flex items-center justify-center font-black transition-all group-hover:scale-110 shadow-[0_0_20px_rgba(52,211,153,0.4)]">
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black transition-all group-hover:scale-110 ${roleCtaBg}`}>
                             <ArrowDownLeft className="w-6 h-6" />
                         </div>
                         <span className="text-xs font-bold text-slate-700 dark:text-gray-300">Receive</span>
@@ -138,12 +162,12 @@ export const VaultTab: React.FC<VaultTabProps> = ({
             </div>
 
             {/* ASSET LIST */}
-            <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 shadow-2xl space-y-4 transition-colors duration-300">
+            <div className={`p-8 rounded-[2.5rem] bg-white dark:bg-[#0c121e] border-x border-b border-slate-200 dark:border-white/10 shadow-xl space-y-4 transition-all duration-300 ${cardRoleAccent}`}>
                 <h3 className="font-black text-lg text-slate-900 dark:text-white">Vault Assets</h3>
 
                 <div className="p-4 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-2xl flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30 flex items-center justify-center font-black text-xs">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs border ${rolePill}`}>
                             XLM
                         </div>
                         <div>
@@ -153,14 +177,14 @@ export const VaultTab: React.FC<VaultTabProps> = ({
                     </div>
                     <div className="text-right">
                         <span className="font-mono font-bold text-sm text-slate-900 dark:text-white block">{xlmNum.toFixed(4)} XLM</span>
-                        <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold block">≈ ₱{phpEquivalent} PHP</span>
+                        <span className={`text-xs font-mono font-bold block ${roleAccentText}`}>≈ ₱{phpEquivalent} PHP</span>
                     </div>
                 </div>
 
                 {assetBalances && assetBalances.length > 0 && assetBalances.map((asset, idx) => (
                     <div key={idx} className="p-4 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-2xl flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-black text-xs">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs border ${rolePill}`}>
                                 {asset.asset_code?.substring(0, 3) || 'TOKEN'}
                             </div>
                             <div>
@@ -176,10 +200,10 @@ export const VaultTab: React.FC<VaultTabProps> = ({
             {/* PUBLIC KEY & STATUS BLOCK */}
             <div className="p-6 rounded-2xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 flex items-center justify-between text-xs text-slate-600 dark:text-gray-400 font-mono transition-colors duration-300">
                 <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <ShieldCheck className={`w-4 h-4 ${roleAccentText}`} />
                     <span>Public Key: {activePubKey ? `${activePubKey.substring(0, 8)}...${activePubKey.substring(activePubKey.length - 8)}` : (stellarData?.publicKey ? `${stellarData.publicKey.substring(0, 8)}...` : 'N/A')}</span>
                 </div>
-                <span className="text-cyan-600 dark:text-cyan-400 font-bold uppercase">{appNetwork}</span>
+                <span className={`font-bold uppercase ${roleAccentText}`}>{appNetwork}</span>
             </div>
         </div>
     );
