@@ -8,7 +8,7 @@ import type { DriverLocationDoc } from '../../types';
 interface LiveTransitMapProps {
     commuterCoords: { lat: number; lng: number };
     activeDrivers: DriverLocationDoc[];
-    onSelectVehicleToPay: (driverDoc: DriverLocationDoc) => void;
+    onSelectVehicleToPay?: (driverDoc: DriverLocationDoc) => void;
 }
 
 interface AnonymizedVehicle {
@@ -429,12 +429,18 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                                 <span className="text-[9px] font-mono text-slate-400 uppercase tracking-wider block">Average Speed ~20 km/h</span>
                             </div>
 
-                            <button
-                                onClick={() => onSelectVehicleToPay(selectedVehicle.rawDoc)}
-                                className="px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(52,211,153,0.4)] flex items-center gap-2 hover:scale-105"
-                            >
-                                <Zap className="w-4 h-4" /> Pay Fare to Vehicle
-                            </button>
+                            {onSelectVehicleToPay ? (
+                                <button
+                                    onClick={() => onSelectVehicleToPay(selectedVehicle.rawDoc)}
+                                    className="px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(52,211,153,0.4)] flex items-center gap-2 hover:scale-105"
+                                >
+                                    <Zap className="w-4 h-4" /> Pay Fare to Vehicle
+                                </button>
+                            ) : (
+                                <span className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-xl text-xs font-mono font-bold">
+                                    🛰️ Awareness Active
+                                </span>
+                            )}
                         </div>
                     </div>
 

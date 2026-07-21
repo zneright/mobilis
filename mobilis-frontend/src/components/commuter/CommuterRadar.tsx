@@ -6,6 +6,8 @@ import { Compass, Navigation, Radio, RefreshCw, Fuel, Zap, MapPin } from 'lucide
 import type { DriverLocationDoc, UserData } from '../../types';
 import FarePaymentModal from './FarePaymentModal';
 import LiveTransitMap, { LiveTransitMapErrorBoundary } from './LiveTransitMap';
+import WaitingBeaconButton from './WaitingBeaconButton';
+import DriverApproachNotifier from '../driver/DriverApproachNotifier';
 
 interface CommuterRadarProps {
     commuterData: UserData;
@@ -151,6 +153,20 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                         <RefreshCw className="w-3.5 h-3.5" /> Currency: {currencyMode}
                     </button>
                 </div>
+            </div>
+
+            {/* Driver Approach Proximity Notifier (200m, 100m, 50m, 10m alerts) */}
+            <DriverApproachNotifier
+                driverCoords={commuterCoords}
+                isOnDuty={commuterData.role === 'driver' && Boolean(commuterData.isDuty)}
+            />
+
+            {/* Commuter Waiting Beacon Button */}
+            <div className="w-full mb-6">
+                <WaitingBeaconButton
+                    commuterUid={commuterData.uid}
+                    commuterCoords={centerCoords}
+                />
             </div>
 
             {/* Fixed 50-Meter Radar Status Banner */}

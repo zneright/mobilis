@@ -48,6 +48,16 @@ export interface DriverLocationDoc {
     updatedAt: string | number;
 }
 
+export interface WaitingBeaconDoc {
+    id: string;
+    commuterUid: string;
+    lat: number;
+    lng: number;
+    active: boolean;
+    createdAt: string;
+    expiresAt: string;
+}
+
 export interface FareTransaction {
     id?: string;
     txHash: string;

@@ -50,6 +50,10 @@ export const HubTab: React.FC<HubTabProps> = ({
     const [targetAudience, setTargetAudience] = useState<string>('coop_drivers');
     const [sendingBroadcast, setSendingBroadcast] = useState<boolean>(false);
     const [broadcastSuccess, setBroadcastSuccess] = useState<boolean>(false);
+    // Custom Credit Advance State
+    const [showAdvanceModal, setShowAdvanceModal] = useState<boolean>(false);
+    const [customAdvanceInput, setCustomAdvanceInput] = useState<string>('15');
+    const [advanceError, setAdvanceError] = useState<string>('');
 
     const isSuperAdmin = stellarData?.role === 'superadmin';
 
@@ -256,11 +260,15 @@ export const HubTab: React.FC<HubTabProps> = ({
                     {/* Action Buttons */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <button
-                            onClick={() => handleRequestAdvance(15)}
-                            disabled={isProcessing || (debtState?.isLocked ?? false)}
+                            onClick={() => {
+                                setCustomAdvanceInput('15');
+                                setAdvanceError('');
+                                setShowAdvanceModal(true);
+                            }}
+                            disabled={isProcessing || (debtState?.isLocked ?? false) || availableXlm <= 0}
                             className="py-4 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(0,210,255,0.3)] flex items-center justify-center gap-2"
                         >
-                            <ArrowUpRight className="w-4 h-4" /> Borrow 15 XLM Advance
+                            <ArrowUpRight className="w-4 h-4" /> Request Credit Advance
                         </button>
                         <button
                             onClick={handleSettleLoan}
@@ -268,6 +276,75 @@ export const HubTab: React.FC<HubTabProps> = ({
                             className="py-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(52,211,153,0.3)] flex items-center justify-center gap-2"
                         >
                             <ShieldCheck className="w-4 h-4" /> Repay Soroban Credit Loan
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* CUSTOM CREDIT ADVANCE MODAL */}
+            {showAdvanceModal && (
+                <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="w-full max-w-md bg-white dark:bg-[#0E121B] border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                                <Fuel className="w-6 h-6 text-cyan-500" />
+                                <h3 className="font-black text-lg text-slate-900 dark:text-white">Custom Soroban Credit Advance</h3>
+                            </div>
+                            <button onClick={() => setShowAdvanceModal(false)} className="p-2 text-slate-400 hover:text-white rounded-xl">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-4 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-2xl space-y-1 font-mono text-xs">
+                            <div className="flex justify-between text-slate-500 dark:text-gray-400">
+                                <span>Total Credit Ceiling:</span>
+                                <strong className="text-slate-900 dark:text-white">{formatCurrency(safeBorrowLimit)}</strong>
+                            </div>
+                            <div className="flex justify-between text-slate-500 dark:text-gray-400">
+                                <span>Available Credit Limit:</span>
+                                <strong className="text-cyan-500 font-bold">{formatCurrency(availableXlm)}</strong>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-mono font-bold text-slate-700 dark:text-gray-300 uppercase tracking-wider block">
+                                Type Desired Advance Amount (XLM)
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                max={availableXlm}
+                                value={customAdvanceInput}
+                                onChange={(e) => {
+                                    setCustomAdvanceInput(e.target.value);
+                                    setAdvanceError('');
+                                }}
+                                placeholder={`Max ${availableXlm} XLM`}
+                                className="w-full px-4 py-3.5 bg-slate-100 dark:bg-black/50 border border-slate-300 dark:border-white/10 rounded-2xl font-mono text-base font-bold text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500"
+                            />
+                            {advanceError && (
+                                <p className="text-xs text-red-500 font-mono font-bold animate-pulse">{advanceError}</p>
+                            )}
+                        </div>
+
+                        <button
+                            onClick={() => {
+                                const parsed = parseFloat(customAdvanceInput);
+                                if (isNaN(parsed) || parsed <= 0) {
+                                    setAdvanceError('Please enter a valid positive XLM amount.');
+                                    return;
+                                }
+                                if (parsed > availableXlm) {
+                                    setAdvanceError(`Amount exceeds available credit ceiling of ${availableXlm} XLM.`);
+                                    return;
+                                }
+                                handleRequestAdvance(parsed);
+                                setShowAdvanceModal(false);
+                            }}
+                            disabled={isProcessing}
+                            className="w-full py-4 bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(0,210,255,0.4)] flex items-center justify-center gap-2 hover:scale-[1.02]"
+                        >
+                            <ArrowUpRight className="w-4 h-4" /> Submit XLM Advance Request
                         </button>
                     </div>
                 </div>
