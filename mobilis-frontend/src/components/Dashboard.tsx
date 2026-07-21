@@ -687,14 +687,8 @@ const Dashboard: React.FC = () => {
         );
     }
 
-    const rootAtmosphereClass = stellarData.role === 'driver'
-        ? 'bg-gray-950 text-white font-sans'
-        : (stellarData.role as string) === 'superadmin' || (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'
-        ? 'bg-slate-100 dark:bg-[#07090E] text-slate-800 dark:text-white font-sans'
-        : 'bg-slate-50 dark:bg-[#07090E] text-slate-900 dark:text-white font-sans';
-
     return (
-        <div className={`h-screen w-full overflow-hidden relative flex ${rootAtmosphereClass}`}>
+        <div className="h-screen w-full overflow-hidden relative flex bg-slate-50 dark:bg-[#07090E] text-slate-900 dark:text-white font-sans transition-colors duration-300">
             
             {/* IN-APP REALTIME DRIVER PAYMENT TOAST ALERT */}
             {paymentToast && (
