@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { calculateDistanceKm } from '../../utils/geo';
-import { Compass, Navigation, Radio, RefreshCw, Fuel, Zap, MapPin } from 'lucide-react';
+import { Navigation, Radio, RefreshCw, Fuel, Zap, MapPin } from 'lucide-react';
 import type { DriverLocationDoc, UserData } from '../../types';
 import FarePaymentModal from './FarePaymentModal';
 import LiveTransitMap, { LiveTransitMapErrorBoundary } from './LiveTransitMap';
@@ -19,7 +19,7 @@ interface CommuterRadarProps {
 
 export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, currencyMode, setCurrencyMode }) => {
     const searchRadiusKm = 5.0; // 5-kilometer GPS transit discovery radius
-    const [viewMode, setViewMode] = useState<'radar' | 'map'>('radar');
+    const [viewMode, setViewMode] = useState<'radar' | 'map'>('map');
     const [commuterCoords, setCommuterCoords] = useState<{ lat: number; lng: number } | null>(null);
     const [gpsStatus, setGpsStatus] = useState<'acquiring' | 'ready' | 'denied' | 'error'>('acquiring');
     const [allActiveDrivers, setAllActiveDrivers] = useState<DriverLocationDoc[]>([]);
@@ -109,56 +109,56 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
     };
 
     return (
-        <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
+        <div className="w-full max-w-4xl mx-auto flex flex-col items-center space-y-6 font-sans">
             
             {/* Top Toolbar & View Mode Switcher */}
-            <div className="w-full mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
-                        <Radio className="w-7 h-7 text-emerald-500 animate-pulse" />
-                        Commuter Transport Radar
+                    <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+                        <Radio className="w-6 h-6 text-emerald-500 animate-pulse" />
+                        Transport Discovery
                     </h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        Discover drivers currently ON TRANSIT and pay instant Stellar fares.
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Real-time nearby vehicles with instant Stellar fare payments.
                     </p>
                 </div>
 
                 <div className="flex items-center gap-3">
                     {/* View Mode Selector */}
-                    <div className="flex items-center gap-1.5 p-1 bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm">
-                        <button
-                            onClick={() => setViewMode('radar')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all ${
-                                viewMode === 'radar'
-                                    ? 'bg-emerald-500 text-black font-black shadow-sm'
-                                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
-                            }`}
-                        >
-                            🛰️ 50m Radar
-                        </button>
+                    <div className="flex items-center gap-1 p-1 bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm">
                         <button
                             onClick={() => setViewMode('map')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all ${
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                                 viewMode === 'map'
-                                    ? 'bg-emerald-500 text-black font-black shadow-sm'
-                                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                                    ? 'bg-emerald-500 text-black font-extrabold shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                             }`}
                         >
-                            🗺️ Live Transit Map
+                            🗺️ Vector Map
+                        </button>
+                        <button
+                            onClick={() => setViewMode('radar')}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                viewMode === 'radar'
+                                    ? 'bg-emerald-500 text-black font-extrabold shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                        >
+                            🛰️ Sonar Radar
                         </button>
                     </div>
 
                     <button
                         onClick={() => setCurrencyMode((p) => (p === 'PHP' ? 'XLM' : 'PHP'))}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold font-mono bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 shadow-sm text-slate-900 dark:text-white"
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-mono font-bold bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 shadow-sm text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
                     >
-                        <RefreshCw className="w-3.5 h-3.5" /> Currency: {currencyMode}
+                        <RefreshCw className="w-3.5 h-3.5 text-emerald-500" /> {currencyMode}
                     </button>
                 </div>
             </div>
 
             {/* Live Accepted Pickup Approach Status */}
-            <div className="w-full mb-6">
+            <div className="w-full">
                 <LiveApproachStatus
                     commuterUid={commuterData.uid}
                     commuterCoords={centerCoords}
@@ -167,7 +167,7 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
 
             {/* Driver Passenger Discovery & Dispatch Section */}
             {commuterData.role === 'driver' && Boolean(commuterData.isDuty) && (
-                <div className="w-full mb-6">
+                <div className="w-full">
                     <DriverPickupDispatch
                         driverUid={commuterData.uid}
                         driverVehicleType={commuterData.vehicleType || 'Tricycle'}
@@ -177,7 +177,7 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                 </div>
             )}
 
-            {/* Driver Approach Proximity Notifier (200m, 100m, 50m, 10m alerts) */}
+            {/* Driver Approach Proximity Notifier */}
             <DriverApproachNotifier
                 driverCoords={commuterCoords}
                 isOnDuty={commuterData.role === 'driver' && Boolean(commuterData.isDuty)}
@@ -185,7 +185,7 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
 
             {/* Commuter Waiting Beacon Button (COMMUTERS ONLY) */}
             {commuterData.role !== 'driver' && (
-                <div className="w-full mb-6">
+                <div className="w-full">
                     <WaitingBeaconButton
                         commuterUid={commuterData.uid}
                         commuterCoords={centerCoords}
@@ -195,9 +195,9 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
 
             {/* Driver Cockpit Operational Header (DRIVERS ONLY) */}
             {commuterData.role === 'driver' && (
-                <div className="w-full mb-6 p-5 rounded-3xl bg-gradient-to-r from-cyan-500/10 via-emerald-500/10 to-indigo-500/10 border border-cyan-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+                <div className="w-full p-5 rounded-[2rem] bg-gradient-to-r from-cyan-500/10 via-emerald-500/10 to-indigo-500/10 border border-cyan-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm backdrop-blur-xl">
                     <div className="flex items-center gap-3 text-center sm:text-left">
-                        <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-500 flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0 border border-cyan-500/30 font-black text-2xl">
+                        <div className="w-11 h-11 rounded-2xl bg-cyan-500/20 text-cyan-500 flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0 border border-cyan-500/30 font-bold text-2xl">
                             {commuterData.vehicleType === 'Jeepney' ? '🛻' :
                              commuterData.vehicleType === 'UV Express' ? '🚐' :
                              commuterData.vehicleType === 'Bus' ? '🚌' :
@@ -207,7 +207,7 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                         <div>
                             <div className="flex items-center gap-2">
                                 <span className={`w-2.5 h-2.5 rounded-full ${commuterData.isDuty ? 'bg-emerald-400 animate-ping' : 'bg-slate-400'}`} />
-                                <h4 className="font-black text-base text-slate-900 dark:text-white">
+                                <h4 className="font-bold text-base text-slate-900 dark:text-white">
                                     Driver Transit Cockpit
                                 </h4>
                                 <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${commuterData.isDuty ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30' : 'bg-slate-500/20 text-slate-400'}`}>
@@ -227,36 +227,34 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                 </div>
             )}
 
-            {/* Fixed 50-Meter Radar Status Banner */}
-            <div className="w-full bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 rounded-2xl p-4 mb-6 shadow-md flex items-center justify-between flex-wrap gap-3">
-                <div className="flex items-center gap-2">
-                    <Compass className="w-4 h-4 text-emerald-500 animate-spin" />
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                        🛰️ Active GPS Radar Radius: <span className="text-emerald-500 font-mono font-black">50 METERS ONLY</span>
-                    </span>
-                </div>
-
-                <span className="px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs font-mono font-bold">
-                    GPS Broadcast Lock • 50m Radius
-                </span>
-            </div>
-
-            {/* GPS Status Banner */}
+            {/* GPS Warning Banner */}
             {gpsStatus === 'denied' && (
-                <div className="w-full mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-xs text-amber-500 flex items-center gap-3">
+                <div className="w-full p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-xs text-amber-500 flex items-center gap-3">
                     <MapPin className="w-5 h-5 flex-shrink-0" />
                     <span>Location fallback applied. Enable browser GPS permission for precise distance scanning.</span>
                 </div>
             )}
 
-            {/* VIEW MODE 1: SONAR RADAR CANVAS */}
+            {/* VIEW MODE 1: PRIVACY-FIRST LIVE TRANSIT MAP */}
+            {viewMode === 'map' && (
+                <div className="w-full">
+                    <LiveTransitMapErrorBoundary>
+                        <LiveTransitMap
+                            commuterCoords={centerCoords}
+                            activeDrivers={nearbyDrivers}
+                            onSelectVehicleToPay={commuterData.role !== 'driver' ? (drv) => setSelectedDriver(drv) : undefined}
+                            commuterUid={commuterData.uid}
+                        />
+                    </LiveTransitMapErrorBoundary>
+                </div>
+            )}
+
+            {/* VIEW MODE 2: SONAR RADAR CANVAS */}
             {viewMode === 'radar' && (
-                <div className="w-full bg-slate-900 dark:bg-[#0B0F19] border border-slate-800 dark:border-white/10 rounded-[2.5rem] p-8 mb-8 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center min-h-[340px]">
+                <div className="w-full bg-slate-900 dark:bg-[#07090E] border border-slate-800 dark:border-white/10 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center min-h-[340px]">
                     
                     {/* Sonar Radar Container */}
                     <div className="relative w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center">
-                        
-                        {/* Rotating Radar Sweep Line */}
                         <div 
                             className="absolute inset-0 rounded-full animate-spin pointer-events-none opacity-40"
                             style={{
@@ -265,14 +263,9 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                             }}
                         />
 
-                        {/* Ring 3 (Outer sonar ring) */}
                         <div className="absolute inset-0 rounded-full border border-emerald-500/20 animate-ping opacity-20 pointer-events-none" />
                         <div className="absolute inset-0 rounded-full border border-dashed border-emerald-500/30" />
-                        
-                        {/* Ring 2 (Middle) */}
                         <div className="absolute inset-8 rounded-full border border-emerald-500/25" />
-                        
-                        {/* Ring 1 (Inner) */}
                         <div className="absolute inset-20 rounded-full border border-emerald-500/40" />
 
                         {/* Center Commuter Marker */}
@@ -296,7 +289,7 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                                     onClick={() => setSelectedDriver(drv)}
                                     style={{ transform: `translate(${x}px, ${y}px)` }}
                                     title={`${drv.driverName} (${formatReadableDistance(drv.distanceKm)})`}
-                                    className="absolute z-20 w-9 h-9 rounded-full bg-emerald-500 text-black flex items-center justify-center shadow-[0_0_20px_rgba(52,211,153,0.9)] hover:scale-130 transition-transform font-bold"
+                                    className="absolute z-20 w-9 h-9 rounded-full bg-emerald-500 text-black flex items-center justify-center shadow-[0_0_20px_rgba(52,211,153,0.9)] hover:scale-125 transition-transform font-bold"
                                 >
                                     <Fuel className="w-4 h-4" />
                                 </button>
@@ -307,35 +300,21 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                     <div className="mt-6 flex items-center gap-2 text-xs font-mono text-emerald-400 font-bold bg-emerald-500/10 px-4 py-2 rounded-full border border-emerald-500/20">
                         <Zap className="w-4 h-4 animate-pulse" />
                         <span>
-                            {nearbyDrivers.length} Driver{nearbyDrivers.length === 1 ? '' : 's'} ON TRANSIT within 50 Meters
+                            {nearbyDrivers.length} Driver{nearbyDrivers.length === 1 ? '' : 's'} ON TRANSIT within 5.0 km
                         </span>
                     </div>
                 </div>
             )}
 
-            {/* VIEW MODE 2: PRIVACY-FIRST LIVE TRANSIT MAP */}
-            {viewMode === 'map' && (
-                <div className="w-full mb-8">
-                    <LiveTransitMapErrorBoundary>
-                        <LiveTransitMap
-                            commuterCoords={centerCoords}
-                            activeDrivers={nearbyDrivers}
-                            onSelectVehicleToPay={commuterData.role !== 'driver' ? (drv) => setSelectedDriver(drv) : undefined}
-                            commuterUid={commuterData.uid}
-                        />
-                    </LiveTransitMapErrorBoundary>
-                </div>
-            )}
-
             {/* NEARBY ON TRANSIT DRIVERS LIST */}
-            <div className="w-full">
-                <h3 className="text-lg font-black text-slate-900 dark:text-white mb-4 flex items-center justify-between">
+            <div className="w-full pt-4">
+                <h3 className="text-lg font-extrabold text-slate-900 dark:text-white mb-4 flex items-center justify-between">
                     <span>Active Drivers On Transit</span>
                     <span className="text-xs font-mono text-emerald-500 font-bold">LIVE GPS BROADCAST</span>
                 </h3>
 
                 {isLoadingDrivers ? (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         {[1, 2].map((i) => (
                             <div key={i} className="p-5 bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 rounded-2xl animate-pulse flex items-center justify-between">
                                 <div className="space-y-2">
@@ -347,14 +326,14 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                         ))}
                     </div>
                 ) : nearbyDrivers.length > 0 ? (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         {nearbyDrivers.map((drv) => (
                             <div
                                 key={drv.uid}
-                                className="p-5 bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all hover:border-emerald-500/50"
+                                className="p-5 bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all hover:border-emerald-500/40"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center text-white font-black text-lg shadow-sm">
+                                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center text-white font-black text-lg shadow-sm">
                                         {(drv.driverName || 'Driver').charAt(0)}
                                     </div>
                                     <div>
@@ -384,7 +363,7 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                                     {commuterData.role !== 'driver' ? (
                                         <button
                                             onClick={() => setSelectedDriver(drv)}
-                                            className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(52,211,153,0.3)] flex items-center gap-1.5"
+                                            className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(52,211,153,0.3)] flex items-center gap-1.5"
                                         >
                                             <Zap className="w-4 h-4" /> Pay Fare
                                         </button>
