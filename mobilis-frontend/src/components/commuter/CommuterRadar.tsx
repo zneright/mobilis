@@ -5,6 +5,7 @@ import { calculateDistanceKm } from '../../utils/geo';
 import { Compass, Navigation, Radio, RefreshCw, Fuel, Zap, MapPin } from 'lucide-react';
 import type { DriverLocationDoc, UserData } from '../../types';
 import FarePaymentModal from './FarePaymentModal';
+import LiveTransitMap from './LiveTransitMap';
 
 interface CommuterRadarProps {
     commuterData: UserData;
@@ -14,6 +15,7 @@ interface CommuterRadarProps {
 
 export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, currencyMode, setCurrencyMode }) => {
     const searchRadiusKm = 0.05; // Fixed 50-meter GPS radar radius
+    const [viewMode, setViewMode] = useState<'radar' | 'map'>('radar');
     const [commuterCoords, setCommuterCoords] = useState<{ lat: number; lng: number } | null>(null);
     const [gpsStatus, setGpsStatus] = useState<'acquiring' | 'ready' | 'denied' | 'error'>('acquiring');
     const [allActiveDrivers, setAllActiveDrivers] = useState<DriverLocationDoc[]>([]);
@@ -105,7 +107,7 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
     return (
         <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
             
-            {/* Top Toolbar */}
+            {/* Top Toolbar & View Mode Switcher */}
             <div className="w-full mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
@@ -118,6 +120,30 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                 </div>
 
                 <div className="flex items-center gap-3">
+                    {/* View Mode Selector */}
+                    <div className="flex items-center gap-1.5 p-1 bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm">
+                        <button
+                            onClick={() => setViewMode('radar')}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all ${
+                                viewMode === 'radar'
+                                    ? 'bg-emerald-500 text-black font-black shadow-sm'
+                                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                        >
+                            🛰️ 50m Radar
+                        </button>
+                        <button
+                            onClick={() => setViewMode('map')}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all ${
+                                viewMode === 'map'
+                                    ? 'bg-emerald-500 text-black font-black shadow-sm'
+                                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                        >
+                            🗺️ Live Transit Map
+                        </button>
+                    </div>
+
                     <button
                         onClick={() => setCurrencyMode((p) => (p === 'PHP' ? 'XLM' : 'PHP'))}
                         className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold font-mono bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 shadow-sm text-slate-900 dark:text-white"
@@ -149,68 +175,80 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                 </div>
             )}
 
-            {/* ADVANCED RADAR VISUALIZER CANVAS */}
-            <div className="w-full bg-slate-900 dark:bg-[#0B0F19] border border-slate-800 dark:border-white/10 rounded-[2.5rem] p-8 mb-8 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center min-h-[340px]">
-                
-                {/* Sonar Radar Container */}
-                <div className="relative w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center">
+            {/* VIEW MODE 1: SONAR RADAR CANVAS */}
+            {viewMode === 'radar' && (
+                <div className="w-full bg-slate-900 dark:bg-[#0B0F19] border border-slate-800 dark:border-white/10 rounded-[2.5rem] p-8 mb-8 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center min-h-[340px]">
                     
-                    {/* Rotating Radar Sweep Line */}
-                    <div 
-                        className="absolute inset-0 rounded-full animate-spin pointer-events-none opacity-40"
-                        style={{
-                            animationDuration: '4s',
-                            background: 'conic-gradient(from 0deg, transparent 0deg, transparent 270deg, rgba(16, 185, 129, 0.35) 360deg)'
-                        }}
-                    />
+                    {/* Sonar Radar Container */}
+                    <div className="relative w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center">
+                        
+                        {/* Rotating Radar Sweep Line */}
+                        <div 
+                            className="absolute inset-0 rounded-full animate-spin pointer-events-none opacity-40"
+                            style={{
+                                animationDuration: '4s',
+                                background: 'conic-gradient(from 0deg, transparent 0deg, transparent 270deg, rgba(16, 185, 129, 0.35) 360deg)'
+                            }}
+                        />
 
-                    {/* Ring 3 (Outer sonar ring) */}
-                    <div className="absolute inset-0 rounded-full border border-emerald-500/20 animate-ping opacity-20 pointer-events-none" />
-                    <div className="absolute inset-0 rounded-full border border-dashed border-emerald-500/30" />
-                    
-                    {/* Ring 2 (Middle) */}
-                    <div className="absolute inset-8 rounded-full border border-emerald-500/25" />
-                    
-                    {/* Ring 1 (Inner) */}
-                    <div className="absolute inset-20 rounded-full border border-emerald-500/40" />
+                        {/* Ring 3 (Outer sonar ring) */}
+                        <div className="absolute inset-0 rounded-full border border-emerald-500/20 animate-ping opacity-20 pointer-events-none" />
+                        <div className="absolute inset-0 rounded-full border border-dashed border-emerald-500/30" />
+                        
+                        {/* Ring 2 (Middle) */}
+                        <div className="absolute inset-8 rounded-full border border-emerald-500/25" />
+                        
+                        {/* Ring 1 (Inner) */}
+                        <div className="absolute inset-20 rounded-full border border-emerald-500/40" />
 
-                    {/* Center Commuter Marker */}
-                    <div className="relative z-10 w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-400 p-0.5 shadow-[0_0_25px_rgba(52,211,153,0.8)]">
-                        <div className="w-full h-full rounded-full bg-black flex items-center justify-center text-emerald-400">
-                            <Navigation className="w-5 h-5" />
+                        {/* Center Commuter Marker */}
+                        <div className="relative z-10 w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-400 p-0.5 shadow-[0_0_25px_rgba(52,211,153,0.8)]">
+                            <div className="w-full h-full rounded-full bg-black flex items-center justify-center text-emerald-400">
+                                <Navigation className="w-5 h-5" />
+                            </div>
                         </div>
+
+                        {/* Driver Markers Visualization on Radar */}
+                        {nearbyDrivers.slice(0, 8).map((drv, idx) => {
+                            const angle = (idx * 45 * Math.PI) / 180;
+                            const radiusRatio = Math.min(drv.distanceKm / searchRadiusKm, 0.85);
+                            const radiusPx = Math.max(35, 120 * radiusRatio);
+                            const x = Math.cos(angle) * radiusPx;
+                            const y = Math.sin(angle) * radiusPx;
+
+                            return (
+                                <button
+                                    key={drv.uid}
+                                    onClick={() => setSelectedDriver(drv)}
+                                    style={{ transform: `translate(${x}px, ${y}px)` }}
+                                    title={`${drv.driverName} (${formatReadableDistance(drv.distanceKm)})`}
+                                    className="absolute z-20 w-9 h-9 rounded-full bg-emerald-500 text-black flex items-center justify-center shadow-[0_0_20px_rgba(52,211,153,0.9)] hover:scale-130 transition-transform font-bold"
+                                >
+                                    <Fuel className="w-4 h-4" />
+                                </button>
+                            );
+                        })}
                     </div>
 
-                    {/* Driver Markers Visualization on Radar */}
-                    {nearbyDrivers.slice(0, 8).map((drv, idx) => {
-                        const angle = (idx * 45 * Math.PI) / 180;
-                        const radiusRatio = Math.min(drv.distanceKm / searchRadiusKm, 0.85);
-                        const radiusPx = Math.max(35, 120 * radiusRatio);
-                        const x = Math.cos(angle) * radiusPx;
-                        const y = Math.sin(angle) * radiusPx;
-
-                        return (
-                            <button
-                                key={drv.uid}
-                                onClick={() => setSelectedDriver(drv)}
-                                style={{ transform: `translate(${x}px, ${y}px)` }}
-                                title={`${drv.driverName} (${formatReadableDistance(drv.distanceKm)})`}
-                                className="absolute z-20 w-9 h-9 rounded-full bg-emerald-500 text-black flex items-center justify-center shadow-[0_0_20px_rgba(52,211,153,0.9)] hover:scale-130 transition-transform font-bold"
-                            >
-                                <Fuel className="w-4 h-4" />
-                            </button>
-                        );
-                    })}
+                    <div className="mt-6 flex items-center gap-2 text-xs font-mono text-emerald-400 font-bold bg-emerald-500/10 px-4 py-2 rounded-full border border-emerald-500/20">
+                        <Zap className="w-4 h-4 animate-pulse" />
+                        <span>
+                            {nearbyDrivers.length} Driver{nearbyDrivers.length === 1 ? '' : 's'} ON TRANSIT within 50 Meters
+                        </span>
+                    </div>
                 </div>
+            )}
 
-                <div className="mt-6 flex items-center gap-2 text-xs font-mono text-emerald-400 font-bold bg-emerald-500/10 px-4 py-2 rounded-full border border-emerald-500/20">
-                    <Zap className="w-4 h-4 animate-pulse" />
-                    <span>
-                        {nearbyDrivers.length} Driver{nearbyDrivers.length === 1 ? '' : 's'} ON TRANSIT within{' '}
-                        {searchRadiusKm < 1 ? `${Math.round(searchRadiusKm * 1000)}m` : `${searchRadiusKm}km`}
-                    </span>
+            {/* VIEW MODE 2: PRIVACY-FIRST LIVE TRANSIT MAP */}
+            {viewMode === 'map' && (
+                <div className="w-full mb-8">
+                    <LiveTransitMap
+                        commuterCoords={centerCoords}
+                        activeDrivers={nearbyDrivers}
+                        onSelectVehicleToPay={(drv) => setSelectedDriver(drv)}
+                    />
                 </div>
-            </div>
+            )}
 
             {/* NEARBY ON TRANSIT DRIVERS LIST */}
             <div className="w-full">
@@ -277,13 +315,11 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                         ))}
                     </div>
                 ) : (
-                    <div className="w-full p-8 bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 rounded-2xl text-center space-y-3">
-                        <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto">
-                            <Radio className="w-6 h-6 animate-pulse" />
-                        </div>
-                        <h4 className="font-bold text-slate-900 dark:text-white">No Drivers Currently On Transit Nearby</h4>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
-                            Drivers appear on the Commuter Radar instantly as soon as they toggle <strong className="text-emerald-500">"Go On Transit"</strong> in their Driver Control Hub.
+                    <div className="p-8 bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 rounded-2xl text-center space-y-2">
+                        <Fuel className="w-8 h-8 text-slate-400 mx-auto" />
+                        <h4 className="font-bold text-sm text-slate-900 dark:text-white">No Drivers Active Within 50 Meters</h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                            Drivers will automatically appear here when they switch their status to ON TRANSIT.
                         </p>
                     </div>
                 )}
@@ -292,10 +328,9 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
             {/* FARE PAYMENT MODAL */}
             {selectedDriver && (
                 <FarePaymentModal
-                    driver={selectedDriver}
                     commuterData={commuterData}
+                    driver={selectedDriver}
                     onClose={() => setSelectedDriver(null)}
-                    onSuccess={() => setSelectedDriver(null)}
                 />
             )}
         </div>
