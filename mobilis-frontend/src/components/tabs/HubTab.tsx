@@ -193,11 +193,11 @@ export const HubTab: React.FC<HubTabProps> = ({
     const usedDebtPercentage = Math.min((safeDebt / safeBorrowLimit) * 100, 100);
 
     return (
-        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 text-slate-900 dark:text-white font-sans">
+        <div className="w-full max-w-4xl mx-auto space-y-6 text-slate-900 dark:text-white font-sans">
             
-            {/* DRIVER / MEMBER SOROBAN CREDIT HERO GAUGE CARD (BENTO SPAN 2) */}
+            {/* DRIVER / MEMBER SOROBAN CREDIT HERO GAUGE CARD */}
             {isDriver && (
-                <div className="lg:col-span-2 p-6 sm:p-8 rounded-[2.5rem] bg-white dark:bg-[#0c1322] border-t-4 border-t-cyan-500 border-x border-b border-slate-200 dark:border-cyan-500/20 shadow-[0_10px_40px_rgba(6,182,212,0.15)] relative overflow-hidden space-y-6 transition-colors duration-300">
+                <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#0c1322] border-t-4 border-t-cyan-500 border-x border-b border-slate-200 dark:border-cyan-500/20 shadow-[0_10px_40px_rgba(6,182,212,0.15)] relative overflow-hidden space-y-6 transition-colors duration-300">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 flex items-center justify-center">
@@ -350,9 +350,9 @@ export const HubTab: React.FC<HubTabProps> = ({
                 </div>
             )}
 
-            {/* ADMIN BROADCAST ANNOUNCEMENT CENTER BUTTON (BENTO SPAN 2) */}
+            {/* ADMIN BROADCAST ANNOUNCEMENT CENTER BUTTON */}
             {isAdmin && (
-                <div className="lg:col-span-2 p-6 rounded-[2.5rem] bg-gradient-to-r from-indigo-900/30 via-purple-900/20 to-slate-900/40 border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_10px_40px_rgba(99,102,241,0.15)]">
+                <div className="p-6 rounded-[2.5rem] bg-gradient-to-r from-indigo-900/30 via-purple-900/20 to-slate-900/40 border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_10px_40px_rgba(99,102,241,0.15)]">
                     <div className="flex items-center gap-3 text-center sm:text-left">
                         <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0">
                             <Megaphone className="w-6 h-6 animate-pulse" />
@@ -378,7 +378,7 @@ export const HubTab: React.FC<HubTabProps> = ({
 
             {/* COOPERATIVE ADMIN VEHICLE TYPE CHANGE REQUESTS QUEUE */}
             {isAdmin && vehicleChangeRequests.length > 0 && (
-                <div className="lg:col-span-2 p-6 sm:p-8 rounded-[2.5rem] bg-white dark:bg-[#0d0f1a] border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30 shadow-[0_10px_40px_rgba(99,102,241,0.15)] space-y-6 transition-colors duration-300">
+                <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#0d0f1a] border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30 shadow-[0_10px_40px_rgba(99,102,241,0.15)] space-y-6 transition-colors duration-300">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
@@ -426,9 +426,9 @@ export const HubTab: React.FC<HubTabProps> = ({
                 </div>
             )}
 
-            {/* COOPERATIVE ADMIN PENDING DRIVERS QUEUE (BENTO SPAN 2) */}
+            {/* COOPERATIVE ADMIN PENDING DRIVERS QUEUE */}
             {isAdmin && (
-                <div className="lg:col-span-2 p-6 sm:p-8 rounded-[2.5rem] bg-white dark:bg-[#0d0f1a] border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30 shadow-[0_10px_40px_rgba(99,102,241,0.15)] space-y-6 transition-colors duration-300">
+                <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#0d0f1a] border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30 shadow-[0_10px_40px_rgba(99,102,241,0.15)] space-y-6 transition-colors duration-300">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center">

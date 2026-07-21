@@ -50,10 +50,10 @@ export const VaultTab: React.FC<VaultTabProps> = ({
         : 'border-t-4 border-t-emerald-500 border-x border-b border-emerald-500/30 shadow-[0_10px_40px_rgba(16,185,129,0.15)]';
 
     return (
-        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 text-slate-900 dark:text-white font-sans">
+        <div className="w-full max-w-4xl mx-auto space-y-6 text-slate-900 dark:text-white font-sans">
             
-            {/* REVOLUT / APPLE WALLET BALANCE HERO CARD (BENTO SPAN 2) */}
-            <div className={`lg:col-span-2 p-6 sm:p-10 rounded-[2.5rem] bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-[#0d111a] dark:to-[#151a26] relative overflow-hidden text-center space-y-6 transition-colors duration-300 ${cardRoleAccent}`}>
+            {/* REVOLUT / APPLE WALLET BALANCE HERO CARD */}
+            <div className={`p-8 sm:p-10 rounded-[2.5rem] bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-[#0d111a] dark:to-[#151a26] relative overflow-hidden text-center space-y-6 transition-colors duration-300 ${cardRoleAccent}`}>
                 
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs font-mono font-bold">

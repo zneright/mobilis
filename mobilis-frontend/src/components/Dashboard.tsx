@@ -78,6 +78,16 @@ const Dashboard: React.FC = () => {
 
     const [activeTab, setActiveTab] = useState<'hub' | 'vault' | 'history' | 'profile'>('hub');
     const [theme, setTheme] = useState<'dark' | 'light'>(() => (localStorage.getItem('theme') as 'dark' | 'light') || 'dark');
+
+    // SYNCHRONIZE LIGHT MODE / DARK MODE WITH HTML ROOT CLASS & LOCAL STORAGE
+    useEffect(() => {
+        localStorage.setItem('theme', theme);
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, [theme]);
     const [currencyMode, setCurrencyMode] = useState<'XLM' | 'PHP'>('XLM');
 
     const appNetwork = 'TESTNET';
