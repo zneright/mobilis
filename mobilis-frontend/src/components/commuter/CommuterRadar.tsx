@@ -398,11 +398,11 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                         ))}
                     </div>
                 ) : (
-                    <div className="p-8 bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 rounded-2xl text-center space-y-2">
+                    <div className="p-8 bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 rounded-2xl text-center space-y-2 font-mono">
                         <Fuel className="w-8 h-8 text-slate-400 mx-auto" />
-                        <h4 className="font-bold text-sm text-slate-900 dark:text-white">No Drivers Active Within 50 Meters</h4>
+                        <h4 className="font-bold text-sm text-slate-900 dark:text-white">No Active Drivers Within 5.0 Kilometers</h4>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                            Drivers will automatically appear here when they switch their status to ON TRANSIT.
+                            Drivers will automatically appear live on your map when they turn ON DUTY in their Driver Control Hub.
                         </p>
                     </div>
                 )}

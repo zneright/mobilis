@@ -208,8 +208,13 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
         try {
             if (!commuterMarkerRef.current) {
                 const el = document.createElement('div');
-                el.className = 'w-10 h-10 rounded-full bg-cyan-500 text-black flex items-center justify-center font-black shadow-[0_0_20px_rgba(0,210,255,0.8)] border-2 border-white animate-pulse';
-                el.innerHTML = '📍';
+                el.className = 'relative flex items-center justify-center';
+                el.innerHTML = `
+                    <div class="absolute w-12 h-12 rounded-full bg-cyan-400/30 border border-cyan-400/60 animate-ping"></div>
+                    <div class="relative z-10 px-3 py-1.5 rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 text-black font-mono font-black flex items-center gap-1.5 shadow-[0_0_25px_rgba(0,210,255,1)] border-2 border-white text-xs whitespace-nowrap">
+                        <span>📍 YOU (MY LOCATION)</span>
+                    </div>
+                `;
 
                 commuterMarkerRef.current = new maplibregl.Marker({ element: el })
                     .setLngLat([commuterCoords.lng, commuterCoords.lat])
@@ -372,6 +377,18 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                             Tap any anonymized vehicle marker to view ETA and initiate instant Stellar fare payment.
                         </p>
                     </div>
+
+                    <button
+                        onClick={() => {
+                            if (mapRef.current) {
+                                mapRef.current.flyTo({ center: [commuterCoords.lng, commuterCoords.lat], zoom: 17, duration: 1000 });
+                            }
+                        }}
+                        title="Locate My Position"
+                        className="absolute bottom-4 right-4 z-20 w-11 h-11 rounded-2xl bg-[#0A0D14]/90 text-cyan-400 border border-cyan-500/30 flex items-center justify-center shadow-lg hover:scale-110 transition-transform backdrop-blur-md"
+                    >
+                        <Navigation className="w-5 h-5" />
+                    </button>
                 </div>
             ) : (
                 /* DISPLAY MODE 2: SONAR RADAR CANVAS (FALLBACK & NATIVE DISPLAY) */
