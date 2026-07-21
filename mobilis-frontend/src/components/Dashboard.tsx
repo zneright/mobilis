@@ -654,7 +654,9 @@ const Dashboard: React.FC = () => {
     };
 
     const formatCurrency = (amount: number | string) => {
+        if (amount === undefined || amount === null || amount === '') return currencyMode === 'PHP' ? '₱ 0.00' : '0.00 XLM';
         const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+        if (isNaN(num)) return currencyMode === 'PHP' ? '₱ 0.00' : '0.00 XLM';
         if (currencyMode === 'PHP') return `₱ ${(num * PHP_EXCHANGE_RATE).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         return `${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} XLM`;
     };
