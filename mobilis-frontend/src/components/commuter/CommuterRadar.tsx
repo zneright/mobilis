@@ -183,13 +183,49 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                 isOnDuty={commuterData.role === 'driver' && Boolean(commuterData.isDuty)}
             />
 
-            {/* Commuter Waiting Beacon Button */}
-            <div className="w-full mb-6">
-                <WaitingBeaconButton
-                    commuterUid={commuterData.uid}
-                    commuterCoords={centerCoords}
-                />
-            </div>
+            {/* Commuter Waiting Beacon Button (COMMUTERS ONLY) */}
+            {commuterData.role !== 'driver' && (
+                <div className="w-full mb-6">
+                    <WaitingBeaconButton
+                        commuterUid={commuterData.uid}
+                        commuterCoords={centerCoords}
+                    />
+                </div>
+            )}
+
+            {/* Driver Cockpit Operational Header (DRIVERS ONLY) */}
+            {commuterData.role === 'driver' && (
+                <div className="w-full mb-6 p-5 rounded-3xl bg-gradient-to-r from-cyan-500/10 via-emerald-500/10 to-indigo-500/10 border border-cyan-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+                    <div className="flex items-center gap-3 text-center sm:text-left">
+                        <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-500 flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0 border border-cyan-500/30 font-black text-2xl">
+                            {commuterData.vehicleType === 'Jeepney' ? '🛻' :
+                             commuterData.vehicleType === 'UV Express' ? '🚐' :
+                             commuterData.vehicleType === 'Bus' ? '🚌' :
+                             commuterData.vehicleType === 'E-Vehicle' ? '🚙' :
+                             commuterData.vehicleType === 'Motorcycle' ? '🛵' : '🛺'}
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <span className={`w-2.5 h-2.5 rounded-full ${commuterData.isDuty ? 'bg-emerald-400 animate-ping' : 'bg-slate-400'}`} />
+                                <h4 className="font-black text-base text-slate-900 dark:text-white">
+                                    Driver Transit Cockpit
+                                </h4>
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${commuterData.isDuty ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30' : 'bg-slate-500/20 text-slate-400'}`}>
+                                    {commuterData.isDuty ? 'ON DUTY • GPS Active' : 'OFF DUTY'}
+                                </span>
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-gray-400 font-mono mt-0.5">
+                                Operating {commuterData.vehicleType || 'Tricycle'} ({commuterData.plateNumber || 'TOD-1234'}) • {commuterData.todaAffiliation || 'Coop TODA'}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 font-mono text-xs font-bold text-cyan-500 bg-cyan-500/10 px-4 py-2 rounded-2xl border border-cyan-500/20">
+                        <Navigation className="w-4 h-4 animate-spin" />
+                        <span>Passenger Dispatch Active</span>
+                    </div>
+                </div>
+            )}
 
             {/* Fixed 50-Meter Radar Status Banner */}
             <div className="w-full bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 rounded-2xl p-4 mb-6 shadow-md flex items-center justify-between flex-wrap gap-3">
