@@ -29,6 +29,7 @@ import ProfileTab from './tabs/ProfileTab';
 
 import CommuterRadar from './commuter/CommuterRadar';
 import DriverDutyToggle from './driver/DriverDutyToggle';
+import DriverRadar from './driver/DriverRadar';
 import MobilisLoader from './common/MobilisLoader';
 import { playDoubleChime } from '../utils/webAudio';
 import { setupFcmNotifications } from '../services/fcm';
@@ -753,8 +754,8 @@ const Dashboard: React.FC = () => {
                                             <DriverDutyToggle userData={stellarData} />
                                         </div>
                                         <div className="w-full">
-                                            <CommuterRadar
-                                                commuterData={stellarData}
+                                            <DriverRadar
+                                                driverData={stellarData}
                                                 currencyMode={currencyMode}
                                                 setCurrencyMode={setCurrencyMode}
                                             />
