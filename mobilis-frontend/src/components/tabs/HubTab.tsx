@@ -182,8 +182,11 @@ export const HubTab: React.FC<HubTabProps> = ({
         }
     };
 
-    const isDriver = stellarData.role === 'driver';
-    const usedDebtPercentage = Math.min((debtState.debt / borrowLimit) * 100, 100);
+    const isDriver = stellarData?.role === 'driver';
+    const safeBorrowLimit = typeof borrowLimit === 'number' && !isNaN(borrowLimit) && borrowLimit > 0 ? borrowLimit : 100;
+    const safeDebt = debtState && typeof debtState.debt === 'number' && !isNaN(debtState.debt) ? debtState.debt : 0;
+    const availableXlm = Math.max(0, safeBorrowLimit - safeDebt);
+    const usedDebtPercentage = Math.min((safeDebt / safeBorrowLimit) * 100, 100);
 
     return (
         <div className="w-full max-w-4xl mx-auto space-y-6 text-slate-900 dark:text-white font-sans">
@@ -198,7 +201,7 @@ export const HubTab: React.FC<HubTabProps> = ({
                             </div>
                             <div>
                                 <h3 className="font-black text-xl text-slate-900 dark:text-white">Soroban Micro-Credit Line</h3>
-                                <p className="text-xs text-slate-500 dark:text-gray-400 font-mono">Affiliated with {stellarData.todaAffiliation || 'Cooperative TODA'}</p>
+                                <p className="text-xs text-slate-500 dark:text-gray-400 font-mono">Affiliated with {stellarData?.todaAffiliation || 'Cooperative TODA'}</p>
                             </div>
                         </div>
                         <div className="px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold">
@@ -229,7 +232,7 @@ export const HubTab: React.FC<HubTabProps> = ({
                                 />
                             </svg>
                             <div className="absolute text-center">
-                                <span className="text-xl font-black text-slate-900 dark:text-white block">{borrowLimit - debtState.debt}</span>
+                                <span className="text-xl font-black text-slate-900 dark:text-white block">{availableXlm}</span>
                                 <span className="text-[9px] font-mono text-slate-500 dark:text-gray-400 uppercase tracking-widest block font-bold">Available XLM</span>
                             </div>
                         </div>
@@ -237,11 +240,11 @@ export const HubTab: React.FC<HubTabProps> = ({
                         <div className="space-y-3 flex-1 text-center sm:text-left">
                             <div className="flex justify-between items-baseline text-sm">
                                 <span className="text-slate-500 dark:text-gray-400 font-medium">Used Credit Debt:</span>
-                                <span className="font-mono font-bold text-amber-600 dark:text-amber-400">{formatCurrency(debtState.debt)}</span>
+                                <span className="font-mono font-bold text-amber-600 dark:text-amber-400">{formatCurrency(safeDebt)}</span>
                             </div>
                             <div className="flex justify-between items-baseline text-sm">
                                 <span className="text-slate-500 dark:text-gray-400 font-medium">Total Credit Limit:</span>
-                                <span className="font-mono font-bold text-slate-900 dark:text-white">{formatCurrency(borrowLimit)}</span>
+                                <span className="font-mono font-bold text-slate-900 dark:text-white">{formatCurrency(safeBorrowLimit)}</span>
                             </div>
                             <div className="pt-2 border-t border-slate-200 dark:border-white/10 flex justify-between items-center text-xs">
                                 <span className="text-slate-400 dark:text-gray-500 font-mono">Smart Contract:</span>
@@ -254,14 +257,14 @@ export const HubTab: React.FC<HubTabProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <button
                             onClick={() => handleRequestAdvance(15)}
-                            disabled={isProcessing || debtState.isLocked}
+                            disabled={isProcessing || (debtState?.isLocked ?? false)}
                             className="py-4 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(0,210,255,0.3)] flex items-center justify-center gap-2"
                         >
                             <ArrowUpRight className="w-4 h-4" /> Borrow 15 XLM Advance
                         </button>
                         <button
                             onClick={handleSettleLoan}
-                            disabled={isProcessing || debtState.debt <= 0}
+                            disabled={isProcessing || safeDebt <= 0}
                             className="py-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(52,211,153,0.3)] flex items-center justify-center gap-2"
                         >
                             <ShieldCheck className="w-4 h-4" /> Repay Soroban Credit Loan
