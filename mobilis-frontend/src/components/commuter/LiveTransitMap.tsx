@@ -374,9 +374,9 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
             </div>
 
             {/* VEHICLE CATEGORY FILTER PILLS */}
-            <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 text-xs">
-                <span className="text-slate-500 dark:text-gray-400 font-mono font-bold flex items-center gap-1 uppercase tracking-wider pr-1 flex-shrink-0">
-                    <Filter className="w-3.5 h-3.5 text-cyan-500" /> Filter:
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1 text-xs">
+                <span className="text-gray-400 font-mono font-bold flex items-center gap-1 uppercase tracking-wider text-[10px] flex-shrink-0">
+                    <Filter className="w-3 h-3 text-emerald-500" /> Filter:
                 </span>
                 {[
                     { label: 'All Vehicles', value: 'all', icon: '🚗' },
@@ -390,9 +390,9 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                     <button
                         key={pill.value}
                         onClick={() => setVehicleFilter(pill.value)}
-                        className={`px-4 py-2 rounded-full font-bold font-mono whitespace-nowrap transition-all border flex items-center gap-1.5 flex-shrink-0 ${vehicleFilter === pill.value
-                                ? 'bg-cyan-500 text-black border-cyan-400 font-black shadow-md scale-105'
-                                : 'bg-white dark:bg-[#0B0F19] border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 hover:border-cyan-500/50'
+                        className={`px-3.5 py-1.5 rounded-full font-bold font-mono whitespace-nowrap transition-all border flex items-center gap-1.5 flex-shrink-0 ${vehicleFilter === pill.value
+                                ? 'bg-gray-900 text-white dark:bg-emerald-500 dark:text-black border-transparent shadow-sm scale-105'
+                                : 'bg-white dark:bg-[#07090E] border-gray-200/60 dark:border-white/10 text-gray-700 dark:text-gray-300'
                             }`}
                     >
                         <span>{pill.icon}</span>
@@ -403,14 +403,14 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
 
             {/* DISPLAY MODE 1: MAPLIBRE GL JS VECTOR MAP */}
             {displayMode === 'maplibre' && webGlSupported ? (
-                <div className="relative w-full h-[440px] rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl">
+                <div className="relative w-full h-[460px] rounded-3xl overflow-hidden border border-gray-100 dark:border-white/10 shadow-md">
                     <div ref={mapContainerRef} className="w-full h-full" />
 
-                    <div className="absolute top-4 left-4 z-10 p-3.5 bg-slate-900/90 dark:bg-black/90 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl text-[11px] text-white space-y-1 shadow-lg">
-                        <div className="flex items-center gap-1.5 font-bold text-cyan-400 font-mono">
+                    <div className="absolute top-4 left-4 z-10 p-3 bg-white/90 dark:bg-[#07090E]/90 backdrop-blur-md border border-gray-100 dark:border-white/10 rounded-2xl text-[11px] text-gray-900 dark:text-white space-y-0.5 shadow-sm font-sans">
+                        <div className="flex items-center gap-1.5 font-extrabold text-emerald-500 font-mono">
                             <Navigation className="w-3.5 h-3.5" /> Live Vector Transit Map
                         </div>
-                        <p className="text-[10px] text-gray-300 font-mono">
+                        <p className="text-[10px] text-gray-500 font-mono">
                             Tap any anonymized vehicle marker to view ETA and send ride signals.
                         </p>
                     </div>
@@ -423,14 +423,14 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                             }
                         }}
                         title="Locate My Position"
-                        className="absolute bottom-4 right-4 z-20 w-11 h-11 rounded-2xl bg-[#0A0D14]/90 text-cyan-400 border border-cyan-500/30 flex items-center justify-center shadow-lg hover:scale-110 transition-transform backdrop-blur-md"
+                        className="absolute bottom-4 right-4 z-20 w-10 h-10 rounded-full bg-white dark:bg-[#07090E] text-emerald-500 border border-gray-200 dark:border-white/10 flex items-center justify-center shadow-md hover:scale-110 transition-transform backdrop-blur-md"
                     >
-                        <Navigation className="w-5 h-5" />
+                        <Navigation className="w-4 h-4" />
                     </button>
                 </div>
             ) : (
                 /* DISPLAY MODE 2: SONAR RADAR CANVAS */
-                <div className="relative w-full h-[420px] rounded-[2.5rem] bg-white dark:bg-[#07090E] border border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl flex items-center justify-center transition-colors duration-300">
+                <div className="relative w-full h-[420px] rounded-3xl bg-white dark:bg-[#07090E] border border-gray-100 dark:border-white/10 overflow-hidden shadow-md flex items-center justify-center transition-colors duration-300">
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="w-[340px] h-[340px] rounded-full border border-emerald-500/10 animate-pulse" />
                         <div className="w-[240px] h-[240px] rounded-full border border-emerald-500/20" />
@@ -439,10 +439,10 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                     </div>
 
                     <div className="relative z-20 flex flex-col items-center">
-                        <div className="w-10 h-10 rounded-full bg-cyan-500 text-black flex items-center justify-center font-black shadow-[0_0_20px_rgba(0,210,255,0.6)] animate-bounce">
-                            <Navigation className="w-5 h-5 fill-current" />
+                        <div className="w-10 h-10 rounded-full bg-emerald-500 text-black flex items-center justify-center font-extrabold shadow-md animate-bounce">
+                            <Navigation className="w-4 h-4 fill-current" />
                         </div>
-                        <span className="px-3 py-1 mt-1.5 rounded-full bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-[10px] font-mono font-bold border border-cyan-500/30">
+                        <span className="px-3 py-1 mt-1.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-mono font-bold border border-emerald-500/20">
                             Your Pickup Location
                         </span>
                     </div>
@@ -460,9 +460,9 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                             >
                                 <div className="w-1 h-8 bg-gradient-to-t from-emerald-500/40 to-transparent rounded-full mb-1 animate-pulse" />
                                 <div
-                                    className={`p-2.5 rounded-2xl flex items-center gap-1.5 shadow-xl transition-all ${isSelected
-                                            ? 'bg-emerald-500 text-black scale-110 shadow-[0_0_25px_rgba(52,211,153,0.8)] border-2 border-white'
-                                            : 'bg-slate-900/90 text-white dark:bg-white/10 border border-slate-200 dark:border-white/20 hover:scale-105'
+                                    className={`p-2.5 rounded-2xl flex items-center gap-1.5 shadow-md transition-all ${isSelected
+                                            ? 'bg-emerald-500 text-black scale-110 shadow-lg border-2 border-white'
+                                            : 'bg-white/90 text-gray-900 dark:bg-white/10 dark:text-white border border-gray-200 dark:border-white/20 hover:scale-105'
                                         }`}
                                 >
                                     <span className="text-lg">{v.icon}</span>
@@ -473,11 +473,11 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                         );
                     })}
 
-                    <div className="absolute bottom-4 left-4 z-20 p-3 bg-slate-900/90 dark:bg-black/80 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl text-[11px] text-white space-y-1 max-w-xs font-mono">
-                        <div className="flex items-center gap-1.5 font-bold text-emerald-400">
+                    <div className="absolute bottom-4 left-4 z-20 p-3 bg-white/90 dark:bg-[#07090E]/90 backdrop-blur-md border border-gray-100 dark:border-white/10 rounded-2xl text-[11px] text-gray-900 dark:text-white space-y-0.5 max-w-xs font-mono shadow-sm">
+                        <div className="flex items-center gap-1.5 font-bold text-emerald-500">
                             <MapPin className="w-3.5 h-3.5" /> Suggested Boarding Point
                         </div>
-                        <p className="text-[10px] text-gray-300">
+                        <p className="text-[10px] text-gray-500">
                             Stand safely on the near sidewalk 15m ahead along the vehicle route vector.
                         </p>
                     </div>
@@ -486,23 +486,23 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
 
             {/* SELECTED ANONYMIZED VEHICLE ETA DETAILS & PAY FARE CARD */}
             {selectedVehicle && (
-                <div className="p-6 rounded-[2.5rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 shadow-2xl space-y-5 transition-colors duration-300">
+                <div className="p-5 rounded-3xl bg-white dark:bg-[#07090E] border border-gray-100 dark:border-white/10 shadow-md space-y-4 font-sans">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
 
                         <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-3xl shadow-sm">
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center text-2xl">
                                 {selectedVehicle.icon}
                             </div>
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <h3 className="font-black text-lg text-slate-900 dark:text-white">
+                                    <h3 className="font-extrabold text-base text-gray-900 dark:text-white">
                                         {selectedVehicle.vehicleType} <span className="text-emerald-500 font-mono">({selectedVehicle.anonId})</span>
                                     </h3>
                                     <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-mono font-bold border border-emerald-500/20">
                                         ON TRANSIT
                                     </span>
                                 </div>
-                                <p className="text-xs text-slate-500 dark:text-gray-400 font-mono mt-0.5">
+                                <p className="text-xs text-gray-500 font-mono mt-0.5">
                                     {selectedVehicle.formattedDistance} • Heading {selectedVehicle.bearing.cardinal} ({selectedVehicle.bearing.angle}°)
                                 </p>
                             </div>
@@ -510,10 +510,10 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
 
                         <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-3">
                             <div className="text-right">
-                                <span className="text-xs font-mono font-black text-emerald-600 dark:text-emerald-400 block">
+                                <span className="text-xs font-mono font-black text-emerald-500 block">
                                     {selectedVehicle.eta}
                                 </span>
-                                <span className="text-[9px] font-mono text-slate-400 uppercase tracking-wider block">Average Speed ~20 km/h</span>
+                                <span className="text-[9px] font-mono text-gray-400 uppercase">Avg Speed ~20 km/h</span>
                             </div>
 
                             <div className="flex items-center gap-2">
@@ -521,17 +521,17 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                                     <button
                                         onClick={() => handleNotifyVehicleDriver(selectedVehicle)}
                                         disabled={notifyingId === selectedVehicle.anonId}
-                                        className="px-5 py-3.5 bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(0,210,255,0.4)] flex items-center gap-1.5 hover:scale-105"
+                                        className="px-4 py-2.5 bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white font-extrabold text-xs rounded-full transition-all flex items-center gap-1.5"
                                     >
-                                        <Bell className="w-4 h-4" /> Notify Driver
+                                        <Bell className="w-3.5 h-3.5 text-emerald-500" /> Notify
                                     </button>
                                 )}
                                 {onSelectVehicleToPay && (
                                     <button
                                         onClick={() => onSelectVehicleToPay(selectedVehicle.rawDoc)}
-                                        className="px-5 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(52,211,153,0.4)] flex items-center gap-2 hover:scale-105"
+                                        className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs rounded-full transition-all shadow-md flex items-center gap-2"
                                     >
-                                        <Zap className="w-4 h-4" /> Pay Fare
+                                        <Zap className="w-3.5 h-3.5" /> Pay Fare
                                     </button>
                                 )}
                             </div>
@@ -539,17 +539,17 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                     </div>
 
                     {notifySuccessMsg && (
-                        <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-xs font-bold rounded-2xl flex items-center gap-2 animate-bounce">
+                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-mono text-xs font-bold rounded-2xl flex items-center gap-2 animate-bounce">
                             <Check className="w-4 h-4" /> {notifySuccessMsg}
                         </div>
                     )}
 
                     {/* Privacy Guarantee Footer */}
-                    <div className="pt-4 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-[11px] text-slate-400 dark:text-gray-500 font-mono">
+                    <div className="pt-3 border-t border-gray-100 dark:border-white/10 flex items-center justify-between text-[10px] text-gray-400 font-mono">
                         <span className="flex items-center gap-1">
-                            <EyeOff className="w-3.5 h-3.5 text-slate-400" /> Driver personal info redacted by Mobilis Privacy Layer
+                            <EyeOff className="w-3 h-3 text-emerald-500" /> Mobilis Privacy Protected
                         </span>
-                        <span className="text-cyan-500 font-bold">Stellar Testnet Ledger Ready</span>
+                        <span className="text-emerald-500 font-bold">Stellar Transit</span>
                     </div>
                 </div>
             )}

@@ -154,20 +154,20 @@ export const LiveApproachStatus: React.FC<LiveApproachStatusProps> = ({
     };
 
     return (
-        <div className="w-full space-y-3">
+        <div className="w-full space-y-2 font-sans">
             {/* Arrival Notice Toast Banner */}
             {arrivalNotice && (
-                <div className="p-4 rounded-2xl bg-cyan-500 text-black font-black text-xs shadow-[0_0_25px_rgba(0,210,255,0.6)] flex items-center gap-2.5 animate-bounce">
-                    <Bell className="w-5 h-5 flex-shrink-0" />
+                <div className="p-3 rounded-2xl bg-emerald-500 text-black font-extrabold text-xs shadow-md flex items-center gap-2 animate-bounce">
+                    <Bell className="w-4 h-4 flex-shrink-0" />
                     <span>{arrivalNotice}</span>
                 </div>
             )}
 
-            {/* Active Approach Card */}
-            <div className="p-6 rounded-[2.5rem] bg-gradient-to-r from-emerald-500/20 via-cyan-500/20 to-indigo-500/20 border border-emerald-500/40 shadow-2xl space-y-4 font-sans">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            {/* Active Approach Floating Glass Card */}
+            <div className="p-4 rounded-3xl bg-white/90 dark:bg-[#07090E]/90 border border-emerald-500/30 shadow-md backdrop-blur-md space-y-3">
+                <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-black flex items-center justify-center font-black text-2xl shadow-lg">
+                        <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center font-extrabold text-xl">
                             {activeSession.vehicleType === 'Jeepney' ? '🛻' :
                              activeSession.vehicleType === 'UV Express' ? '🚐' :
                              activeSession.vehicleType === 'Bus' ? '🚌' :
@@ -176,44 +176,43 @@ export const LiveApproachStatus: React.FC<LiveApproachStatusProps> = ({
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-                                <h3 className="font-black text-base text-slate-900 dark:text-white">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                                <h3 className="font-extrabold text-sm text-gray-900 dark:text-white">
                                     Driver Accepted Pickup
                                 </h3>
                             </div>
-                            <p className="text-xs text-slate-600 dark:text-gray-300 font-mono mt-0.5">
+                            <p className="text-xs text-gray-500 font-mono mt-0.5">
                                 {activeSession.vehicleType} • {formattedDist} away
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                         <div className="text-right">
-                            <span className="text-sm font-mono font-black text-emerald-500 block">
+                            <span className="text-xs font-mono font-extrabold text-emerald-500 block">
                                 {eta}
                             </span>
-                            <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">Live Approach</span>
+                            <span className="text-[9px] font-mono text-gray-400 uppercase">ETA</span>
                         </div>
 
-                        {/* Commuter Cancel Ride Button */}
                         <button
                             onClick={handleCommuterCancel}
                             disabled={isCancelling}
-                            className="px-4 py-2.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5"
+                            className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 rounded-full transition-all"
+                            title="Cancel Request"
                         >
                             <X className="w-4 h-4" />
-                            <span>{isCancelling ? 'Cancelling...' : 'Cancel Request'}</span>
                         </button>
                     </div>
                 </div>
 
-                {/* Auto-Cancel Countdown Bar & Verification */}
-                <div className="pt-3 border-t border-slate-200 dark:border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-gray-400 font-mono">
-                    <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                        <CheckCircle2 className="w-4 h-4" /> Driver En Route to Your Pickup Spot
+                {/* Auto-Cancel Countdown Bar */}
+                <div className="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center justify-between text-[11px] text-gray-500 font-mono">
+                    <span className="flex items-center gap-1 text-emerald-500 font-bold">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Driver En Route
                     </span>
-                    <span className="flex items-center gap-1 text-amber-400 font-bold">
-                        <Clock className="w-3.5 h-3.5 animate-spin" /> Auto-cancels in {formatCountdown(timeLeftSec)}
+                    <span className="flex items-center gap-1 text-amber-500 font-bold">
+                        <Clock className="w-3 h-3 animate-spin" /> Auto-cancels in {formatCountdown(timeLeftSec)}
                     </span>
                 </div>
             </div>

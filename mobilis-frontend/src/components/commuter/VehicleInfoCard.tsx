@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { playCommuterChime } from '../../utils/webAudio';
-import { Bell, EyeOff, Check } from 'lucide-react';
+import { Bell, EyeOff, Check, X } from 'lucide-react';
 
 interface VehicleInfoCardProps {
     vehicleType: string;
@@ -60,63 +60,78 @@ export const VehicleInfoCard: React.FC<VehicleInfoCardProps> = ({
     };
 
     const occupancyColor =
-        occupancyStatus === 'Available' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
-        occupancyStatus === 'Nearly Full' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
-        'bg-red-500/20 text-red-400 border-red-500/30';
+        occupancyStatus === 'Available' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+        occupancyStatus === 'Nearly Full' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+        'bg-rose-500/10 text-rose-500 border-rose-500/20';
 
     return (
-        <div className="w-full p-6 rounded-[2.5rem] bg-[#090C14] border border-cyan-500/30 shadow-2xl space-y-4 text-white font-sans backdrop-blur-2xl">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 flex items-center justify-center text-3xl shadow-md">
-                        {icon}
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h3 className="font-black text-lg text-white">
-                                {vehicleType} <span className="text-cyan-400 font-mono text-xs">(ON TRANSIT)</span>
-                            </h3>
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${occupancyColor}`}>
-                                {occupancyStatus}
-                            </span>
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end bg-black/60 backdrop-blur-sm animate-fadeIn">
+            {/* Pull-Up Bottom Sheet Container */}
+            <div className="w-full max-w-lg mx-auto bg-white dark:bg-[#07090E] rounded-t-[40px] p-6 shadow-[0_-20px_60px_rgba(0,0,0,0.15)] border-t border-gray-100 dark:border-white/10 text-gray-900 dark:text-white font-sans space-y-4">
+                
+                {/* Gray Drag Handle Pill */}
+                <div className="w-12 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mb-2" />
+
+                <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-white/10">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-white/10 flex items-center justify-center text-2xl">
+                            {icon}
                         </div>
-                        <p className="text-xs text-slate-400 font-mono mt-0.5">
-                            {distanceText} away • {bearingText}
-                        </p>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h3 className="font-extrabold text-base text-gray-900 dark:text-white">
+                                    {vehicleType}
+                                </h3>
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${occupancyColor}`}>
+                                    {occupancyStatus}
+                                </span>
+                            </div>
+                            <p className="text-xs text-gray-500 font-mono mt-0.5">
+                                {distanceText} away • {bearingText}
+                            </p>
+                        </div>
+                    </div>
+
+                    {onClose && (
+                        <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-white/10">
+                            <X className="w-5 h-5" />
+                        </button>
+                    )}
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-white/5 rounded-2xl">
+                    <div>
+                        <span className="text-xs text-gray-500 font-mono">Estimated Arrival (ETA)</span>
+                        <span className="text-lg font-extrabold text-emerald-500 block">{etaText}</span>
+                    </div>
+                    <div className="text-right">
+                        <span className="text-xs text-gray-500 font-mono">Avg Speed</span>
+                        <span className="text-xs font-bold text-gray-700 dark:text-gray-300 block">~20 km/h</span>
                     </div>
                 </div>
 
-                <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-4">
-                    <div className="text-right font-mono">
-                        <span className="text-sm font-black text-cyan-400 block">
-                            {etaText}
-                        </span>
-                        <span className="text-[9px] text-slate-400 uppercase tracking-wider block">Average Speed ~20 km/h</span>
+                {successMsg && (
+                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-mono text-xs font-bold rounded-2xl flex items-center gap-2 animate-bounce">
+                        <Check className="w-4 h-4" /> {successMsg}
                     </div>
+                )}
 
-                    <button
-                        onClick={handleSendWaitingSignal}
-                        disabled={isSubmitting || !commuterUid}
-                        className="px-6 py-3.5 bg-gradient-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(0,210,255,0.4)] flex items-center gap-2 hover:scale-105"
-                    >
-                        <Bell className="w-4 h-4" />
-                        <span>{isSubmitting ? 'Signaling...' : "I'm Waiting For Ride"}</span>
-                    </button>
+                <button
+                    onClick={handleSendWaitingSignal}
+                    disabled={isSubmitting || !commuterUid}
+                    className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs rounded-full transition-all shadow-md flex items-center justify-center gap-2 active:scale-98"
+                >
+                    <Bell className="w-4 h-4" />
+                    <span>{isSubmitting ? 'Signaling...' : "I'M WAITING FOR RIDE"}</span>
+                </button>
+
+                {/* Privacy Redaction Guarantee */}
+                <div className="pt-2 flex items-center justify-between text-[10px] text-gray-400 font-mono">
+                    <span className="flex items-center gap-1">
+                        <EyeOff className="w-3 h-3 text-emerald-500" /> Mobilis Privacy Protected
+                    </span>
+                    <span className="text-emerald-500 font-bold">Stellar Transit</span>
                 </div>
-            </div>
-
-            {successMsg && (
-                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-xs font-bold rounded-2xl flex items-center gap-2 animate-bounce">
-                    <Check className="w-4 h-4" /> {successMsg}
-                </div>
-            )}
-
-            {/* Privacy Redaction Guarantee */}
-            <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-400 font-mono">
-                <span className="flex items-center gap-1.5">
-                    <EyeOff className="w-3.5 h-3.5 text-cyan-400" /> Personal details redacted by Mobilis Privacy Layer
-                </span>
-                <span className="text-emerald-400 font-bold">Stellar Public Transit Ledger</span>
             </div>
         </div>
     );

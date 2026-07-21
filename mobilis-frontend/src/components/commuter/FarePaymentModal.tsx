@@ -46,9 +46,9 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
     const fareXlm = (parseFloat(farePhp || '0') / PHP_RATE).toFixed(4);
 
     const presetPhpAmounts = [
-        { label: '₱15 (Minimum Fare)', value: '15' },
-        { label: '₱30 (Standard Fare)', value: '30' },
-        { label: '₱50 (Medium Trip)', value: '50' },
+        { label: '₱15 (Min Fare)', value: '15' },
+        { label: '₱30 (Standard)', value: '30' },
+        { label: '₱50 (Medium)', value: '50' },
         { label: '₱100 (Long Trip)', value: '100' },
     ];
 
@@ -143,71 +143,61 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-            <div className="w-full max-w-md bg-white dark:bg-[#0a0a14] border border-slate-200 dark:border-white/10 rounded-3xl p-6 shadow-2xl relative text-slate-900 dark:text-white my-auto transition-colors duration-300">
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end bg-black/60 backdrop-blur-sm animate-fadeIn">
+            {/* Pull-Up Bottom Sheet Card */}
+            <div className="w-full max-w-lg mx-auto bg-white dark:bg-[#07090E] rounded-t-[40px] p-6 shadow-[0_-20px_60px_rgba(0,0,0,0.15)] relative border-t border-gray-100 dark:border-white/10 text-gray-900 dark:text-white font-sans max-h-[90vh] overflow-y-auto">
+                
+                {/* Gray Drag Handle Pill */}
+                <div className="w-12 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mb-4" />
 
-                {/* Header */}
-                <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-200 dark:border-white/10">
+                {/* Top Header */}
+                <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100 dark:border-white/10">
                     <div className="flex items-center gap-2">
-                        <Receipt className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                        <Receipt className="w-5 h-5 text-emerald-500" />
                         <div>
-                            <h3 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">Automatic Transport Fare</h3>
-                            <p className="text-xs text-slate-500 dark:text-gray-400 font-mono">Real-Time PHP Equivalent Payment</p>
+                            <h3 className="text-lg font-extrabold tracking-tight">Express Fare Payment</h3>
+                            <p className="text-xs text-gray-500 font-mono">Stellar Instant Cashless Settlement</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+                    <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-white/10">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 {/* Driver Info Card */}
-                <div className="p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl mb-6 flex items-center justify-between">
+                <div className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl mb-4 flex items-center justify-between">
                     <div>
-                        <p className="text-[10px] uppercase font-bold tracking-widest text-emerald-600 dark:text-emerald-400">Driver Recipient</p>
-                        <h4 className="font-bold text-base text-slate-900 dark:text-white">{driver.driverName}</h4>
-                        <p className="text-xs text-slate-500 dark:text-gray-400 font-mono">🛺 {driver.plateNumber} • {driver.todaAffiliation}</p>
+                        <p className="text-[10px] uppercase font-bold tracking-widest text-emerald-500 font-mono">Driver Recipient</p>
+                        <h4 className="font-extrabold text-sm text-gray-900 dark:text-white">{driver.driverName}</h4>
+                        <p className="text-xs text-gray-500 font-mono">🛺 {driver.plateNumber} • {driver.todaAffiliation}</p>
                     </div>
-                    <div className="px-3 py-1 bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-bold">
+                    <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-full text-xs font-bold font-mono">
                         ON TRANSIT
-                    </div>
+                    </span>
                 </div>
 
                 {/* STEP 1: INPUT */}
                 {step === 'input' && (
-                    <div className="space-y-5">
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                                Enter Fare Amount in PHP (₱)
-                            </label>
-                            <div className="relative">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-black text-emerald-600 dark:text-emerald-400">₱</span>
-                                <input
-                                    type="number"
-                                    step="1"
-                                    value={farePhp}
-                                    onChange={(e) => setFarePhp(e.target.value)}
-                                    placeholder="15"
-                                    className="w-full pl-10 pr-24 p-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-2xl text-2xl font-black text-emerald-600 dark:text-emerald-400 outline-none focus:border-emerald-500"
-                                />
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-right">
-                                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 block font-mono">≈ {fareXlm} XLM</span>
-                                    <span className="text-[9px] text-slate-400 dark:text-gray-400 uppercase font-mono block">Real-time Rate</span>
-                                </div>
+                    <div className="space-y-4">
+                        <div className="text-center py-2">
+                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Total Fare Receipt</span>
+                            <div className="text-4xl font-black text-gray-900 dark:text-white">
+                                ₱{farePhp}.00 <span className="text-xs font-mono font-normal text-emerald-500 block mt-1">({fareXlm} XLM)</span>
                             </div>
                         </div>
 
                         {/* Quick PHP Presets */}
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-2">Popular Fare Presets</p>
-                            <div className="grid grid-cols-2 gap-2">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 font-mono">Select Fare Preset</p>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 {presetPhpAmounts.map((preset, idx) => (
                                     <button
                                         key={idx}
                                         onClick={() => setFarePhp(preset.value)}
-                                        className={`p-3 rounded-xl border text-xs font-bold transition-all ${
+                                        className={`p-3 rounded-2xl border text-xs font-bold transition-all ${
                                             farePhp === preset.value
-                                                ? 'bg-emerald-500 text-black border-emerald-400 shadow-md font-black'
-                                                : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/10'
+                                                ? 'bg-gray-900 text-white dark:bg-emerald-500 dark:text-black border-transparent shadow-sm'
+                                                : 'bg-gray-50 dark:bg-white/5 border-gray-200/60 dark:border-white/10 text-gray-700 dark:text-gray-300'
                                         }`}
                                     >
                                         {preset.label}
@@ -217,7 +207,7 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
                         </div>
 
                         {error && (
-                            <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-xs text-center font-medium">
+                            <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-2xl text-xs text-center font-bold">
                                 {error}
                             </div>
                         )}
@@ -225,46 +215,46 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
                         <button
                             onClick={() => setStep('review')}
                             disabled={!farePhp || parseFloat(farePhp) <= 0}
-                            className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-black text-sm rounded-2xl transition-all shadow-[0_0_20px_rgba(52,211,153,0.4)] flex items-center justify-center gap-2"
+                            className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-sm rounded-full transition-all shadow-md flex items-center justify-center gap-2 active:scale-98"
                         >
-                            Review Payment Details
+                            Confirm Stellar Payment
                         </button>
                     </div>
                 )}
 
                 {/* STEP 2: REVIEW */}
                 {step === 'review' && (
-                    <div className="space-y-5">
-                        <div className="p-5 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl space-y-3 font-mono text-xs">
-                            <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-white/10">
-                                <span className="text-slate-500 dark:text-gray-400">Recipient Driver:</span>
-                                <span className="font-bold text-slate-900 dark:text-white">{driver.driverName}</span>
+                    <div className="space-y-4">
+                        <div className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl space-y-2.5 text-xs font-mono">
+                            <div className="flex justify-between items-center pb-2 border-b border-gray-200/50 dark:border-white/10">
+                                <span className="text-gray-500">Driver Recipient:</span>
+                                <span className="font-bold text-gray-900 dark:text-white">{driver.driverName}</span>
                             </div>
-                            <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-white/10">
-                                <span className="text-slate-500 dark:text-gray-400">TODA / Plate:</span>
-                                <span className="font-bold text-slate-900 dark:text-white">🛺 {driver.plateNumber}</span>
+                            <div className="flex justify-between items-center pb-2 border-b border-gray-200/50 dark:border-white/10">
+                                <span className="text-gray-500">Plate / TODA:</span>
+                                <span className="font-bold text-gray-900 dark:text-white">🛺 {driver.plateNumber}</span>
                             </div>
-                            <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-white/10">
-                                <span className="text-slate-500 dark:text-gray-400">Amount (PHP):</span>
-                                <span className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">₱{parseFloat(farePhp).toFixed(2)} PHP</span>
+                            <div className="flex justify-between items-center pb-2 border-b border-gray-200/50 dark:border-white/10">
+                                <span className="text-gray-500">Fare Amount:</span>
+                                <span className="font-extrabold text-emerald-500 text-base">₱{parseFloat(farePhp).toFixed(2)} PHP</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-slate-500 dark:text-gray-400">XLM Equivalent:</span>
-                                <span className="font-bold text-cyan-600 dark:text-cyan-400">{fareXlm} XLM</span>
+                                <span className="text-gray-500">Stellar XLM:</span>
+                                <span className="font-bold text-cyan-500">{fareXlm} XLM</span>
                             </div>
                         </div>
 
-                        <div className="flex gap-3">
+                        <div className="flex gap-2">
                             <button
                                 onClick={() => setStep('input')}
-                                className="w-1/3 py-4 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-900 dark:text-white font-bold rounded-2xl text-xs border border-slate-200 dark:border-white/10"
+                                className="w-1/3 py-4 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 text-gray-900 dark:text-white font-bold rounded-full text-xs"
                             >
                                 Back
                             </button>
                             <button
                                 onClick={handleExecutePayment}
                                 disabled={isSubmitting}
-                                className="w-2/3 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(52,211,153,0.4)] flex items-center justify-center gap-2"
+                                className="w-2/3 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs rounded-full transition-all shadow-md flex items-center justify-center gap-2 active:scale-98"
                             >
                                 <ShieldCheck className="w-4 h-4" /> Confirm & Pay ₱{farePhp}
                             </button>
@@ -274,71 +264,58 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
 
                 {/* STEP 3: PROCESSING */}
                 {step === 'processing' && (
-                    <div className="py-12 text-center space-y-4">
-                        <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                        <h4 className="text-lg font-black text-slate-900 dark:text-white">Broadcasting Real-Time Fare...</h4>
-                        <p className="text-xs text-slate-500 dark:text-gray-400 max-w-xs mx-auto">
-                            Executing on-chain Stellar payment and recording digital receipt in Firebase Firestore.
+                    <div className="py-10 text-center space-y-4">
+                        <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                        <h4 className="text-base font-extrabold text-gray-900 dark:text-white">Broadcasting Stellar Payment...</h4>
+                        <p className="text-xs text-gray-500 max-w-xs mx-auto font-mono">
+                            Executing on-chain transaction and generating receipt.
                         </p>
                     </div>
                 )}
 
                 {/* STEP 4: SUCCESS DIGITAL RECEIPT */}
                 {step === 'success' && (
-                    <div className="py-4 text-center space-y-5">
-                        
-                        {/* DIGITAL RECEIPT CARD */}
-                        <div className="bg-white text-slate-900 rounded-3xl p-6 text-left shadow-2xl relative border-4 border-emerald-500">
-                            
-                            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                    <div className="py-2 text-center space-y-4">
+                        <div className="bg-white text-gray-900 rounded-3xl p-5 text-left shadow-lg border border-emerald-500">
+                            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
                                 <div>
-                                    <h4 className="font-black text-lg tracking-tight text-slate-900">MOBILIS RECEIPT</h4>
-                                    <p className="text-[10px] font-mono text-emerald-600 font-bold uppercase">Official Transit Fare Receipt</p>
+                                    <h4 className="font-extrabold text-base text-gray-900">MOBILIS RECEIPT</h4>
+                                    <p className="text-[10px] font-mono text-emerald-600 font-bold uppercase">Official Transit Fare</p>
                                 </div>
-                                <div className="w-10 h-10 rounded-full bg-emerald-500 text-black flex items-center justify-center font-black">
+                                <div className="w-8 h-8 rounded-full bg-emerald-500 text-black flex items-center justify-center font-bold">
                                     ✓
                                 </div>
                             </div>
 
-                            <div className="py-4 space-y-2 text-xs">
+                            <div className="py-3 space-y-2 text-xs">
                                 <div className="flex justify-between">
-                                    <span className="text-slate-500 font-medium">Receipt No:</span>
-                                    <span className="font-mono font-bold text-slate-900 truncate max-w-[160px]">
+                                    <span className="text-gray-500">Receipt No:</span>
+                                    <span className="font-mono font-bold text-gray-900 truncate max-w-[150px]">
                                         OR-{completedTxHash?.substring(0, 10).toUpperCase()}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-slate-500 font-medium">Date & Time:</span>
-                                    <span className="font-mono text-slate-900">
+                                    <span className="text-gray-500">Date & Time:</span>
+                                    <span className="font-mono text-gray-800">
                                         {completedTimestamp ? new Date(completedTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-slate-500 font-medium">Driver:</span>
-                                    <span className="font-bold text-slate-900">{driver.driverName}</span>
+                                    <span className="text-gray-500">Driver:</span>
+                                    <span className="font-bold text-gray-900">{driver.driverName}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-slate-500 font-medium">Vehicle / TODA:</span>
-                                    <span className="font-mono text-slate-800">🛺 {driver.plateNumber} ({driver.todaAffiliation})</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-slate-500 font-medium">Commuter:</span>
-                                    <span className="font-bold text-slate-900">{commuterData.fullName || 'Commuter'}</span>
+                                    <span className="text-gray-500">Vehicle / TODA:</span>
+                                    <span className="font-mono text-gray-800">🛺 {driver.plateNumber} ({driver.todaAffiliation})</span>
                                 </div>
 
-                                <div className="mt-4 pt-3 border-t border-slate-200 flex justify-between items-baseline">
-                                    <span className="text-xs font-bold text-slate-700">TOTAL PAID</span>
+                                <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between items-baseline">
+                                    <span className="text-xs font-bold text-gray-700">TOTAL PAID</span>
                                     <div className="text-right">
-                                        <span className="text-2xl font-black text-emerald-600 block">₱{parseFloat(farePhp).toFixed(2)} PHP</span>
-                                        <span className="text-[10px] font-mono text-slate-500 font-bold block">({fareXlm} XLM)</span>
+                                        <span className="text-xl font-extrabold text-emerald-600">₱{parseFloat(farePhp).toFixed(2)} PHP</span>
+                                        <span className="text-[10px] font-mono text-gray-500 block">({fareXlm} XLM)</span>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div className="pt-3 border-t border-dashed border-slate-300 text-center">
-                                <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest block font-bold">
-                                    VERIFIED ON STELLAR BLOCKCHAIN LEDGER
-                                </span>
                             </div>
                         </div>
 
@@ -347,14 +324,14 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
                             <div className="flex gap-2">
                                 <button
                                     onClick={handleCopyTxHash}
-                                    className="flex-1 py-3 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-900 dark:text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 border border-slate-200 dark:border-white/10 transition-all"
+                                    className="flex-1 py-3 bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white font-bold rounded-full text-xs flex items-center justify-center gap-2"
                                 >
-                                    {copiedHash ? <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                                    {copiedHash ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                                     {copiedHash ? 'Hash Copied!' : 'Copy TX Hash'}
                                 </button>
                                 <button
                                     onClick={() => window.print()}
-                                    className="py-3 px-4 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-900 dark:text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-200 dark:border-white/10 transition-all"
+                                    className="py-3 px-4 bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white font-bold rounded-full text-xs flex items-center justify-center gap-1.5"
                                 >
                                     <Printer className="w-4 h-4" /> Print
                                 </button>
@@ -365,17 +342,17 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
                                     href={`https://stellar.expert/explorer/testnet/tx/${completedTxHash}`}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="w-full py-3 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all"
+                                    className="w-full py-3 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 font-bold rounded-full text-xs flex items-center justify-center gap-2"
                                 >
-                                    Verify Blockchain Ledger <ExternalLink className="w-3.5 h-3.5" />
+                                    Verify Ledger <ExternalLink className="w-3.5 h-3.5" />
                                 </a>
                             )}
 
                             <button
                                 onClick={onClose}
-                                className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(52,211,153,0.4)]"
+                                className="w-full py-4 bg-emerald-500 text-black font-extrabold text-xs rounded-full shadow-md"
                             >
-                                Done & Return to Radar
+                                Done & Return
                             </button>
                         </div>
                     </div>
