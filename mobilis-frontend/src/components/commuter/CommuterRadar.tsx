@@ -251,7 +251,7 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
 
             {/* VIEW MODE 2: SONAR RADAR CANVAS */}
             {viewMode === 'radar' && (
-                <div className="w-full bg-white dark:bg-[#07090E] border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-md relative overflow-hidden flex flex-col items-center justify-center min-h-[320px]">
+                <div className="w-full bg-white dark:bg-[#0c121e] border-t-4 border-t-emerald-500 border-x border-b border-gray-100 dark:border-emerald-500/20 rounded-3xl p-6 shadow-[0_10px_30px_rgba(16,185,129,0.15)] relative overflow-hidden flex flex-col items-center justify-center min-h-[320px]">
                     
                     {/* Sonar Radar Container */}
                     <div className="relative w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center">

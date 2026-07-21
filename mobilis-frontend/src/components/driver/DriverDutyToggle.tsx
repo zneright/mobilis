@@ -144,24 +144,24 @@ export const DriverDutyToggle: React.FC<DriverDutyToggleProps> = ({ userData }) 
     }, []);
 
     return (
-        <div className="w-full bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-xl transition-all">
+        <div className="w-full bg-white dark:bg-[#0c1322] border-t-4 border-t-cyan-500 border-x border-b border-slate-200 dark:border-cyan-500/20 rounded-2xl p-6 shadow-[0_10px_30px_rgba(6,182,212,0.15)] transition-all">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
                         isOnDuty 
-                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-[0_0_20px_rgba(52,211,153,0.4)] animate-pulse' 
-                            : 'bg-gray-100 dark:bg-white/5 text-gray-400 border border-gray-200 dark:border-white/10'
+                            ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 shadow-[0_0_20px_rgba(6,182,212,0.4)] animate-pulse' 
+                            : 'bg-slate-100 dark:bg-white/5 text-slate-400 border border-slate-200 dark:border-white/10'
                     }`}>
                         <Navigation className="w-7 h-7" />
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
-                            <span className={`w-3 h-3 rounded-full ${isOnDuty ? 'bg-emerald-400 animate-ping' : 'bg-gray-400'}`} />
-                            <h4 className="font-black text-lg tracking-wider text-gray-900 dark:text-white uppercase">
+                            <span className={`w-3 h-3 rounded-full ${isOnDuty ? 'bg-cyan-400 animate-ping' : 'bg-gray-400'}`} />
+                            <h4 className="font-black text-lg tracking-wider text-slate-900 dark:text-white uppercase">
                                 {isOnDuty ? 'ON TRANSIT • RADAR VISIBLE' : 'OFF TRANSIT'}
                             </h4>
                         </div>
-                        <p className="text-xs text-gray-500 font-mono mt-1">{statusText}</p>
+                        <p className="text-xs text-slate-500 dark:text-gray-400 font-mono mt-1">{statusText}</p>
                     </div>
                 </div>
 
@@ -170,8 +170,8 @@ export const DriverDutyToggle: React.FC<DriverDutyToggleProps> = ({ userData }) 
                     disabled={isUpdating}
                     className={`w-full sm:w-auto px-7 py-4 rounded-xl font-black text-sm flex items-center justify-center gap-2.5 transition-all shadow-lg ${
                         isOnDuty
-                            ? 'bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/40'
-                            : 'bg-emerald-500 text-black hover:bg-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.4)]'
+                            ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/40'
+                            : 'bg-cyan-500 text-black hover:bg-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.4)]'
                     }`}
                 >
                     <Power className="w-5 h-5" />
