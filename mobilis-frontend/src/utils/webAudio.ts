@@ -1,6 +1,6 @@
 /**
  * Web Audio API Sound Synthesizer
- * Generates clean, distinct notification sounds for Commuters vs Drivers.
+ * Generates clean, distinct notification sounds for Commuters vs Drivers vs Startup.
  */
 let audioCtx: AudioContext | null = null;
 
@@ -17,7 +17,6 @@ function getAudioContext(): AudioContext {
 
 /**
  * Commuter Notification Chime: Soft ambient 2-tone chime (C5 -> G5)
- * Triggered when a driver approaches or accepts a commuter's ride beacon.
  */
 export function playCommuterChime(): void {
     try {
@@ -54,7 +53,6 @@ export function playCommuterChime(): void {
 
 /**
  * Driver Notification Chime: Upbeat triple-pulse dispatch chime (A5 -> C6 -> E6)
- * Triggered when a passenger is discovered nearby or a driver accepts a pickup.
  */
 export function playDriverAlertChime(): void {
     try {
@@ -98,6 +96,32 @@ export function playDriverAlertChime(): void {
         osc3.stop(now + 0.55);
     } catch (e) {
         console.warn("Audio Context playback error:", e);
+    }
+}
+
+/**
+ * Startup Chime: Ascending futuristic 4-note chord (C5 -> E5 -> G5 -> C6)
+ * Triggered on app launch during splash screen animation.
+ */
+export function playStartupChime(): void {
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+            gain.gain.setValueAtTime(0.3, now + idx * 0.12);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.4);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + idx * 0.12);
+            osc.stop(now + idx * 0.12 + 0.4);
+        });
+    } catch (e) {
+        console.warn("Startup chime error:", e);
     }
 }
 

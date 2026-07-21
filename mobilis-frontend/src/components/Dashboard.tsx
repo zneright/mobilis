@@ -720,7 +720,7 @@ const Dashboard: React.FC = () => {
             )}
 
             <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} role={stellarData.role} />
-            <div className="flex-1 flex flex-col h-full overflow-y-auto relative pt-20 pb-20">
+            <div className="flex-1 flex flex-col h-full overflow-y-auto relative pt-20 pb-28 sm:pb-32">
                 <Header
                     theme={theme}
                     toggleTheme={() => setTheme(p => p === 'dark' ? 'light' : 'dark')}
