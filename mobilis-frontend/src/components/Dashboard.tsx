@@ -822,20 +822,36 @@ const Dashboard: React.FC = () => {
 
             {/* SEND MODAL */}
             {showSendModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="w-full max-w-md bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 rounded-[2rem] p-6 shadow-2xl relative">
-                        <button onClick={() => setShowSendModal(false)} className="absolute top-6 right-6 text-gray-500 hover:text-black dark:hover:text-white"><X className="w-5 h-5" /></button>
-                        <h3 className="text-xl font-black mb-6">Send XLM</h3>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+                    <div className={`w-full max-w-md bg-white dark:bg-[#0c121e] rounded-[2rem] p-6 shadow-2xl relative transition-all ${
+                        stellarData.role === 'driver'
+                            ? 'border-t-4 border-t-cyan-500 border-x border-b border-cyan-500/30'
+                            : (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'
+                            ? 'border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30'
+                            : stellarData.role === 'superadmin'
+                            ? 'border-t-4 border-t-rose-500 border-x border-b border-rose-500/30'
+                            : 'border-t-4 border-t-emerald-500 border-x border-b border-emerald-500/30'
+                    }`}>
+                        <button onClick={() => setShowSendModal(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 dark:hover:text-white"><X className="w-5 h-5" /></button>
+                        <h3 className="text-xl font-black mb-6 text-slate-900 dark:text-white">Send XLM</h3>
                         <form onSubmit={handleSendXLM} className="space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Destination Public Key</label>
-                                <input required type="text" value={sendDest} onChange={(e) => setSendDest(e.target.value)} placeholder="G..." className="w-full p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none font-mono focus:border-blue-500" />
+                                <label className="block text-xs font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">Destination Public Key</label>
+                                <input required type="text" value={sendDest} onChange={(e) => setSendDest(e.target.value)} placeholder="G..." className="w-full p-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none font-mono text-slate-900 dark:text-white focus:border-cyan-500" />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Amount (XLM)</label>
-                                <input required type="number" step="0.0000001" value={sendAmt} onChange={(e) => setSendAmt(e.target.value)} placeholder="0.00" className="w-full p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-blue-500" />
+                                <label className="block text-xs font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">Amount (XLM)</label>
+                                <input required type="number" step="0.0000001" value={sendAmt} onChange={(e) => setSendAmt(e.target.value)} placeholder="0.00" className="w-full p-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none text-slate-900 dark:text-white focus:border-cyan-500" />
                             </div>
-                            <button type="submit" disabled={isProcessing} className="w-full py-4 mt-2 bg-blue-500 text-white font-black text-sm rounded-xl transition-all hover:bg-blue-600 disabled:opacity-50">
+                            <button type="submit" disabled={isProcessing} className={`w-full py-4 mt-2 font-black text-sm rounded-xl transition-all disabled:opacity-50 ${
+                                stellarData.role === 'driver'
+                                    ? 'bg-cyan-500 hover:bg-cyan-400 text-black shadow-[0_0_20px_rgba(6,182,212,0.3)]'
+                                    : (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'
+                                    ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)]'
+                                    : stellarData.role === 'superadmin'
+                                    ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-[0_0_20px_rgba(244,63,94,0.3)]'
+                                    : 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-[0_0_20px_rgba(16,185,129,0.3)]'
+                            }`}>
                                 {isProcessing ? "Signing Transaction..." : `Confirm & Send on ${appNetwork}`}
                             </button>
                         </form>
@@ -845,19 +861,35 @@ const Dashboard: React.FC = () => {
 
             {/* RECEIVE MODAL */}
             {showReceiveModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="w-full max-w-sm bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-2xl relative text-center">
-                        <button onClick={() => setShowReceiveModal(false)} className="absolute top-6 right-6 text-gray-500 hover:text-black dark:hover:text-white"><X className="w-5 h-5" /></button>
-                        <h3 className="text-xl font-black mb-2">Receive Assets</h3>
-                        <p className="text-sm text-gray-500 mb-8">Scan to transfer funds to your wallet.</p>
-                        <div className="bg-white p-4 rounded-2xl mx-auto w-fit mb-8 shadow-sm">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+                    <div className={`w-full max-w-sm bg-white dark:bg-[#0c121e] rounded-[2rem] p-8 shadow-2xl relative text-center transition-all ${
+                        stellarData.role === 'driver'
+                            ? 'border-t-4 border-t-cyan-500 border-x border-b border-cyan-500/30'
+                            : (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'
+                            ? 'border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30'
+                            : stellarData.role === 'superadmin'
+                            ? 'border-t-4 border-t-rose-500 border-x border-b border-rose-500/30'
+                            : 'border-t-4 border-t-emerald-500 border-x border-b border-emerald-500/30'
+                    }`}>
+                        <button onClick={() => setShowReceiveModal(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 dark:hover:text-white"><X className="w-5 h-5" /></button>
+                        <h3 className="text-xl font-black mb-2 text-slate-900 dark:text-white">Receive Assets</h3>
+                        <p className="text-sm text-slate-500 dark:text-gray-400 mb-8">Scan to transfer funds to your wallet.</p>
+                        <div className="bg-white p-4 rounded-2xl mx-auto w-fit mb-8 shadow-md">
                             <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${activePubKey}`} alt="QR Code" className="w-48 h-48" />
                         </div>
                         <div className="text-left">
-                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Your Address</label>
+                            <label className="block text-xs font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">Your Address</label>
                             <div className="flex gap-2">
-                                <code className="flex-1 bg-gray-50 dark:bg-black/40 p-4 rounded-xl text-[10px] break-all border border-gray-200 dark:border-white/5">{activePubKey}</code>
-                                <button onClick={() => navigator.clipboard.writeText(activePubKey!)} className="p-4 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-colors"><Copy className="w-4 h-4" /></button>
+                                <code className="flex-1 bg-slate-50 dark:bg-black/50 p-4 rounded-xl text-[10px] break-all border border-slate-200 dark:border-white/10 font-mono text-slate-900 dark:text-white">{activePubKey}</code>
+                                <button onClick={() => navigator.clipboard.writeText(activePubKey!)} className={`p-4 rounded-xl font-bold transition-colors ${
+                                    stellarData.role === 'driver'
+                                        ? 'bg-cyan-500 text-black hover:bg-cyan-400'
+                                        : (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'
+                                        ? 'bg-indigo-600 text-white hover:bg-indigo-500'
+                                        : stellarData.role === 'superadmin'
+                                        ? 'bg-rose-600 text-white hover:bg-rose-500'
+                                        : 'bg-emerald-500 text-black hover:bg-emerald-400'
+                                }`}><Copy className="w-4 h-4" /></button>
                             </div>
                         </div>
                     </div>
@@ -866,18 +898,26 @@ const Dashboard: React.FC = () => {
 
             {/* WALLET SELECTION MODAL */}
             {showWalletModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="w-full max-w-sm bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-2xl relative text-center">
-                        <button onClick={() => setShowWalletModal(false)} className="absolute top-6 right-6 text-gray-500 hover:text-black dark:hover:text-white"><X className="w-5 h-5" /></button>
-                        <Wallet className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-                        <h3 className="text-xl font-black mb-2">Connect Wallet</h3>
-                        <p className="text-sm text-gray-500 mb-6">Select your preferred Stellar Network provider to continue.</p>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+                    <div className={`w-full max-w-sm bg-white dark:bg-[#0c121e] rounded-[2rem] p-8 shadow-2xl relative text-center transition-all ${
+                        stellarData.role === 'driver'
+                            ? 'border-t-4 border-t-cyan-500 border-x border-b border-cyan-500/30'
+                            : (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'
+                            ? 'border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30'
+                            : stellarData.role === 'superadmin'
+                            ? 'border-t-4 border-t-rose-500 border-x border-b border-rose-500/30'
+                            : 'border-t-4 border-t-emerald-500 border-x border-b border-emerald-500/30'
+                    }`}>
+                        <button onClick={() => setShowWalletModal(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 dark:hover:text-white"><X className="w-5 h-5" /></button>
+                        <Wallet className="w-12 h-12 text-cyan-500 mx-auto mb-4" />
+                        <h3 className="text-xl font-black mb-2 text-slate-900 dark:text-white">Connect Wallet</h3>
+                        <p className="text-sm text-slate-500 dark:text-gray-400 mb-6">Select your preferred Stellar Network provider to continue.</p>
 
                         <div className="flex flex-col gap-3">
-                            <button onClick={() => executeWalletConnection('LOBSTR')} className="w-full py-4 px-6 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 rounded-xl font-bold text-sm flex items-center justify-between transition-colors">
+                            <button onClick={() => executeWalletConnection('LOBSTR')} className="w-full py-4 px-6 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 rounded-xl font-bold text-sm text-slate-900 dark:text-white flex items-center justify-between transition-colors">
                                 LOBSTR Extension <ArrowUpRight className="w-4 h-4 opacity-50" />
                             </button>
-                            <button onClick={() => executeWalletConnection('Freighter')} className="w-full py-4 px-6 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 rounded-xl font-bold text-sm flex items-center justify-between transition-colors">
+                            <button onClick={() => executeWalletConnection('Freighter')} className="w-full py-4 px-6 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 rounded-xl font-bold text-sm text-slate-900 dark:text-white flex items-center justify-between transition-colors">
                                 Freighter <ArrowUpRight className="w-4 h-4 opacity-50" />
                             </button>
                         </div>
@@ -888,7 +928,15 @@ const Dashboard: React.FC = () => {
             {/* INTERACTIVE NOTIFICATION CENTER MODAL */}
             {showNotificationModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-                    <div className="w-full max-w-md bg-white dark:bg-[#0a0a14] border border-gray-200 dark:border-white/10 rounded-[2.5rem] p-6 shadow-2xl relative text-gray-900 dark:text-white space-y-5">
+                    <div className={`w-full max-w-md bg-white dark:bg-[#0c121e] rounded-[2.5rem] p-6 shadow-2xl relative text-slate-900 dark:text-white space-y-5 transition-all ${
+                        stellarData.role === 'driver'
+                            ? 'border-t-4 border-t-cyan-500 border-x border-b border-cyan-500/30'
+                            : (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'
+                            ? 'border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30'
+                            : stellarData.role === 'superadmin'
+                            ? 'border-t-4 border-t-rose-500 border-x border-b border-rose-500/30'
+                            : 'border-t-4 border-t-emerald-500 border-x border-b border-emerald-500/30'
+                    }`}>
                         
                         <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-white/10">
                             <div className="flex items-center gap-3">
