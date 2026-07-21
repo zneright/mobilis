@@ -17,7 +17,7 @@ import {
     Transaction
 } from '@stellar/stellar-sdk';
 import { requestAccess, signTransaction, isConnected, isAllowed } from '@stellar/freighter-api';
-import { Copy, ArrowUpRight, X, Wallet, Globe, Zap, Bell, Radio, ShieldCheck, Megaphone } from 'lucide-react';
+import { Copy, ArrowUpRight, X, Wallet, Zap, Bell, Radio, ShieldCheck, Megaphone } from 'lucide-react';
 import Header from './Header';
 import BottomNav from './BottomNav';
 import Sidebar from './Sidebar';
@@ -708,14 +708,10 @@ const Dashboard: React.FC = () => {
 
             {/* IN-APP REALTIME BROADCAST ANNOUNCEMENT TOAST */}
             {broadcastToast && (
-                <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] max-w-md w-full bg-cyan-500 text-black p-4 rounded-2xl shadow-[0_0_35px_rgba(0,210,255,0.6)] border border-cyan-400 flex items-center gap-3 animate-bounce">
-                    <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center flex-shrink-0">
-                        <Megaphone className="w-6 h-6 text-black" />
-                    </div>
-                    <div className="flex-1">
-                        <p className="font-black text-xs uppercase tracking-wider">📢 Announcement from {broadcastToast.senderName}</p>
-                        <p className="font-bold text-sm">{broadcastToast.title}</p>
-                        <p className="text-xs font-medium text-slate-900 truncate">{broadcastToast.message}</p>
+                <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[90] max-w-md w-full bg-cyan-500 text-black p-4 rounded-2xl shadow-xl flex items-center justify-between gap-3 animate-bounce">
+                    <div className="flex items-center gap-2 text-xs font-mono font-bold">
+                        <Megaphone className="w-4 h-4 flex-shrink-0" />
+                        <span>📢 {broadcastToast.title}: {broadcastToast.message}</span>
                     </div>
                     <button onClick={() => setBroadcastToast(null)} className="p-1 hover:bg-black/10 rounded-lg">
                         <X className="w-4 h-4" />
@@ -724,7 +720,7 @@ const Dashboard: React.FC = () => {
             )}
 
             <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} role={stellarData.role} />
-            <div className="flex-1 flex flex-col h-full overflow-y-auto relative">
+            <div className="flex-1 flex flex-col h-full overflow-y-auto relative pt-20 pb-20">
                 <Header
                     theme={theme}
                     toggleTheme={() => setTheme(p => p === 'dark' ? 'light' : 'dark')}
@@ -732,12 +728,7 @@ const Dashboard: React.FC = () => {
                     onOpenNotifications={() => setShowNotificationModal(true)}
                 />
 
-                <div className="w-full py-1.5 px-4 text-center text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-b border-yellow-500/20">
-                    <Globe className="w-3.5 h-3.5" />
-                    Operating Strictly on Stellar {appNetwork}
-                </div>
-
-                <main className="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-8 flex flex-col items-center pb-28 md:pb-8">
+                <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-8 flex flex-col items-center">
 
                     {activeTab === 'hub' && (
                         stellarData.role === 'commuter' ? (

@@ -23,8 +23,8 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, role }) 
     ] as const;
 
     return (
-        <div className="md:hidden fixed bottom-4 left-4 right-4 z-50 pointer-events-none flex justify-center">
-            <nav className="pointer-events-auto w-full max-w-md bg-slate-900/90 dark:bg-[#060610]/95 backdrop-blur-2xl border border-slate-700/60 dark:border-white/15 rounded-full p-2 shadow-[0_15px_40px_rgba(0,0,0,0.5)] flex items-center justify-around">
+        <div className="fixed bottom-0 left-0 right-0 z-50 w-full bg-white/95 dark:bg-[#07090E]/95 backdrop-blur-md border-t border-gray-100 dark:border-white/10 pb-safe shadow-lg">
+            <nav className="max-w-md mx-auto h-16 flex items-center justify-around px-4">
                 {tabs.map((tab) => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
@@ -32,16 +32,19 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, role }) 
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`flex flex-col items-center justify-center py-2 px-3 rounded-full transition-all duration-200 active:scale-95 ${
+                            className={`flex flex-col items-center justify-center w-16 py-1 transition-all duration-200 active:scale-95 ${
                                 isActive
-                                    ? 'bg-emerald-500 text-black shadow-[0_0_20px_rgba(52,211,153,0.5)] font-black'
-                                    : 'text-gray-400 hover:text-white'
+                                    ? 'text-emerald-500 dark:text-emerald-400 font-bold'
+                                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
                             }`}
                         >
-                            <Icon className={`w-5 h-5 ${isActive ? 'scale-110' : 'scale-100'}`} />
-                            <span className="text-[9px] font-mono tracking-wider font-bold mt-0.5 uppercase">
+                            <Icon className={`w-5 h-5 transition-transform ${isActive ? 'scale-110' : 'scale-100'}`} />
+                            <span className="text-[10px] font-mono tracking-tight font-bold mt-1">
                                 {tab.label}
                             </span>
+                            {isActive && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 mt-0.5 animate-pulse" />
+                            )}
                         </button>
                     );
                 })}
