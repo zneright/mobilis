@@ -8,7 +8,8 @@ interface BottomNavProps {
 }
 
 const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, role }) => {
-    const isAdmin = role === 'superadmin' || role === 'admin';
+    const isAdmin = role === 'superadmin' || role === 'admin' || role === 'cooperative';
+    const isDriver = role === 'driver';
     const isCommuter = role === 'commuter';
 
     const tabs: {
@@ -22,8 +23,20 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, role }) 
         { id: 'profile', label: 'Profile', icon: UserCog },
     ] as const;
 
+    const activeColorClass = isDriver
+        ? 'text-cyan-500 font-bold'
+        : isAdmin
+        ? 'text-gray-900 dark:text-white font-bold'
+        : 'text-emerald-500 font-bold';
+
+    const activeDotClass = isDriver
+        ? 'bg-cyan-500'
+        : isAdmin
+        ? 'bg-gray-900 dark:bg-white'
+        : 'bg-emerald-500';
+
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 w-full bg-white/95 dark:bg-[#07090E]/95 backdrop-blur-md border-t border-gray-100 dark:border-white/10 pb-safe shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 z-50 w-full bg-white/95 dark:bg-[#07090E]/95 backdrop-blur-md border-t border-gray-100 dark:border-white/10 pb-safe shadow-lg font-sans">
             <nav className="max-w-md mx-auto h-16 flex items-center justify-around px-4">
                 {tabs.map((tab) => {
                     const Icon = tab.icon;
@@ -34,7 +47,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, role }) 
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex flex-col items-center justify-center w-16 py-1 transition-all duration-200 active:scale-95 ${
                                 isActive
-                                    ? 'text-emerald-500 dark:text-emerald-400 font-bold'
+                                    ? activeColorClass
                                     : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
                             }`}
                         >
@@ -43,7 +56,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, role }) 
                                 {tab.label}
                             </span>
                             {isActive && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 mt-0.5 animate-pulse" />
+                                <span className={`w-1.5 h-1.5 rounded-full mt-0.5 animate-pulse ${activeDotClass}`} />
                             )}
                         </button>
                     );

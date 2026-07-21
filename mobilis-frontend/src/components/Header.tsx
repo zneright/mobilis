@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sun, Moon, Bell, ShieldCheck, Zap } from 'lucide-react';
+import { Sun, Moon, Bell, ShieldCheck, Navigation, Radio, Building2 } from 'lucide-react';
 import MobilisLogo from './common/MobilisLogo';
 
 interface HeaderProps {
@@ -8,26 +8,40 @@ interface HeaderProps {
     onSignOut?: () => void;
     onOpenNotifications?: () => void;
     unreadCount?: number;
+    role?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onOpenNotifications, unreadCount = 2 }) => {
+const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onOpenNotifications, unreadCount = 2, role }) => {
+    const isDriver = role === 'driver';
+    const isAdmin = role === 'superadmin' || role === 'admin' || role === 'cooperative';
+
     return (
-        <header className="fixed top-3 left-4 right-4 max-w-5xl mx-auto z-50 bg-white/85 dark:bg-[#07090E]/85 backdrop-blur-md rounded-full shadow-md border border-gray-100 dark:border-white/10 transition-all h-14 px-5 flex items-center justify-between">
-            {/* Left: Brand & Network Status */}
+        <header className="fixed top-3 left-4 right-4 max-w-5xl mx-auto z-50 bg-white/85 dark:bg-[#07090E]/85 backdrop-blur-md rounded-full shadow-md border border-gray-100 dark:border-white/10 transition-all h-14 px-5 flex items-center justify-between font-sans">
+            {/* Left: Brand & Dynamic Role Indicator */}
             <div className="flex items-center gap-3">
                 <MobilisLogo size={28} showText />
-                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-bold tracking-wide">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                    <ShieldCheck className="w-3 h-3" />
-                    <span>STELLAR TESTNET LIVE</span>
+                
+                {/* Role-Based Pill Badge */}
+                <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wide border transition-colors ${
+                    isDriver
+                        ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20'
+                        : isAdmin
+                        ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+                        : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full animate-ping ${
+                        isDriver ? 'bg-cyan-500' : isAdmin ? 'bg-indigo-500' : 'bg-emerald-500'
+                    }`} />
+                    {isDriver ? <Navigation className="w-3 h-3" /> : isAdmin ? <Building2 className="w-3 h-3" /> : <Radio className="w-3 h-3" />}
+                    <span>{isDriver ? 'DRIVER COCKPIT' : isAdmin ? 'COOP TREASURY' : 'COMMUTER TRANSIT'}</span>
                 </div>
             </div>
 
             {/* Right: Actions & Controls */}
             <div className="flex items-center gap-2">
-                <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-mono font-bold text-cyan-600 dark:text-cyan-400">
-                    <Zap className="w-3 h-3 text-cyan-500 animate-pulse" />
-                    <span>Instant Settlement</span>
+                <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    <ShieldCheck className="w-3 h-3 text-emerald-500" />
+                    <span>STELLAR TESTNET</span>
                 </div>
 
                 {/* Notification Bell */}

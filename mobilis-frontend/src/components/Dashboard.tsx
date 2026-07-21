@@ -726,6 +726,7 @@ const Dashboard: React.FC = () => {
                     toggleTheme={() => setTheme(p => p === 'dark' ? 'light' : 'dark')}
                     onSignOut={handleFullSignOut}
                     onOpenNotifications={() => setShowNotificationModal(true)}
+                    role={stellarData.role}
                 />
 
                 <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-8 flex flex-col items-center">
