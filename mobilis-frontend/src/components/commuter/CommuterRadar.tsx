@@ -320,7 +320,7 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                         <LiveTransitMap
                             commuterCoords={centerCoords}
                             activeDrivers={nearbyDrivers}
-                            onSelectVehicleToPay={(drv) => setSelectedDriver(drv)}
+                            onSelectVehicleToPay={commuterData.role !== 'driver' ? (drv) => setSelectedDriver(drv) : undefined}
                         />
                     </LiveTransitMapErrorBoundary>
                 </div>
@@ -380,12 +380,18 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                                     <span className="text-xs font-mono font-bold text-emerald-500">
                                         {formatReadableDistance(drv.distanceKm)}
                                     </span>
-                                    <button
-                                        onClick={() => setSelectedDriver(drv)}
-                                        className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(52,211,153,0.3)] flex items-center gap-1.5"
-                                    >
-                                        <Zap className="w-4 h-4" /> Pay Fare
-                                    </button>
+                                    {commuterData.role !== 'driver' ? (
+                                        <button
+                                            onClick={() => setSelectedDriver(drv)}
+                                            className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(52,211,153,0.3)] flex items-center gap-1.5"
+                                        >
+                                            <Zap className="w-4 h-4" /> Pay Fare
+                                        </button>
+                                    ) : (
+                                        <span className="px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-500 text-xs font-mono font-bold">
+                                            🛰️ Transit Active
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         ))}

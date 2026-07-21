@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { collection, query, where, onSnapshot, doc, updateDoc, addDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Fuel, Building2, UserCheck, ArrowUpRight, ShieldCheck, CheckCircle2, Megaphone, Send, BellRing, X, Truck } from 'lucide-react';
 
@@ -130,10 +130,10 @@ export const HubTab: React.FC<HubTabProps> = ({
                 vehicleApprovedAt: new Date().toISOString(),
                 vehicleApprovedBy: stellarData.uid,
             });
-            // Also sync active location document if driver is currently on transit
-            await updateDoc(doc(db, 'driver_locations', driverUid), {
+            // Also sync active location document using setDoc merge:true
+            await setDoc(doc(db, 'driver_locations', driverUid), {
                 vehicleType: newVehicleType,
-            }).catch(() => {});
+            }, { merge: true }).catch(() => {});
         } catch (err) {
             console.error("Failed to approve vehicle change:", err);
         } finally {
