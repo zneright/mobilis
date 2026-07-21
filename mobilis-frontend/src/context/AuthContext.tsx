@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { auth, db } from '../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { Keypair } from '@stellar/stellar-sdk';
 import type { AuthContextType, UserData as StellarData } from '../types';
 
@@ -18,51 +18,66 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
+        let userDocUnsubscribe: (() => void) | null = null;
+
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             setCurrentUser(user);
 
+            if (userDocUnsubscribe) {
+                userDocUnsubscribe();
+                userDocUnsubscribe = null;
+            }
+
             if (user) {
-                try {
-                    const userDocRef = doc(db, 'users', user.uid);
-                    const userDoc = await getDoc(userDocRef);
+                const userDocRef = doc(db, 'users', user.uid);
 
-                    if (userDoc.exists()) {
-                        setStellarData(userDoc.data() as StellarData);
-                    } else {
-                        // Generate Stellar Keypair for new user
-                        const pair = Keypair.random();
-                        const publicKey = pair.publicKey();
-                        const secret = pair.secret();
+                // Real-time listener on user profile document for instant vehicleType & status sync
+                userDocUnsubscribe = onSnapshot(
+                    userDocRef,
+                    async (docSnap) => {
+                        if (docSnap.exists()) {
+                            setStellarData(docSnap.data() as StellarData);
+                        } else {
+                            // Generate Stellar Keypair for new user
+                            const pair = Keypair.random();
+                            const publicKey = pair.publicKey();
+                            const secret = pair.secret();
 
-                        const newStellarData: StellarData = {
-                            uid: user.uid,
-                            email: user.email || '',
-                            publicKey,
-                            secret,
-                            role: 'driver',
-                            status: 'approved',
-                        } as StellarData;
+                            const newStellarData: StellarData = {
+                                uid: user.uid,
+                                email: user.email || '',
+                                publicKey,
+                                secret,
+                                role: 'driver',
+                                status: 'approved',
+                            } as StellarData;
 
-                        try {
-                            fetch(`https://friendbot.stellar.org?addr=${publicKey}`).catch(() => {});
-                            await setDoc(userDocRef, newStellarData);
-                        } catch {
-                            // Firestore write fallback
+                            try {
+                                fetch(`https://friendbot.stellar.org?addr=${publicKey}`).catch(() => {});
+                                await setDoc(userDocRef, newStellarData);
+                            } catch {
+                                // Firestore write fallback
+                            }
+
+                            setStellarData(newStellarData);
                         }
-
-                        setStellarData(newStellarData);
+                        setLoading(false);
+                    },
+                    (err) => {
+                        console.warn("User profile doc snapshot error:", err);
+                        setLoading(false);
                     }
-                } catch {
-                    // Silently handle read timing before initial document creation
-                    setStellarData(null);
-                }
+                );
             } else {
                 setStellarData(null);
+                setLoading(false);
             }
-            setLoading(false);
         });
 
-        return unsubscribe;
+        return () => {
+            if (userDocUnsubscribe) userDocUnsubscribe();
+            unsubscribe();
+        };
     }, []);
 
     return (
@@ -72,11 +87,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     );
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = (): AuthContextType => {
     const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error("useAuth must be used within an AuthProvider");
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
     }
     return context;
 };
