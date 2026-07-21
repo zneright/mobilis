@@ -86,10 +86,10 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ stellarData }) => {
         : 'border-t-4 border-t-emerald-500 border-x border-b border-emerald-500/30 shadow-[0_10px_40px_rgba(16,185,129,0.15)]';
 
     return (
-        <div className="w-full max-w-2xl mx-auto space-y-6 text-slate-900 dark:text-white font-sans">
+        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 text-slate-900 dark:text-white font-sans">
             
             {/* USER AVATAR & IDENTITY HEADER */}
-            <div className={`p-8 rounded-[2.5rem] bg-white dark:bg-[#0e121a] text-center space-y-4 transition-colors duration-300 ${cardBorderAccent}`}>
+            <div className={`lg:col-span-2 p-6 sm:p-8 rounded-[2.5rem] bg-white dark:bg-[#0e121a] text-center space-y-4 transition-colors duration-300 ${cardBorderAccent}`}>
                 <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${avatarGradient} p-1 mx-auto shadow-lg`}>
                     <div className="w-full h-full rounded-full bg-slate-100 dark:bg-[#090A0C] flex items-center justify-center text-slate-900 dark:text-white font-black text-2xl">
                         {(stellarData?.fullName || stellarData?.coopName || 'User').charAt(0).toUpperCase()}
