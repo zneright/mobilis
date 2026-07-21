@@ -321,6 +321,7 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                             commuterCoords={centerCoords}
                             activeDrivers={nearbyDrivers}
                             onSelectVehicleToPay={commuterData.role !== 'driver' ? (drv) => setSelectedDriver(drv) : undefined}
+                            commuterUid={commuterData.uid}
                         />
                     </LiveTransitMapErrorBoundary>
                 </div>

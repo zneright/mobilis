@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../../firebase';
 import { calculateDistanceKm, calculateBearing, calculateETA, formatDistance } from '../../utils/geo';
-import { Navigation, MapPin, Zap, EyeOff, ShieldCheck, Filter } from 'lucide-react';
+import { playCommuterChime } from '../../utils/webAudio';
+import { Navigation, MapPin, Zap, EyeOff, ShieldCheck, Filter, Bell, Check } from 'lucide-react';
 import type { DriverLocationDoc } from '../../types';
 
 interface LiveTransitMapProps {
     commuterCoords: { lat: number; lng: number };
     activeDrivers: DriverLocationDoc[];
     onSelectVehicleToPay?: (driverDoc: DriverLocationDoc) => void;
+    commuterUid?: string;
 }
 
 interface AnonymizedVehicle {
@@ -40,6 +44,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
     commuterCoords,
     activeDrivers,
     onSelectVehicleToPay,
+    commuterUid,
 }) => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<maplibregl.Map | null>(null);
@@ -50,6 +55,34 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
     const [vehicleFilter, setVehicleFilter] = useState<string>('all');
     const [webGlSupported, setWebGlSupported] = useState<boolean>(true);
     const [displayMode, setDisplayMode] = useState<'maplibre' | 'sonar'>('sonar');
+    const [notifyingId, setNotifyingId] = useState<string | null>(null);
+    const [notifySuccessMsg, setNotifySuccessMsg] = useState<string>('');
+
+    const handleNotifyVehicleDriver = async (v: AnonymizedVehicle) => {
+        if (!commuterUid || !commuterCoords) return;
+        setNotifyingId(v.anonId);
+
+        try {
+            const expirationTime = new Date(Date.now() + 10 * 60 * 1000);
+            await setDoc(doc(db, 'waiting_beacons', commuterUid), {
+                commuterUid,
+                lat: commuterCoords.lat,
+                lng: commuterCoords.lng,
+                active: true,
+                preferredVehicleType: v.vehicleType,
+                createdAt: new Date().toISOString(),
+                expiresAt: expirationTime.toISOString(),
+            });
+
+            playCommuterChime();
+            setNotifySuccessMsg(`Notified nearby ${v.vehicleType} drivers!`);
+            setTimeout(() => setNotifySuccessMsg(''), 5000);
+        } catch (err) {
+            console.error("Failed to notify vehicle driver:", err);
+        } finally {
+            setNotifyingId(null);
+        }
+    };
 
     // Check WebGL availability on mount
     useEffect(() => {
@@ -429,20 +462,33 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                                 <span className="text-[9px] font-mono text-slate-400 uppercase tracking-wider block">Average Speed ~20 km/h</span>
                             </div>
 
-                            {onSelectVehicleToPay ? (
-                                <button
-                                    onClick={() => onSelectVehicleToPay(selectedVehicle.rawDoc)}
-                                    className="px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(52,211,153,0.4)] flex items-center gap-2 hover:scale-105"
-                                >
-                                    <Zap className="w-4 h-4" /> Pay Fare to Vehicle
-                                </button>
-                            ) : (
-                                <span className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-xl text-xs font-mono font-bold">
-                                    🛰️ Awareness Active
-                                </span>
-                            )}
+                            <div className="flex items-center gap-2">
+                                {commuterUid && (
+                                    <button
+                                        onClick={() => handleNotifyVehicleDriver(selectedVehicle)}
+                                        disabled={notifyingId === selectedVehicle.anonId}
+                                        className="px-5 py-3.5 bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(0,210,255,0.4)] flex items-center gap-1.5 hover:scale-105"
+                                    >
+                                        <Bell className="w-4 h-4" /> Notify Driver
+                                    </button>
+                                )}
+                                {onSelectVehicleToPay && (
+                                    <button
+                                        onClick={() => onSelectVehicleToPay(selectedVehicle.rawDoc)}
+                                        className="px-5 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(52,211,153,0.4)] flex items-center gap-2 hover:scale-105"
+                                    >
+                                        <Zap className="w-4 h-4" /> Pay Fare
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
+
+                    {notifySuccessMsg && (
+                        <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-xs font-bold rounded-2xl flex items-center gap-2 animate-bounce">
+                            <Check className="w-4 h-4" /> {notifySuccessMsg}
+                        </div>
+                    )}
 
             {/* Privacy Guarantee Footer */}
                     <div className="pt-4 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-[11px] text-slate-400 dark:text-gray-500 font-mono">
