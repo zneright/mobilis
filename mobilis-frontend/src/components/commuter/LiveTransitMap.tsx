@@ -5,7 +5,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { calculateDistanceKm, calculateBearing, calculateETA, formatDistance } from '../../utils/geo';
 import { playCommuterChime } from '../../utils/webAudio';
-import { Zap, EyeOff, ShieldCheck, Filter, Bell, Check } from 'lucide-react';
+import { Zap, EyeOff, ShieldCheck, Filter, Bell, Check, Navigation, MapPin } from 'lucide-react';
 import type { DriverLocationDoc } from '../../types';
 
 interface LiveTransitMapProps {
@@ -75,7 +75,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
             });
 
             playCommuterChime();
-            setNotifySuccessMsg(`notified nearby ${v.vehicleType.toLowerCase()} drivers.`);
+            setNotifySuccessMsg(`Notified nearby ${v.vehicleType} drivers!`);
             setTimeout(() => setNotifySuccessMsg(''), 5000);
         } catch (err) {
             console.error("Failed to notify vehicle driver:", err);
@@ -98,8 +98,8 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
     // Transform raw driver documents into Privacy-First Anonymized Vehicles
     const anonymizedVehicles: AnonymizedVehicle[] = useMemo(() => {
         return activeDrivers.map((drv) => {
-            const hash = drv.uid.substring(0, 4).toLowerCase();
-            const anonId = `vhcl.${hash}`;
+            const hash = drv.uid.substring(0, 4).toUpperCase();
+            const anonId = `Vehicle #${hash}`;
 
             const vehicleType = drv.vehicleType || 'Tricycle';
             let icon = '🛺';
@@ -138,17 +138,17 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
     const vehicleCounts = useMemo(() => {
         const counts: Record<string, number> = {};
         anonymizedVehicles.forEach((v) => {
-            counts[v.vehicleType.toLowerCase()] = (counts[v.vehicleType.toLowerCase()] || 0) + 1;
+            counts[v.vehicleType] = (counts[v.vehicleType] || 0) + 1;
         });
         return counts;
     }, [anonymizedVehicles]);
 
     const activeVehicleSummary = useMemo(() => {
         const entries = Object.entries(vehicleCounts);
-        if (entries.length === 0) return 'no vehicles broadcasting within 50m radius.';
+        if (entries.length === 0) return 'No public transit broadcasting nearby.';
         return entries
             .map(([type, count]) => `${count} ${type}${count > 1 ? 's' : ''}`)
-            .join(' · ') + ' approaching nearby.';
+            .join(' • ') + ' Approaching Nearby';
     }, [vehicleCounts]);
 
     const selectedVehicle = useMemo(() => {
@@ -192,12 +192,18 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
         }
 
         return () => {
+            if (commuterMarkerRef.current) {
+                commuterMarkerRef.current.remove();
+                commuterMarkerRef.current = null;
+            }
+            markersRef.current.forEach((marker) => marker.remove());
+            markersRef.current.clear();
             if (mapRef.current) {
                 mapRef.current.remove();
                 mapRef.current = null;
             }
         };
-    }, [displayMode, commuterCoords]);
+    }, [displayMode]);
 
     // Update Commuter Marker & Center Map on GPS updates
     useEffect(() => {
@@ -207,16 +213,19 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
         try {
             if (!commuterMarkerRef.current) {
                 const el = document.createElement('div');
-                el.className = 'relative flex items-center justify-center';
+                el.className = 'relative flex items-center justify-center cursor-pointer';
                 el.innerHTML = `
-                    <div class="absolute w-12 h-12 rounded-full bg-cyan-400/30 border border-cyan-400/60 animate-ping"></div>
-                    <div class="relative z-10 px-3 py-1.5 rounded-xl bg-[#0B0F19] text-cyan-400 font-mono flex items-center gap-1.5 shadow-[0_0_25px_rgba(0,210,255,1)] border border-cyan-400/50 text-xs whitespace-nowrap lowercase">
-                        <span class="w-1.5 h-1.5 bg-cyan-400 rounded-full"></span>
-                        <span>you</span>
+                    <div class="absolute w-14 h-14 rounded-full bg-cyan-400/30 border border-cyan-400/60 animate-ping pointer-events-none"></div>
+                    <div class="relative z-10 px-3.5 py-1.5 rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 text-black font-mono font-black flex items-center gap-1.5 shadow-[0_0_25px_rgba(0,210,255,1)] border-2 border-white text-xs whitespace-nowrap">
+                        <span>📍 YOU</span>
                     </div>
                 `;
 
-                commuterMarkerRef.current = new maplibregl.Marker({ element: el })
+                commuterMarkerRef.current = new maplibregl.Marker({
+                    element: el,
+                    rotationAlignment: 'viewport',
+                    pitchAlignment: 'viewport',
+                })
                     .setLngLat([commuterCoords.lng, commuterCoords.lat])
                     .addTo(map);
             } else {
@@ -227,7 +236,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
         } catch (err) {
             console.warn("Error updating commuter marker:", err);
         }
-    }, [commuterCoords]);
+    }, [commuterCoords, displayMode]);
 
     // Update Vehicle Markers on MapLibre Canvas
     useEffect(() => {
@@ -240,28 +249,56 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                 currentMarkerKeys.add(v.anonId);
                 const isSelected = selectedAnonId === v.anonId;
 
+                const vt = v.vehicleType.toLowerCase();
+                let gradientClass = 'from-cyan-400 to-emerald-400';
+                let glowClass = 'shadow-[0_0_20px_rgba(0,210,255,0.9)]';
+
+                if (vt.includes('jeepney')) {
+                    gradientClass = 'from-blue-600 to-cyan-500';
+                    glowClass = 'shadow-[0_0_20px_rgba(0,136,255,0.9)]';
+                } else if (vt.includes('tricycle')) {
+                    gradientClass = 'from-emerald-500 to-teal-400';
+                    glowClass = 'shadow-[0_0_20px_rgba(0,210,106,0.9)]';
+                } else if (vt.includes('express') || vt.includes('uv') || vt.includes('shuttle')) {
+                    gradientClass = 'from-amber-500 to-yellow-400';
+                    glowClass = 'shadow-[0_0_20px_rgba(255,153,0,0.9)]';
+                } else if (vt.includes('bus')) {
+                    gradientClass = 'from-purple-600 to-indigo-500';
+                    glowClass = 'shadow-[0_0_20px_rgba(139,92,246,0.9)]';
+                } else if (vt.includes('motorcycle') || vt.includes('habal')) {
+                    gradientClass = 'from-rose-500 to-red-400';
+                    glowClass = 'shadow-[0_0_20px_rgba(255,59,48,0.9)]';
+                } else if (vt.includes('taxi')) {
+                    gradientClass = 'from-yellow-400 to-amber-300';
+                    glowClass = 'shadow-[0_0_20px_rgba(255,204,0,0.9)]';
+                }
+
                 if (markersRef.current.has(v.anonId)) {
                     const marker = markersRef.current.get(v.anonId)!;
                     marker.setLngLat([v.lng, v.lat]);
-                    marker.setRotation(v.bearing.angle);
                 } else {
                     const el = document.createElement('div');
-                    el.className = `cursor-pointer transition-all duration-300 p-2 rounded-xl flex flex-col items-center gap-1 shadow-2xl ${isSelected
-                        ? 'bg-emerald-500 text-black scale-110 shadow-[0_0_25px_rgba(52,211,153,0.9)] border border-emerald-300'
-                        : 'bg-[#0B0F19] text-white border border-white/20 hover:scale-105'
-                        }`;
+                    el.className = 'cursor-pointer group relative flex items-center justify-center';
                     el.innerHTML = `
-                        <span style="font-size: 16px;">${v.icon}</span>
-                        <span class="text-[9px] lowercase font-mono opacity-90">.${v.anonId.split('.')[1]}</span>
+                        <div class="absolute w-12 h-12 rounded-full bg-white/20 border border-white/50 animate-ping pointer-events-none"></div>
+                        <div class="relative z-10 w-11 h-11 rounded-full bg-gradient-to-tr ${gradientClass} p-0.5 ${glowClass} ${isSelected ? 'scale-125 border-4 border-white' : 'border-2 border-white'} group-hover:scale-125 transition-transform flex items-center justify-center shadow-2xl">
+                            <span class="text-xl inline-block transition-transform duration-500" style="transform: rotate(${v.bearing.angle}deg);">${v.icon}</span>
+                        </div>
+                        <div class="absolute -bottom-6 px-2.5 py-0.5 rounded-full bg-[#070A12]/95 border border-white/20 text-[9px] font-mono font-black text-white shadow-xl whitespace-nowrap">
+                            ${v.vehicleType} (${v.anonId})
+                        </div>
                     `;
 
                     el.addEventListener('click', () => {
                         setSelectedAnonId(v.anonId);
                     });
 
-                    const marker = new maplibregl.Marker({ element: el, rotationAlignment: 'map' })
+                    const marker = new maplibregl.Marker({
+                        element: el,
+                        rotationAlignment: 'viewport',
+                        pitchAlignment: 'viewport',
+                    })
                         .setLngLat([v.lng, v.lat])
-                        .setRotation(v.bearing.angle)
                         .addTo(map);
 
                     markersRef.current.set(v.anonId, marker);
@@ -289,112 +326,124 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
     };
 
     return (
-        <div className="w-full flex flex-col gap-6 text-slate-900 dark:text-white font-mono lowercase">
+        <div className="w-full space-y-6 text-slate-900 dark:text-white font-sans transition-colors duration-300">
 
-            {/* PRIVACY GUARANTEE & VEHICLE DENSITY BAR (VERTICAL STACK) */}
-            <div className="p-5 rounded-[2rem] bg-gradient-to-b from-emerald-500/5 to-transparent border border-emerald-500/20 flex flex-col gap-5 shadow-sm">
-                <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-                        <ShieldCheck className="w-4 h-4" />
-                        <span className="text-[10px] font-bold">
-                            {webGlSupported ? '.maplibre_engine' : '.sonar_engine'}
-                        </span>
+            {/* PRIVACY GUARANTEE & VEHICLE DENSITY BAR */}
+            <div className="p-5 rounded-[2rem] bg-gradient-to-r from-emerald-500/10 via-cyan-500/10 to-indigo-500/10 border border-emerald-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg backdrop-blur-xl">
+                <div className="flex items-center gap-3.5 text-center sm:text-left">
+                    <div className="w-11 h-11 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0 border border-emerald-500/30">
+                        <ShieldCheck className="w-5 h-5" />
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-gray-400">
-                        .privacy_status = redacted;
-                    </p>
-                    <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 leading-relaxed border-l-2 border-emerald-500/50 pl-3">
-                        {activeVehicleSummary}
-                    </p>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-bold border border-emerald-500/30">
+                                {webGlSupported ? 'MapLibre Vector Engine' : '50m Sonar Engine'}
+                            </span>
+                            <span className="text-xs text-slate-500 dark:text-gray-400 font-mono">100% Privacy Redacted</span>
+                        </div>
+                        <p className="text-xs font-bold text-slate-900 dark:text-white mt-1">
+                            {activeVehicleSummary}
+                        </p>
+                    </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                     <button
                         onClick={() => {
                             if (!webGlSupported) return;
                             setDisplayMode('maplibre');
                         }}
                         disabled={!webGlSupported}
-                        className={`px-4 py-3 rounded-2xl text-[10px] font-bold transition-all border text-left flex items-center gap-3 ${displayMode === 'maplibre'
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                            : 'bg-transparent border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-40'
+                        className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition-all border ${displayMode === 'maplibre'
+                                ? 'bg-emerald-500 text-black border-emerald-400 font-black shadow-md'
+                                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/10 disabled:opacity-40'
                             }`}
                     >
-                        <span className={`w-1.5 h-1.5 rounded-full ${displayMode === 'maplibre' ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`}></span>
-                        .view_maplibre {!webGlSupported && '(unavailable)'}
+                        🗺️ MapLibre GL Map {!webGlSupported && '(WebGL Unavailable)'}
                     </button>
                     <button
                         onClick={() => setDisplayMode('sonar')}
-                        className={`px-4 py-3 rounded-2xl text-[10px] font-bold transition-all border text-left flex items-center gap-3 ${displayMode === 'sonar'
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                            : 'bg-transparent border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5'
+                        className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition-all border ${displayMode === 'sonar'
+                                ? 'bg-emerald-500 text-black border-emerald-400 font-black shadow-md'
+                                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/10'
                             }`}
                     >
-                        <span className={`w-1.5 h-1.5 rounded-full ${displayMode === 'sonar' ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`}></span>
-                        .view_sonar
+                        🌐 50m Sonar Radar
                     </button>
                 </div>
             </div>
 
-            {/* VEHICLE CATEGORY FILTER PILLS (VERTICAL LIST) */}
-            <div className="flex flex-col gap-2 p-5 rounded-[2rem] border border-slate-200 dark:border-white/10">
-                <span className="text-slate-400 dark:text-gray-500 text-[10px] flex items-center gap-2 mb-2">
-                    <Filter className="w-3 h-3" /> .filter_by_type
+            {/* VEHICLE CATEGORY FILTER PILLS */}
+            <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 text-xs">
+                <span className="text-slate-500 dark:text-gray-400 font-mono font-bold flex items-center gap-1 uppercase tracking-wider pr-1 flex-shrink-0">
+                    <Filter className="w-3.5 h-3.5 text-cyan-500" /> Filter:
                 </span>
-                <div className="flex flex-col gap-1.5">
-                    {[
-                        { label: 'all_vehicles', value: 'all' },
-                        { label: 'jeepney', value: 'jeepney' },
-                        { label: 'tricycle', value: 'tricycle' },
-                        { label: 'uv_express', value: 'uv express' },
-                        { label: 'bus', value: 'bus' },
-                        { label: 'e-vehicle', value: 'e-vehicle' },
-                        { label: 'motorcycle', value: 'motorcycle' },
-                    ].map((pill) => (
-                        <button
-                            key={pill.value}
-                            onClick={() => setVehicleFilter(pill.value)}
-                            className={`px-4 py-2.5 rounded-xl text-[10px] font-bold transition-all text-left flex items-center gap-3 ${vehicleFilter === pill.value
-                                ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400'
-                                : 'text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
-                                }`}
-                        >
-                            <span className={`w-1 h-1 rounded-full ${vehicleFilter === pill.value ? 'bg-cyan-500' : 'bg-transparent'}`}></span>
-                            .{pill.label}
-                        </button>
-                    ))}
-                </div>
+                {[
+                    { label: 'All Vehicles', value: 'all', icon: '🚗' },
+                    { label: 'Jeepney', value: 'jeepney', icon: '🛻' },
+                    { label: 'Tricycle', value: 'tricycle', icon: '🛺' },
+                    { label: 'UV Express', value: 'uv express', icon: '🚐' },
+                    { label: 'Bus', value: 'bus', icon: '🚌' },
+                    { label: 'E-Vehicle', value: 'e-vehicle', icon: '🚙' },
+                    { label: 'Motorcycle', value: 'motorcycle', icon: '🛵' },
+                ].map((pill) => (
+                    <button
+                        key={pill.value}
+                        onClick={() => setVehicleFilter(pill.value)}
+                        className={`px-4 py-2 rounded-full font-bold font-mono whitespace-nowrap transition-all border flex items-center gap-1.5 flex-shrink-0 ${vehicleFilter === pill.value
+                                ? 'bg-cyan-500 text-black border-cyan-400 font-black shadow-md scale-105'
+                                : 'bg-white dark:bg-[#0B0F19] border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 hover:border-cyan-500/50'
+                            }`}
+                    >
+                        <span>{pill.icon}</span>
+                        <span>{pill.label}</span>
+                    </button>
+                ))}
             </div>
 
             {/* DISPLAY MODE 1: MAPLIBRE GL JS VECTOR MAP */}
             {displayMode === 'maplibre' && webGlSupported ? (
-                <div className="relative w-full h-[420px] rounded-[2rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-lg">
+                <div className="relative w-full h-[440px] rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl">
                     <div ref={mapContainerRef} className="w-full h-full" />
-                    <div className="absolute top-4 left-4 z-10 p-3 bg-slate-900/90 dark:bg-black/80 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl text-[10px] text-white flex flex-col gap-1.5">
-                        <div className="flex items-center gap-2 text-cyan-400">
-                            <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"></span>
-                            .live_vector_map
+
+                    <div className="absolute top-4 left-4 z-10 p-3.5 bg-slate-900/90 dark:bg-black/90 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl text-[11px] text-white space-y-1 shadow-lg">
+                        <div className="flex items-center gap-1.5 font-bold text-cyan-400 font-mono">
+                            <Navigation className="w-3.5 h-3.5" /> Live Vector Transit Map
                         </div>
-                        <p className="text-gray-400 pl-3.5 border-l border-white/10">
-                            tap_marker_for_eta_and_payment
+                        <p className="text-[10px] text-gray-300 font-mono">
+                            Tap any anonymized vehicle marker to view ETA and send ride signals.
                         </p>
                     </div>
+
+                    {/* Floating Locate Button */}
+                    <button
+                        onClick={() => {
+                            if (mapRef.current) {
+                                mapRef.current.flyTo({ center: [commuterCoords.lng, commuterCoords.lat], zoom: 17, duration: 1000 });
+                            }
+                        }}
+                        title="Locate My Position"
+                        className="absolute bottom-4 right-4 z-20 w-11 h-11 rounded-2xl bg-[#0A0D14]/90 text-cyan-400 border border-cyan-500/30 flex items-center justify-center shadow-lg hover:scale-110 transition-transform backdrop-blur-md"
+                    >
+                        <Navigation className="w-5 h-5" />
+                    </button>
                 </div>
             ) : (
                 /* DISPLAY MODE 2: SONAR RADAR CANVAS */
-                <div className="relative w-full h-[420px] rounded-[2rem] bg-white dark:bg-[#07090E] border border-slate-200 dark:border-white/10 overflow-hidden shadow-lg flex items-center justify-center transition-colors duration-300">
+                <div className="relative w-full h-[420px] rounded-[2.5rem] bg-white dark:bg-[#07090E] border border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl flex items-center justify-center transition-colors duration-300">
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="w-[340px] h-[340px] rounded-full border border-emerald-500/10 animate-pulse" />
                         <div className="w-[240px] h-[240px] rounded-full border border-emerald-500/20" />
                         <div className="w-[140px] h-[140px] rounded-full border border-emerald-500/30" />
-                        <div className="absolute w-[340px] h-[340px] rounded-full border-t border-emerald-500/40 animate-spin" style={{ animationDuration: '6s' }} />
+                        <div className="absolute w-[340px] h-[340px] rounded-full border-t-2 border-emerald-500/40 animate-spin" style={{ animationDuration: '6s' }} />
                     </div>
 
-                    <div className="relative z-20 flex flex-col items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-cyan-500 shadow-[0_0_15px_rgba(0,210,255,0.6)] animate-ping absolute" />
-                        <div className="w-3 h-3 rounded-full bg-cyan-500 relative z-10" />
-                        <span className="text-[9px] text-cyan-600 dark:text-cyan-400">
-                            .you
+                    <div className="relative z-20 flex flex-col items-center">
+                        <div className="w-10 h-10 rounded-full bg-cyan-500 text-black flex items-center justify-center font-black shadow-[0_0_20px_rgba(0,210,255,0.6)] animate-bounce">
+                            <Navigation className="w-5 h-5 fill-current" />
+                        </div>
+                        <span className="px-3 py-1 mt-1.5 rounded-full bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-[10px] font-mono font-bold border border-cyan-500/30">
+                            Your Pickup Location
                         </span>
                     </div>
 
@@ -409,100 +458,98 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                                 style={{ transform: `translate(${x}px, ${y}px)` }}
                                 className="absolute z-30 cursor-pointer transition-all duration-700 ease-out flex flex-col items-center"
                             >
+                                <div className="w-1 h-8 bg-gradient-to-t from-emerald-500/40 to-transparent rounded-full mb-1 animate-pulse" />
                                 <div
-                                    className={`p-2 rounded-xl flex flex-col items-center gap-1 shadow-xl transition-all border ${isSelected
-                                        ? 'bg-emerald-500/10 text-emerald-500 scale-110 border-emerald-500/50 backdrop-blur-md'
-                                        : 'bg-slate-900/90 text-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:scale-105'
+                                    className={`p-2.5 rounded-2xl flex items-center gap-1.5 shadow-xl transition-all ${isSelected
+                                            ? 'bg-emerald-500 text-black scale-110 shadow-[0_0_25px_rgba(52,211,153,0.8)] border-2 border-white'
+                                            : 'bg-slate-900/90 text-white dark:bg-white/10 border border-slate-200 dark:border-white/20 hover:scale-105'
                                         }`}
                                 >
-                                    <span className="text-sm">{v.icon}</span>
-                                    <span className="text-[8px] opacity-80">.{v.anonId.split('.')[1]}</span>
+                                    <span className="text-lg">{v.icon}</span>
+                                    <span className="text-[10px] font-black font-mono">{v.anonId}</span>
+                                    <span className="text-[9px] font-mono opacity-80">({v.eta})</span>
                                 </div>
                             </div>
                         );
                     })}
+
+                    <div className="absolute bottom-4 left-4 z-20 p-3 bg-slate-900/90 dark:bg-black/80 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl text-[11px] text-white space-y-1 max-w-xs font-mono">
+                        <div className="flex items-center gap-1.5 font-bold text-emerald-400">
+                            <MapPin className="w-3.5 h-3.5" /> Suggested Boarding Point
+                        </div>
+                        <p className="text-[10px] text-gray-300">
+                            Stand safely on the near sidewalk 15m ahead along the vehicle route vector.
+                        </p>
+                    </div>
                 </div>
             )}
 
-            {/* SELECTED ANONYMIZED VEHICLE ETA DETAILS (VERTICAL LAYOUT) */}
+            {/* SELECTED ANONYMIZED VEHICLE ETA DETAILS & PAY FARE CARD */}
             {selectedVehicle && (
-                <div className="p-6 rounded-[2rem] bg-slate-50 dark:bg-[#121418] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col gap-6">
+                <div className="p-6 rounded-[2.5rem] bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 shadow-2xl space-y-5 transition-colors duration-300">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
 
-                    {/* Header Info */}
-                    <div className="flex flex-col gap-4">
-                        <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-2xl shrink-0">
+                        <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-3xl shadow-sm">
                                 {selectedVehicle.icon}
                             </div>
-                            <div className="flex flex-col gap-1">
-                                <h3 className="font-bold text-slate-900 dark:text-white text-sm">
-                                    .{selectedVehicle.vehicleType.toLowerCase()}
-                                </h3>
-                                <p className="text-[10px] text-emerald-500">
-                                    id: {selectedVehicle.anonId}
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="font-black text-lg text-slate-900 dark:text-white">
+                                        {selectedVehicle.vehicleType} <span className="text-emerald-500 font-mono">({selectedVehicle.anonId})</span>
+                                    </h3>
+                                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-mono font-bold border border-emerald-500/20">
+                                        ON TRANSIT
+                                    </span>
+                                </div>
+                                <p className="text-xs text-slate-500 dark:text-gray-400 font-mono mt-0.5">
+                                    {selectedVehicle.formattedDistance} • Heading {selectedVehicle.bearing.cardinal} ({selectedVehicle.bearing.angle}°)
                                 </p>
-                                <span className="text-[9px] text-slate-400 mt-1">
-                                    .status = on_transit
-                                </span>
                             </div>
                         </div>
 
-                        {/* Metrics stacked vertically */}
-                        <div className="flex flex-col gap-2 pl-4 border-l-2 border-slate-200 dark:border-white/10 text-[10px] text-slate-500 dark:text-gray-400">
-                            <p className="flex items-center gap-2">
-                                <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
-                                distance: {selectedVehicle.formattedDistance}
-                            </p>
-                            <p className="flex items-center gap-2">
-                                <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
-                                bearing: {selectedVehicle.bearing.cardinal.toLowerCase()} ({selectedVehicle.bearing.angle}deg)
-                            </p>
-                            <p className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold">
-                                <span className="w-1 h-1 rounded-full bg-emerald-500"></span>
-                                eta: {selectedVehicle.eta}
-                            </p>
-                            <p className="flex items-center gap-2">
-                                <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
-                                speed: ~20 km/h
-                            </p>
-                        </div>
-                    </div>
+                        <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-3">
+                            <div className="text-right">
+                                <span className="text-xs font-mono font-black text-emerald-600 dark:text-emerald-400 block">
+                                    {selectedVehicle.eta}
+                                </span>
+                                <span className="text-[9px] font-mono text-slate-400 uppercase tracking-wider block">Average Speed ~20 km/h</span>
+                            </div>
 
-                    {/* Action Buttons stacked vertically */}
-                    <div className="flex flex-col gap-3 pt-4 border-t border-slate-200 dark:border-white/10">
-                        {commuterUid && (
-                            <button
-                                onClick={() => handleNotifyVehicleDriver(selectedVehicle)}
-                                disabled={notifyingId === selectedVehicle.anonId}
-                                className="w-full py-3.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30 text-[10px] font-bold rounded-2xl transition-all flex items-center justify-center gap-2"
-                            >
-                                <Bell className="w-3.5 h-3.5" /> .notify_driver()
-                            </button>
-                        )}
-                        {onSelectVehicleToPay && (
-                            <button
-                                onClick={() => onSelectVehicleToPay(selectedVehicle.rawDoc)}
-                                className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] font-bold rounded-2xl transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
-                            >
-                                <Zap className="w-3.5 h-3.5" /> .pay_fare()
-                            </button>
-                        )}
+                            <div className="flex items-center gap-2">
+                                {commuterUid && (
+                                    <button
+                                        onClick={() => handleNotifyVehicleDriver(selectedVehicle)}
+                                        disabled={notifyingId === selectedVehicle.anonId}
+                                        className="px-5 py-3.5 bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(0,210,255,0.4)] flex items-center gap-1.5 hover:scale-105"
+                                    >
+                                        <Bell className="w-4 h-4" /> Notify Driver
+                                    </button>
+                                )}
+                                {onSelectVehicleToPay && (
+                                    <button
+                                        onClick={() => onSelectVehicleToPay(selectedVehicle.rawDoc)}
+                                        className="px-5 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(52,211,153,0.4)] flex items-center gap-2 hover:scale-105"
+                                    >
+                                        <Zap className="w-4 h-4" /> Pay Fare
+                                    </button>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     {notifySuccessMsg && (
-                        <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 text-cyan-500 text-[10px] rounded-xl flex items-center gap-2">
-                            <Check className="w-3.5 h-3.5" /> {notifySuccessMsg}
+                        <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-xs font-bold rounded-2xl flex items-center gap-2 animate-bounce">
+                            <Check className="w-4 h-4" /> {notifySuccessMsg}
                         </div>
                     )}
 
-                    {/* Privacy Footer stacked */}
-                    <div className="pt-2 flex flex-col gap-2 text-[9px] text-slate-400 dark:text-gray-500">
-                        <span className="flex items-center gap-1.5">
-                            <EyeOff className="w-3 h-3" /> data.redacted = true;
+                    {/* Privacy Guarantee Footer */}
+                    <div className="pt-4 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-[11px] text-slate-400 dark:text-gray-500 font-mono">
+                        <span className="flex items-center gap-1">
+                            <EyeOff className="w-3.5 h-3.5 text-slate-400" /> Driver personal info redacted by Mobilis Privacy Layer
                         </span>
-                        <span className="text-cyan-500/70">
-                            network.stellar = ready;
-                        </span>
+                        <span className="text-cyan-500 font-bold">Stellar Testnet Ledger Ready</span>
                     </div>
                 </div>
             )}
@@ -530,12 +577,12 @@ export class LiveTransitMapErrorBoundary extends Component<
     render() {
         if (this.state.hasError) {
             return this.props.fallback || (
-                <div className="p-6 bg-slate-900 border border-slate-800 rounded-[2rem] flex flex-col gap-2 text-slate-400 font-mono text-[10px] lowercase">
+                <div className="p-6 bg-slate-900 border border-slate-800 rounded-3xl text-center space-y-2 text-white font-mono text-xs">
                     <p className="text-amber-400 font-bold">
-                        .error = map_engine_unavailable;
+                        ⚠️ Live Vector Map Engine Unavailable in Current Environment
                     </p>
-                    <p className="pl-2 border-l border-slate-700">
-                        active_drivers = visible_on_sonar;
+                    <p className="text-slate-400">
+                        Active drivers remain visible on the 50m Sonar Radar canvas.
                     </p>
                 </div>
             );

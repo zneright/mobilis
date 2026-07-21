@@ -139,6 +139,12 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
         }
 
         return () => {
+            if (driverMarkerRef.current) {
+                driverMarkerRef.current.remove();
+                driverMarkerRef.current = null;
+            }
+            passengerMarkersRef.current.forEach((marker) => marker.remove());
+            passengerMarkersRef.current.clear();
             if (mapRef.current) {
                 mapRef.current.remove();
                 mapRef.current = null;
@@ -166,7 +172,11 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
                           driverVehicleType === 'Motorcycle' ? '🛵' : '🛺'} MY VEHICLE (ON DUTY)</span>
                     </div>
                 `;
-                driverMarkerRef.current = new maplibregl.Marker({ element: el })
+                driverMarkerRef.current = new maplibregl.Marker({
+                    element: el,
+                    rotationAlignment: 'viewport',
+                    pitchAlignment: 'viewport',
+                })
                     .setLngLat([centerCoords.lng, centerCoords.lat])
                     .addTo(map);
             } else {
@@ -197,7 +207,11 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
                         </div>
                     `;
                     el.addEventListener('click', () => handleAcceptPickup(p));
-                    const marker = new maplibregl.Marker({ element: el })
+                    const marker = new maplibregl.Marker({
+                        element: el,
+                        rotationAlignment: 'viewport',
+                        pitchAlignment: 'viewport',
+                    })
                         .setLngLat([p.lng, p.lat])
                         .addTo(map);
                     passengerMarkersRef.current.set(p.id, marker);
