@@ -118,9 +118,14 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
         if (!mapContainerRef.current) return;
 
         try {
+            const isDarkMode = document.documentElement.classList.contains('dark');
+            const styleUrl = isDarkMode
+                ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+                : 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
+
             const map = new maplibregl.Map({
                 container: mapContainerRef.current,
-                style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+                style: styleUrl,
                 center: [centerCoords.lng, centerCoords.lat],
                 zoom: 16.8,
                 pitch: mapPitch,
@@ -146,20 +151,20 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
         if (!mapRef.current) return;
         const map = mapRef.current;
 
-        // Driver Vehicle Marker
+        // Driver Vehicle Marker (Bright Self Badge)
         try {
             if (!driverMarkerRef.current) {
                 const el = document.createElement('div');
                 el.className = 'relative flex items-center justify-center';
                 el.innerHTML = `
-                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-orange-600 p-0.5 shadow-[0_0_35px_rgba(255,107,0,0.95)] border-2 border-white animate-pulse flex items-center justify-center text-2xl">
-                        ${driverVehicleType === 'Jeepney' ? '🛻' :
+                    <div class="absolute w-14 h-14 rounded-full bg-orange-500/30 border border-orange-500/60 animate-ping pointer-events-none"></div>
+                    <div class="relative z-10 px-3 py-1.5 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-black font-mono font-black flex items-center gap-1.5 shadow-[0_0_25px_rgba(255,107,0,1)] border-2 border-white text-xs whitespace-nowrap">
+                        <span>${driverVehicleType === 'Jeepney' ? '🛻' :
                           driverVehicleType === 'UV Express' ? '🚐' :
                           driverVehicleType === 'Bus' ? '🚌' :
                           driverVehicleType === 'E-Vehicle' ? '🚙' :
-                          driverVehicleType === 'Motorcycle' ? '🛵' : '🛺'}
+                          driverVehicleType === 'Motorcycle' ? '🛵' : '🛺'} MY VEHICLE (ON DUTY)</span>
                     </div>
-                    <div class="absolute -inset-3 rounded-full border border-orange-500/40 animate-ping pointer-events-none"></div>
                 `;
                 driverMarkerRef.current = new maplibregl.Marker({ element: el })
                     .setLngLat([centerCoords.lng, centerCoords.lat])
@@ -253,7 +258,7 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
     };
 
     return (
-        <div className="w-full max-w-5xl mx-auto flex flex-col items-center font-sans space-y-4 text-white">
+        <div className="w-full max-w-5xl mx-auto flex flex-col items-center font-sans space-y-4 text-slate-900 dark:text-white transition-colors duration-300">
             
             {/* Driver Approach Proximity Notifier (200m, 100m, 50m, 10m alerts) */}
             <DriverApproachNotifier
@@ -263,38 +268,38 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
 
             {/* GPS Warning Banner */}
             {gpsStatus === 'denied' && (
-                <div className="w-full p-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs text-amber-400 flex items-center gap-2 font-mono">
+                <div className="w-full p-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs text-amber-600 dark:text-amber-400 flex items-center gap-2 font-mono">
                     <MapPin className="w-4 h-4 flex-shrink-0" />
                     <span>GPS fallback applied. Enable browser GPS for precise proximity telemetry.</span>
                 </div>
             )}
 
             {/* TOP CYBERPUNK HUD TELEMETRY STRIP */}
-            <div className="w-full bg-[#07090E]/90 border border-orange-500/30 rounded-3xl p-4 shadow-[0_0_30px_rgba(255,107,0,0.15)] backdrop-blur-xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+            <div className="w-full bg-white/90 dark:bg-[#07090E]/90 border border-orange-500/30 rounded-3xl p-4 shadow-[0_0_30px_rgba(255,107,0,0.15)] backdrop-blur-xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
                 <div className="flex items-center gap-3">
                     <div className="w-3 h-3 rounded-full bg-orange-500 animate-ping" />
-                    <span className="font-black text-orange-400 tracking-wider uppercase">
+                    <span className="font-black text-orange-600 dark:text-orange-400 tracking-wider uppercase">
                         DRIVER MISSION CONTROL • HUD ONLINE
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 text-[10px] font-bold">
+                    <span className="px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30 text-[10px] font-bold">
                         {driverData.isDuty ? 'ON DUTY • GPS BROADCASTING' : 'OFF DUTY'}
                     </span>
                 </div>
 
-                <div className="flex items-center gap-6 font-bold text-slate-300">
-                    <span className="flex items-center gap-1.5 text-amber-400">
+                <div className="flex items-center gap-6 font-bold text-slate-700 dark:text-slate-300">
+                    <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
                         <Gauge className="w-3.5 h-3.5" /> ~22 KM/H SPEED
                     </span>
-                    <span className="flex items-center gap-1.5 text-cyan-400">
+                    <span className="flex items-center gap-1.5 text-cyan-600 dark:text-cyan-400">
                         <Radio className="w-3.5 h-3.5 animate-pulse" /> {nearbyPassengers.length} PASSENGERS IN RADAR
                     </span>
-                    <span className="text-emerald-400 font-black">STELLAR TESTNET</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-black">STELLAR TESTNET</span>
                 </div>
             </div>
 
             {/* MAIN DRIVER OPERATIONAL MAP */}
-            <div className="w-full bg-[#050505] border border-orange-500/30 rounded-[2.5rem] p-3 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center min-h-[480px]">
-                <div className="w-full h-[460px] rounded-[2rem] overflow-hidden relative border border-white/10">
+            <div className="w-full bg-slate-100 dark:bg-[#050505] border border-orange-500/30 rounded-[2.5rem] p-3 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center min-h-[480px]">
+                <div className="w-full h-[460px] rounded-[2rem] overflow-hidden relative border border-slate-300 dark:border-white/10">
                     <div ref={mapContainerRef} className="w-full h-full" />
                     
                     {/* CUSTOM RADIAL HUD FLOATING CONTROLS */}
@@ -302,14 +307,14 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
                         <button
                             onClick={recenterMap}
                             title="Locate Driver"
-                            className="w-11 h-11 rounded-2xl bg-[#0A0D14]/90 text-orange-400 border border-orange-500/30 flex items-center justify-center shadow-lg hover:scale-110 transition-transform backdrop-blur-md"
+                            className="w-11 h-11 rounded-2xl bg-white/90 dark:bg-[#0A0D14]/90 text-orange-600 dark:text-orange-400 border border-orange-500/30 flex items-center justify-center shadow-lg hover:scale-110 transition-transform backdrop-blur-md"
                         >
                             <Navigation className="w-5 h-5" />
                         </button>
                         <button
                             onClick={togglePitch}
                             title="Toggle 45° Cockpit Pitch"
-                            className="w-11 h-11 rounded-2xl bg-[#0A0D14]/90 text-amber-400 border border-amber-500/30 flex items-center justify-center shadow-lg hover:scale-110 transition-transform backdrop-blur-md text-xs font-mono font-black"
+                            className="w-11 h-11 rounded-2xl bg-white/90 dark:bg-[#0A0D14]/90 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center justify-center shadow-lg hover:scale-110 transition-transform backdrop-blur-md text-xs font-mono font-black"
                         >
                             {mapPitch}°
                         </button>
