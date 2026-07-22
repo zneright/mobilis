@@ -3,6 +3,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { playCommuterChime } from '../../utils/webAudio';
 import { Bell, EyeOff, Check, X } from 'lucide-react';
+import { roleCtaBg, rolePill, roleAccentText } from '../tabs/roleStyleTokens';
 
 interface VehicleInfoCardProps {
     vehicleType: string;
@@ -60,7 +61,7 @@ export const VehicleInfoCard: React.FC<VehicleInfoCardProps> = ({
     };
 
     const occupancyColor =
-        occupancyStatus === 'Available' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+        occupancyStatus === 'Available' ? `${rolePill('commuter')} border` :
         occupancyStatus === 'Nearly Full' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
         'bg-rose-500/10 text-rose-500 border-rose-500/20';
 
@@ -102,7 +103,7 @@ export const VehicleInfoCard: React.FC<VehicleInfoCardProps> = ({
                 <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-white/5 rounded-2xl">
                     <div>
                         <span className="text-xs text-gray-500 font-mono">Estimated Arrival (ETA)</span>
-                        <span className="text-lg font-extrabold text-emerald-500 block">{etaText}</span>
+                        <span className={`text-lg font-extrabold block ${roleAccentText('commuter')}`}>{etaText}</span>
                     </div>
                     <div className="text-right">
                         <span className="text-xs text-gray-500 font-mono">Avg Speed</span>
@@ -111,7 +112,7 @@ export const VehicleInfoCard: React.FC<VehicleInfoCardProps> = ({
                 </div>
 
                 {successMsg && (
-                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-mono text-xs font-bold rounded-2xl flex items-center gap-2 animate-bounce">
+                    <div className={`p-3 border font-mono text-xs font-bold rounded-2xl flex items-center gap-2 animate-bounce ${rolePill('commuter')}`}>
                         <Check className="w-4 h-4" /> {successMsg}
                     </div>
                 )}
@@ -119,7 +120,7 @@ export const VehicleInfoCard: React.FC<VehicleInfoCardProps> = ({
                 <button
                     onClick={handleSendWaitingSignal}
                     disabled={isSubmitting || !commuterUid}
-                    className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs rounded-full transition-all shadow-md flex items-center justify-center gap-2 active:scale-98"
+                    className={`w-full py-4 font-extrabold text-xs rounded-full transition-all shadow-md flex items-center justify-center gap-2 active:scale-98 ${roleCtaBg('commuter')}`}
                 >
                     <Bell className="w-4 h-4" />
                     <span>{isSubmitting ? 'Signaling...' : "I'M WAITING FOR RIDE"}</span>
@@ -128,9 +129,9 @@ export const VehicleInfoCard: React.FC<VehicleInfoCardProps> = ({
                 {/* Privacy Redaction Guarantee */}
                 <div className="pt-2 flex items-center justify-between text-[10px] text-gray-400 font-mono">
                     <span className="flex items-center gap-1">
-                        <EyeOff className="w-3 h-3 text-emerald-500" /> Mobilis Privacy Protected
+                        <EyeOff className={`w-3 h-3 ${roleAccentText('commuter')}`} /> Mobilis Privacy Protected
                     </span>
-                    <span className="text-emerald-500 font-bold">Stellar Transit</span>
+                    <span className={`font-bold ${roleAccentText('commuter')}`}>Stellar Transit</span>
                 </div>
             </div>
         </div>

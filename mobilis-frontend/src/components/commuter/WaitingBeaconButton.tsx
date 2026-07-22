@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { MapPin, Navigation, Clock, X, Filter } from 'lucide-react';
+import { roleCtaBg, rolePill, roleAccentText, cardRoleStyle } from '../tabs/roleStyleTokens';
 import { playCommuterChime } from '../../utils/webAudio';
 
 interface WaitingBeaconButtonProps {
@@ -92,19 +93,20 @@ export const WaitingBeaconButton: React.FC<WaitingBeaconButtonProps> = ({
                 <div className="p-3 bg-white/90 dark:bg-[#07090E]/90 border border-gray-100 dark:border-white/10 rounded-2xl shadow-sm backdrop-blur-md space-y-2">
                     <div className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-300">
                         <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] text-gray-500">
-                            <Filter className="w-3 h-3 text-emerald-500" /> Preferred Transport Target:
+                            <Filter className={`w-3 h-3 ${roleAccentText('commuter')}`} /> Preferred Transport Target:
                         </span>
-                        <span className="text-emerald-500 font-mono">{preferredVehicle}</span>
+                        <span className={`font-mono ${roleAccentText('commuter')}`}>{preferredVehicle}</span>
                     </div>
 
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs font-bold">
                         {[
                             { label: 'All Vehicles', value: 'All' },
+                            { label: '🛻 Traditional Jeepney', value: 'Jeepney' },
+                            { label: '⚡🚍 Modern E-Jeepney', value: 'E-Jeepney' },
                             { label: '🛺 Tricycle', value: 'Tricycle' },
-                            { label: '🛻 Jeepney', value: 'Jeepney' },
+                            { label: '⚡🛺 E-Trike', value: 'E-Trike' },
                             { label: '🚐 UV Express', value: 'UV Express' },
                             { label: '🚌 Bus', value: 'Bus' },
-                            { label: '🚙 E-Vehicle', value: 'E-Vehicle' },
                             { label: '🛵 Motorcycle', value: 'Motorcycle' },
                         ].map((item) => (
                             <button
@@ -112,7 +114,7 @@ export const WaitingBeaconButton: React.FC<WaitingBeaconButtonProps> = ({
                                 onClick={() => setPreferredVehicle(item.value)}
                                 className={`px-3 py-1.5 rounded-full border transition-all text-center whitespace-nowrap flex-shrink-0 ${
                                     preferredVehicle === item.value
-                                        ? 'bg-gray-900 text-white dark:bg-emerald-500 dark:text-black border-transparent shadow-sm'
+                                        ? `${roleCtaBg('commuter')} border-transparent shadow-sm`
                                         : 'bg-gray-50 dark:bg-white/5 border-gray-200/60 dark:border-white/10 text-gray-600 dark:text-gray-400'
                                 }`}
                             >
@@ -124,9 +126,9 @@ export const WaitingBeaconButton: React.FC<WaitingBeaconButtonProps> = ({
             )}
 
             {isWaiting ? (
-                <div className="p-4 rounded-3xl bg-white/95 dark:bg-[#07090E]/95 border border-emerald-500/30 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md backdrop-blur-md">
+                <div className={`p-4 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md backdrop-blur-md ${cardRoleStyle('commuter')}`}>
                     <div className="flex items-center gap-3 text-center sm:text-left">
-                        <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0 border ${rolePill('commuter')}`}>
                             <Navigation className="w-5 h-5 animate-pulse" />
                         </div>
                         <div>
@@ -137,7 +139,7 @@ export const WaitingBeaconButton: React.FC<WaitingBeaconButtonProps> = ({
                                 </h4>
                             </div>
                             <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
-                                <Clock className="w-3 h-3 text-emerald-500" /> Auto-expires in <strong className="text-emerald-500 font-mono">{formatTime(timeLeftSec)}</strong>
+                                <Clock className={`w-3 h-3 ${roleAccentText('commuter')}`} /> Auto-expires in <strong className={`font-mono ${roleAccentText('commuter')}`}>{formatTime(timeLeftSec)}</strong>
                             </p>
                         </div>
                     </div>
@@ -154,7 +156,7 @@ export const WaitingBeaconButton: React.FC<WaitingBeaconButtonProps> = ({
                 <button
                     onClick={handleStartWaiting}
                     disabled={isSubmitting || !commuterCoords}
-                    className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-sm rounded-full transition-all shadow-md flex items-center justify-center gap-2 active:scale-98"
+                    className={`w-full py-4 font-black text-sm rounded-full transition-all shadow-md flex items-center justify-center gap-2 active:scale-98 ${roleCtaBg('commuter')}`}
                 >
                     <MapPin className="w-4 h-4" /> REQUEST RIDE ({preferredVehicle})
                 </button>

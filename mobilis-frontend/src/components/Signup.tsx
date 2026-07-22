@@ -390,11 +390,13 @@ const Signup: React.FC = () => {
                                         onChange={(e) => setVehicleType(e.target.value as any)}
                                         className={inputClasses}
                                     >
-                                        <option value="Jeepney">🛻 Jeepney / Modern PUJ (JODA Cooperative)</option>
-                                        <option value="Tricycle">🛺 Tricycle (TODA Cooperative)</option>
+                                        <option value="Jeepney">🛻 Traditional Jeepney (JODA Cooperative)</option>
+                                        <option value="E-Jeepney">⚡🚍 Modern E-Jeepney (Transport Cooperative)</option>
+                                        <option value="Tricycle">🛺 Toda Tricycle (TODA Cooperative)</option>
+                                        <option value="E-Trike">⚡🛺 Electric E-Trike (Eco Mobility)</option>
                                         <option value="UV Express">🚐 UV Express / Shuttle Van (UVODA)</option>
                                         <option value="Bus">🚌 Public Utility Bus (PUB Cooperative)</option>
-                                        <option value="E-Vehicle">🚙 E-Vehicle / E-Trike (Electric Mobility)</option>
+                                        <option value="E-Vehicle">🚙 E-Vehicle (Electric Mobility)</option>
                                         <option value="Motorcycle">🛵 Motorcycle Taxi (Habal-Habal Coop)</option>
                                     </select>
                                 </div>

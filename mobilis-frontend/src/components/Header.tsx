@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Sun, Moon, Bell, ShieldCheck, Navigation, Radio, Building2, ShieldAlert } from 'lucide-react';
+import { rolePill, roleAccentText } from './tabs/roleStyleTokens';
 import MobilisLogo from './common/MobilisLogo';
 import { motion } from 'framer-motion';
 import { playCommuterChime, playDriverAlertChime, playStartupChime } from '../utils/webAudio';
@@ -19,12 +20,15 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onOpenNotifications
     const isCoopAdmin = role === 'admin' || role === 'cooperative';
 
     const roleConfig = isSuperAdmin
-        ? { label: 'SUPER ADMIN', color: 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30', dot: 'bg-rose-500', Icon: ShieldAlert }
+        ? { label: 'SUPER ADMIN', dot: 'bg-rose-500', Icon: ShieldAlert }
         : isCoopAdmin
-        ? { label: 'COOP TREASURY', color: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/30', dot: 'bg-indigo-500', Icon: Building2 }
+        ? { label: 'COOP TREASURY', dot: 'bg-violet-500', Icon: Building2 }
         : isDriver
-        ? { label: 'DRIVER COCKPIT', color: 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/30', dot: 'bg-cyan-500', Icon: Navigation }
-        : { label: 'COMMUTER TRANSIT', color: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30', dot: 'bg-emerald-500', Icon: Radio };
+        ? { label: 'DRIVER DASHBOARD', dot: 'bg-cyan-500', Icon: Navigation }
+        : { label: 'COMMUTER TRANSIT', dot: 'bg-emerald-500', Icon: Radio };
+
+    const pillClass = rolePill(role ?? 'commuter');
+    const accentClass = roleAccentText(role ?? 'commuter');
 
     // Play role‑specific chime when role changes
     useEffect(() => {
@@ -52,16 +56,16 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onOpenNotifications
                 <MobilisLogo size={28} showText />
                 
                 {/* Role-Based Pill Badge */}
-                <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wide border transition-all duration-200 ${roleConfig.color}`}>
+                <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wide border transition-all duration-200 ${pillClass}`}>
                     <span className={`w-1.5 h-1.5 rounded-full animate-ping ${roleConfig.dot}`} />
-                    <RoleIcon className="w-3 h-3" />
-                    <span>{roleConfig.label}</span>
+                    <RoleIcon className="w-3 h-3 flex-shrink-0" />
+                    <span className="hidden xs:inline">{roleConfig.label}</span>
                 </div>
             </div>
 
             {/* Right: Actions & Controls */}
             <div className="flex items-center gap-2">
-                <div className={`hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold border transition-all ${roleConfig.color}`}>
+                <div className={`hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold border transition-all ${pillClass}`}>
                     <ShieldCheck className="w-3 h-3" />
                     <span>STELLAR TESTNET</span>
                 </div>

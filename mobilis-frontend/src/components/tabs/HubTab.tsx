@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Fuel, Building2, UserCheck, ArrowUpRight, ShieldCheck, CheckCircle2, Megaphone, Send, BellRing, X, Truck } from 'lucide-react';
+import { Fuel, Building2, UserCheck, ArrowUpRight, ShieldCheck, CheckCircle2, Megaphone, Send, BellRing, X, Truck, Radio } from 'lucide-react';
+import { cardRoleStyle, rolePill, roleAccentText, roleCtaBg, roleCardBorder } from './roleStyleTokens';
 
 interface HubTabProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -186,18 +187,25 @@ export const HubTab: React.FC<HubTabProps> = ({
         }
     };
 
-    const isDriver = stellarData?.role === 'driver';
+    const isDriver = stellarData?.role?.toLowerCase() === 'driver';
+    const role = stellarData?.role ?? 'commuter';
+    const cardStyle = cardRoleStyle(role);
+    const pillStyle = rolePill(role);
+    const accentStyle = roleAccentText(role);
+    const ctaStyle = roleCtaBg(role);
+    const cardBorder = roleCardBorder(role);
+
     const safeBorrowLimit = typeof borrowLimit === 'number' && !isNaN(borrowLimit) && borrowLimit > 0 ? borrowLimit : 100;
-    const safeDebt = debtState && typeof debtState.debt === 'number' && !isNaN(debtState.debt) ? debtState.debt : 0;
+    const safeDebt = typeof debtState === 'number' ? debtState : (debtState && typeof debtState.debt === 'number' ? debtState.debt : 0);
     const availableXlm = Math.max(0, safeBorrowLimit - safeDebt);
     const usedDebtPercentage = Math.min((safeDebt / safeBorrowLimit) * 100, 100);
 
     return (
-        <div className="w-full max-w-4xl mx-auto space-y-6 text-slate-900 dark:text-white font-sans">
+        <div className="w-full max-w-4xl mx-auto space-y-5 text-slate-900 dark:text-white font-sans">
             
             {/* DRIVER / MEMBER SOROBAN CREDIT HERO GAUGE CARD */}
             {isDriver && (
-                <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#0c1322] border-t-4 border-t-cyan-500 border-x border-b border-slate-200 dark:border-cyan-500/20 shadow-[0_10px_40px_rgba(6,182,212,0.15)] relative overflow-hidden space-y-6 transition-colors duration-300">
+                <div className={`p-8 rounded-3xl bg-white dark:bg-[#0e121a] relative overflow-hidden space-y-6 transition-colors duration-300 ${cardBorder}`}>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 flex items-center justify-center">
@@ -266,20 +274,22 @@ export const HubTab: React.FC<HubTabProps> = ({
                                 setShowAdvanceModal(true);
                             }}
                             disabled={isProcessing || (debtState?.isLocked ?? false) || availableXlm <= 0}
-                            className="py-4 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(0,210,255,0.3)] flex items-center justify-center gap-2"
+                            className={`py-4 disabled:opacity-50 font-black text-xs rounded-2xl transition-all flex items-center justify-center gap-2 ${ctaStyle}`}
                         >
                             <ArrowUpRight className="w-4 h-4" /> Request Credit Advance
                         </button>
                         <button
                             onClick={handleSettleLoan}
                             disabled={isProcessing || safeDebt <= 0}
-                            className="py-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(52,211,153,0.3)] flex items-center justify-center gap-2"
+                            className={`py-4 disabled:opacity-50 font-black text-xs rounded-2xl transition-all flex items-center justify-center gap-2 ${ctaStyle}`}
                         >
                             <ShieldCheck className="w-4 h-4" /> Repay Soroban Credit Loan
                         </button>
                     </div>
                 </div>
             )}
+
+
 
             {/* CUSTOM CREDIT ADVANCE MODAL */}
             {showAdvanceModal && (
@@ -342,7 +352,7 @@ export const HubTab: React.FC<HubTabProps> = ({
                                 setShowAdvanceModal(false);
                             }}
                             disabled={isProcessing}
-                            className="w-full py-4 bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(0,210,255,0.4)] flex items-center justify-center gap-2 hover:scale-[1.02]"
+                            className={`w-full py-4 font-black text-xs rounded-2xl transition-all flex items-center justify-center gap-2 hover:scale-[1.02] ${ctaStyle}`}
                         >
                             <ArrowUpRight className="w-4 h-4" /> Submit XLM Advance Request
                         </button>
@@ -352,7 +362,7 @@ export const HubTab: React.FC<HubTabProps> = ({
 
             {/* ADMIN BROADCAST ANNOUNCEMENT CENTER BUTTON */}
             {isAdmin && (
-                <div className="p-6 rounded-[2.5rem] bg-gradient-to-r from-indigo-900/30 via-purple-900/20 to-slate-900/40 border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_10px_40px_rgba(99,102,241,0.15)]">
+                <div className={`p-6 rounded-3xl bg-white dark:bg-[#0e121a] flex flex-col sm:flex-row items-center justify-between gap-4 ${cardBorder}`}>
                     <div className="flex items-center gap-3 text-center sm:text-left">
                         <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0">
                             <Megaphone className="w-6 h-6 animate-pulse" />
@@ -369,7 +379,7 @@ export const HubTab: React.FC<HubTabProps> = ({
 
                     <button
                         onClick={() => setShowBroadcastModal(true)}
-                        className="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(99,102,241,0.4)] flex items-center gap-2 flex-shrink-0"
+                        className={`px-6 py-3.5 font-black text-xs rounded-2xl transition-all flex items-center gap-2 flex-shrink-0 ${ctaStyle}`}
                     >
                         <BellRing className="w-4 h-4" /> Send Announcement
                     </button>
@@ -378,7 +388,7 @@ export const HubTab: React.FC<HubTabProps> = ({
 
             {/* COOPERATIVE ADMIN VEHICLE TYPE CHANGE REQUESTS QUEUE */}
             {isAdmin && vehicleChangeRequests.length > 0 && (
-                <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#0d0f1a] border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30 shadow-[0_10px_40px_rgba(99,102,241,0.15)] space-y-6 transition-colors duration-300">
+                <div className={`p-8 rounded-3xl bg-white dark:bg-[#0e121a] space-y-6 transition-colors duration-300 ${cardBorder}`}>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
@@ -428,7 +438,7 @@ export const HubTab: React.FC<HubTabProps> = ({
 
             {/* COOPERATIVE ADMIN PENDING DRIVERS QUEUE */}
             {isAdmin && (
-                <div className="p-8 rounded-[2.5rem] bg-white dark:bg-[#0d0f1a] border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30 shadow-[0_10px_40px_rgba(99,102,241,0.15)] space-y-6 transition-colors duration-300">
+                <div className={`p-8 rounded-3xl bg-white dark:bg-[#0e121a] space-y-6 transition-colors duration-300 ${cardBorder}`}>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
@@ -468,7 +478,7 @@ export const HubTab: React.FC<HubTabProps> = ({
                                     <button
                                         onClick={() => handleApproveDriver(driver.uid)}
                                         disabled={approvingUid === driver.uid}
-                                        className="w-full sm:w-auto px-6 py-3 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-black text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(52,211,153,0.4)] flex items-center justify-center gap-2"
+                                        className={`w-full sm:w-auto px-6 py-3 disabled:opacity-50 font-black text-xs rounded-xl transition-all flex items-center justify-center gap-2 ${ctaStyle}`}
                                     >
                                         <UserCheck className="w-4 h-4" />
                                         {approvingUid === driver.uid ? 'Approving...' : 'Approve Driver'}
@@ -568,7 +578,7 @@ export const HubTab: React.FC<HubTabProps> = ({
                                 <button
                                     type="submit"
                                     disabled={sendingBroadcast}
-                                    className="w-full py-4 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(0,210,255,0.4)] flex items-center justify-center gap-2"
+                                    className={`w-full py-4 disabled:opacity-50 font-black text-xs rounded-2xl transition-all flex items-center justify-center gap-2 ${ctaStyle}`}
                                 >
                                     <Send className="w-4 h-4" />
                                     {sendingBroadcast ? 'Sending Broadcast...' : 'Broadcast Announcement Now'}

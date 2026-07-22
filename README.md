@@ -61,19 +61,25 @@ With **Mobilis**, commuters can now discover nearby drivers on a real-time radar
 
 ## 📸 System Evidence & UI Presentation
 
+### 🛺 Driver Operational UI Suite (Verified Mobile Views)
+
+| Driver Dashboard (Radar & Dispatch Queue) | Driver Digital Wallet (Soroban Vault) |
+| :---: | :---: |
+| <img src="./docs/screenshots/driver_dashboard.png" width="280" alt="Driver Dashboard" /> | <img src="./docs/screenshots/driver_wallet.png" width="280" alt="Driver Wallet" /> |
+
+| Driver Transactions (Fare Receipts) | Driver Profile & Transport Vehicle |
+| :---: | :---: |
+| <img src="./docs/screenshots/driver_transactions.png" width="280" alt="Driver Transactions" /> | <img src="./docs/screenshots/driver_profile.png" width="280" alt="Driver Profile" /> |
+
 ### Mobile Responsive UI Ecosystem
 
 | Landing View | Security Gateway / Login | Driver Registration Node |
 | :---: | :---: | :---: |
 | <img src="https://github.com/user-attachments/assets/b4a66160-d9cf-4511-907c-dc3e33b8840d" width="240" alt="Landing Page" /> | <img src="https://github.com/user-attachments/assets/818d9164-fc87-4925-95f8-c023855cc99d" width="240" alt="Login View" /> | <img src="https://github.com/user-attachments/assets/025aefda-5177-4659-9b32-037de1b80bae" width="240" alt="Signup Driver" /> |
 
-| Cooperative Admin Registration | Driver Core Control Hub | Cooperative Command Center |
+| Cooperative Admin Registration | Cooperative Command Center | Profile Management |
 | :---: | :---: | :---: |
-| <img src="https://github.com/user-attachments/assets/a7ecac52-0080-437c-998d-1460ac524976" width="240" alt="Signup Cooperative" /> | <img src="https://github.com/user-attachments/assets/fb7881d8-3c83-4f86-9234-e16e07669f01" width="240" alt="Driver Profile Control Hub" /> | <img src="https://github.com/user-attachments/assets/447adb3d-2ede-402a-a4e3-f208d2639bbb" width="240" alt="Cooperative Dashboard Driver" /> |
-
-| Integrated Digital Wallet | Real-Time Activity History Ledger | Profile Management Configuration |
-| :---: | :---: | :---: |
-| <img src="https://github.com/user-attachments/assets/6f7dbfa4-ed3f-49d9-afe5-3f2a3da6820d" width="240" alt="Wallet Tab" /> | <img src="https://github.com/user-attachments/assets/301e56b7-9a68-47a0-aa74-c493ed47940e" width="240" alt="Transactions Ledger" /> | <img src="https://github.com/user-attachments/assets/8acd4ec7-1bbe-4a45-9747-eca2a1fc19b8" width="240" alt="Profile Control" /> 
+| <img src="https://github.com/user-attachments/assets/a7ecac52-0080-437c-998d-1460ac524976" width="240" alt="Signup Cooperative" /> | <img src="https://github.com/user-attachments/assets/447adb3d-2ede-402a-a4e3-f208d2639bbb" width="240" alt="Cooperative Dashboard Driver" /> | <img src="https://github.com/user-attachments/assets/8acd4ec7-1bbe-4a45-9747-eca2a1fc19b8" width="240" alt="Profile Control" /> |
 
 ---
 

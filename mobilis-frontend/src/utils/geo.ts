@@ -73,3 +73,35 @@ export function calculateETA(distanceKm: number, averageSpeedKmh: number = 20): 
     if (timeMinutes <= 1) return 'Arriving in 1 min';
     return `Arriving in ${timeMinutes} min`;
 }
+
+/**
+ * Fetches real turn-by-turn road route geometry from OSRM public routing service.
+ */
+export async function fetchRealRoadRoute(
+    startLng: number,
+    startLat: number,
+    endLng: number,
+    endLat: number
+): Promise<{ type: 'LineString'; coordinates: [number, number][] }> {
+    try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`;
+        const res = await fetch(url);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.routes && data.routes[0] && data.routes[0].geometry) {
+                return data.routes[0].geometry;
+            }
+        }
+    } catch (e) {
+        console.warn("Real road route fetch warning, using direct vector path fallback:", e);
+    }
+
+    // Direct fallback if offline or API unreachable
+    return {
+        type: 'LineString',
+        coordinates: [
+            [startLng, startLat],
+            [endLng, endLat],
+        ],
+    };
+}

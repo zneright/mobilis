@@ -3,7 +3,8 @@ import { collection, query, where, onSnapshot, setDoc, doc } from 'firebase/fire
 import { db } from '../../firebase';
 import { calculateDistanceKm, calculateETA, formatDistance } from '../../utils/geo';
 import { playDriverAlertChime } from '../../utils/webAudio';
-import { UserCheck, Check } from 'lucide-react';
+import { UserCheck, Check, Navigation } from 'lucide-react';
+import { cardRoleStyle, roleCtaBg, rolePill, roleAccentText } from '../tabs/roleStyleTokens';
 import type { WaitingBeaconDoc } from '../../types';
 
 interface DriverPickupDispatchProps {
@@ -100,16 +101,16 @@ export const DriverPickupDispatch: React.FC<DriverPickupDispatchProps> = ({
     if (!isOnDuty || sortedBeacons.length === 0) return null;
 
     return (
-        <div className="w-full bg-slate-900 dark:bg-[#080B12] border border-cyan-500/30 rounded-3xl p-5 shadow-2xl text-white space-y-4">
+        <div className={`w-full rounded-3xl p-5 shadow-2xl space-y-4 ${cardRoleStyle('driver')}`}>
             
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <UserCheck className="w-5 h-5 text-cyan-400 animate-pulse" />
-                    <h3 className="font-black text-sm uppercase tracking-wider text-cyan-400">
+                    <UserCheck className={`w-5 h-5 animate-pulse ${roleAccentText('driver')}`} />
+                    <h3 className={`font-black text-sm uppercase tracking-wider ${roleAccentText('driver')}`}>
                         Passenger Discovery ({sortedBeacons.length} Nearby)
                     </h3>
                 </div>
-                <span className="px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-mono font-bold text-cyan-400">
+                <span className={`px-2.5 py-1 rounded-full border text-[10px] font-mono font-bold ${rolePill('driver')}`}>
                     Target: {driverVehicleType || 'Tricycle'}
                 </span>
             </div>
@@ -126,7 +127,7 @@ export const DriverPickupDispatch: React.FC<DriverPickupDispatchProps> = ({
                             className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/50 flex items-center justify-between gap-3 transition-all"
                         >
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-black text-base shadow-sm">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-base shadow-sm border ${rolePill('driver')}`}>
                                     👤
                                 </div>
                                 <div>
@@ -147,7 +148,7 @@ export const DriverPickupDispatch: React.FC<DriverPickupDispatchProps> = ({
                             <button
                                 onClick={() => handleAcceptPickup(b)}
                                 disabled={acceptingId === b.id}
-                                className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(0,210,255,0.4)] flex items-center gap-1 hover:scale-105"
+                                className={`px-4 py-2 font-black text-xs rounded-xl transition-all shadow-md flex items-center gap-1 hover:scale-105 ${roleCtaBg('driver')}`}
                             >
                                 <Check className="w-3.5 h-3.5" /> Accept Pickup
                             </button>

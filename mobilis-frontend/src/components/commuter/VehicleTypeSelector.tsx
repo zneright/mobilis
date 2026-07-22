@@ -1,36 +1,40 @@
 import React from 'react';
+import { roleCtaBg, rolePill } from '../tabs/roleStyleTokens';
 
 interface VehicleTypeSelectorProps {
     selectedType: string;
     onSelectType: (type: string) => void;
+    role?: string;
 }
 
 export const vehicleTypes = [
-    { id: 'all', label: 'All Vehicles', icon: '🚗' },
+    { id: 'all', label: 'All Transit', icon: '⚡' },
     { id: 'Tricycle', label: 'Tricycle', icon: '🛺' },
-    { id: 'Jeepney', label: 'Jeepney', icon: '🛻' },
+    { id: 'Jeepney', label: 'Traditional Jeepney', icon: '🛻' },
+    { id: 'E-Jeepney', label: 'Modern E-Jeepney', icon: '⚡🚍' },
     { id: 'UV Express', label: 'UV Express', icon: '🚐' },
     { id: 'Bus', label: 'Bus', icon: '🚌' },
     { id: 'Taxi', label: 'Taxi', icon: '🚖' },
-    { id: 'Motorcycle', label: 'Motorcycle', icon: '🛵' },
+    { id: 'Motorcycle', label: 'Habal-Habal', icon: '🛵' },
 ] as const;
 
 export const VehicleTypeSelector: React.FC<VehicleTypeSelectorProps> = ({
     selectedType,
     onSelectType,
+    role = 'commuter',
 }) => {
     return (
-        <div className="w-full flex items-center gap-2 overflow-x-auto py-2 scrollbar-none px-4">
+        <div className="w-full flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
             {vehicleTypes.map((vt) => {
                 const isActive = selectedType.toLowerCase() === vt.id.toLowerCase();
                 return (
                     <button
                         key={vt.id}
                         onClick={() => onSelectType(vt.id)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all flex-shrink-0 border shadow-sm ${
+                        className={`flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-mono font-bold transition-all flex-shrink-0 border shadow-sm ${
                             isActive
-                                ? 'bg-gray-900 text-white dark:bg-emerald-500 dark:text-black border-transparent scale-105 shadow-md'
-                                : 'bg-white/90 dark:bg-[#07090E]/90 border-gray-200/60 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-white'
+                                ? roleCtaBg(role) + ' scale-105 shadow-md'
+                                : rolePill(role) + ' hover:scale-102 opacity-80 hover:opacity-100'
                         }`}
                     >
                         <span className="text-sm">{vt.icon}</span>

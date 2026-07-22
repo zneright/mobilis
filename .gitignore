@@ -1,4 +1,4 @@
-# Antigravity & AI Agent Artifacts
+# Internal Workspace & Artifacts
 .antigravity
 .gemini
 .agents
@@ -6,6 +6,8 @@
 antigravity-ide
 scratch
 *.log
+MOBILIS_UI_ARCHITECTURE_AUDIT.md
+MOBILIS_UI_REDESIGN_BLUEPRINT.md
 
 # Editor & IDE Directories
 .history

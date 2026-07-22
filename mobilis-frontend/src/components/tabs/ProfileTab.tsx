@@ -3,6 +3,7 @@ import { Copy, Check, QrCode, Shield, LogOut, ChevronRight, User, Phone, MapPin,
 import { auth, db } from '../../firebase';
 import { signOut } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
+import { cardRoleStyle, rolePill, roleAccentText, roleCtaBg, roleAvatarGradient, roleDisplayName } from './roleStyleTokens';
 
 interface ProfileTabProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -22,6 +23,14 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ stellarData }) => {
     const [changeSuccessMsg, setChangeSuccessMsg] = useState('');
 
     const isDriver = stellarData?.role === 'driver';
+    const role = stellarData?.role ?? 'commuter';
+
+    const pillStyle = rolePill(role);
+    const accentStyle = roleAccentText(role);
+    const ctaStyle = roleCtaBg(role);
+    const avatarGradient = roleAvatarGradient(role);
+    const cardStyle = cardRoleStyle(role);
+    const displayName = roleDisplayName(role);
 
     const handleCopyKey = () => {
         if (stellarData?.publicKey) {
@@ -58,64 +67,37 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ stellarData }) => {
     const pubKey = stellarData?.publicKey || '';
     const obfuscatedKey = pubKey ? `${pubKey.substring(0, 8)}...${pubKey.substring(pubKey.length - 8)}` : 'N/A';
 
-    const isSuperAdmin = stellarData?.role === 'superadmin';
-    const isCoopAdmin = stellarData?.role === 'admin' || stellarData?.role === 'cooperative';
-
-    const roleBadgeClass = isSuperAdmin
-        ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30'
-        : isCoopAdmin
-        ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/30'
-        : isDriver
-        ? 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/30'
-        : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
-
-    const avatarGradient = isSuperAdmin
-        ? 'from-rose-500 via-pink-400 to-orange-400'
-        : isCoopAdmin
-        ? 'from-indigo-500 via-purple-400 to-indigo-600'
-        : isDriver
-        ? 'from-cyan-400 via-teal-300 to-amber-400'
-        : 'from-emerald-400 via-teal-300 to-cyan-400';
-
-    const cardBorderAccent = isSuperAdmin
-        ? 'border-t-4 border-t-rose-500 border-x border-b border-rose-500/30 shadow-[0_10px_40px_rgba(244,63,94,0.15)]'
-        : isCoopAdmin
-        ? 'border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30 shadow-[0_10px_40px_rgba(99,102,241,0.15)]'
-        : isDriver
-        ? 'border-t-4 border-t-cyan-500 border-x border-b border-cyan-500/30 shadow-[0_10px_40px_rgba(6,182,212,0.15)]'
-        : 'border-t-4 border-t-emerald-500 border-x border-b border-emerald-500/30 shadow-[0_10px_40px_rgba(16,185,129,0.15)]';
-
     return (
-        <div className="w-full max-w-2xl mx-auto space-y-6 text-slate-900 dark:text-white font-sans">
-            
-            {/* USER AVATAR & IDENTITY HEADER */}
-            <div className={`p-8 rounded-[2.5rem] bg-white dark:bg-[#0e121a] text-center space-y-4 transition-colors duration-300 ${cardBorderAccent}`}>
-                <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${avatarGradient} p-1 mx-auto shadow-lg`}>
-                    <div className="w-full h-full rounded-full bg-slate-100 dark:bg-[#090A0C] flex items-center justify-center text-slate-900 dark:text-white font-black text-2xl">
+        <div className="w-full max-w-4xl mx-auto space-y-5 text-slate-900 dark:text-white font-sans">
+
+            {/* ── USER AVATAR & IDENTITY HEADER ────────────────── */}
+            <div className={`p-8 rounded-3xl text-center space-y-4 transition-all duration-300 ${cardStyle}`}>
+                <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${avatarGradient} p-[3px] mx-auto shadow-lg`}>
+                    <div className="w-full h-full rounded-full bg-white dark:bg-[#0e121a] flex items-center justify-center text-slate-900 dark:text-white font-black text-2xl">
                         {(stellarData?.fullName || stellarData?.coopName || 'User').charAt(0).toUpperCase()}
                     </div>
                 </div>
 
                 <div>
-                    <h2 className="text-2xl font-black text-slate-900 dark:text-white">{stellarData?.fullName || stellarData?.coopName || 'Mobilis Member'}</h2>
-                    <p className="text-xs text-slate-500 dark:text-gray-400 font-mono mt-0.5">{stellarData?.email || 'Registered User'}</p>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{stellarData?.fullName || stellarData?.coopName || 'Mobilis Member'}</h2>
+                    <p className="text-xs text-slate-400 dark:text-gray-500 font-mono mt-0.5">{stellarData?.email || 'Registered User'}</p>
                 </div>
 
-                <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-xs font-mono font-bold uppercase tracking-wider ${roleBadgeClass}`}>
+                <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-xs font-mono font-bold uppercase tracking-wider ${pillStyle}`}>
                     <Shield className="w-3.5 h-3.5" />
-                    Role: {stellarData?.role || 'User'}
+                    {displayName}
                 </div>
             </div>
 
-            {/* DRIVER VEHICLE TYPE & COOPERATIVE APPROVAL SECTION */}
+            {/* ── DRIVER VEHICLE TYPE ──────────────────────────── */}
             {isDriver && (
-                <div className="p-6 rounded-3xl bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 shadow-xl space-y-4 transition-colors duration-300">
+                <div className={`p-6 rounded-3xl space-y-4 transition-all duration-300 ${cardStyle}`}>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <Truck className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
-                            <h3 className="font-black text-sm text-slate-900 dark:text-white uppercase tracking-wider">Transport Vehicle Designation</h3>
+                            <Truck className={`w-5 h-5 ${accentStyle}`} />
+                            <h3 className="font-black text-sm text-slate-900 dark:text-white uppercase tracking-wider">Transport Vehicle</h3>
                         </div>
-                        <span className="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-mono font-bold text-xs border border-cyan-500/20">
+                        <span className={`px-3 py-1 rounded-full font-mono font-bold text-xs border ${pillStyle}`}>
                             {stellarData?.vehicleType || 'Tricycle'}
                         </span>
                     </div>
@@ -126,13 +108,13 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ stellarData }) => {
                                 <Clock className="w-4 h-4 animate-spin" />
                                 <span>Cooperative Approval Pending</span>
                             </div>
-                            <p className="text-xs text-slate-600 dark:text-gray-300">
+                            <p className="text-xs text-slate-600 dark:text-gray-400">
                                 Request to change vehicle to <strong className="text-amber-500">{stellarData.pendingVehicleType}</strong> is awaiting approval from <strong>{stellarData.todaAffiliation || 'your Cooperative Admin'}</strong>.
                             </p>
                         </div>
                     ) : (
                         <form onSubmit={handleRequestVehicleChange} className="space-y-3 pt-2">
-                            <label className="block text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">
+                            <label className="block text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-wider">
                                 Request Vehicle Type Change (Cooperative Verification Required)
                             </label>
                             <div className="flex flex-col sm:flex-row gap-3">
@@ -140,26 +122,28 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ stellarData }) => {
                                     value={selectedNewVehicle}
                                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     onChange={(e) => setSelectedNewVehicle(e.target.value as any)}
-                                    className="flex-1 p-3 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-cyan-500"
+                                    className="flex-1 p-3 bg-white/60 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/[0.08] rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-cyan-500"
                                 >
-                                    <option value="Jeepney">🛻 Jeepney / Modern PUJ (JODA)</option>
+                                    <option value="Jeepney">🛻 Traditional Jeepney (JODA)</option>
+                                    <option value="E-Jeepney">⚡🚍 Modern E-Jeepney (Transport Coop)</option>
                                     <option value="Tricycle">🛺 Tricycle (TODA)</option>
+                                    <option value="E-Trike">⚡🛺 Electric E-Trike</option>
                                     <option value="UV Express">🚐 UV Express / Shuttle Van</option>
                                     <option value="Bus">🚌 Public Utility Bus (PUB)</option>
-                                    <option value="E-Vehicle">🚙 E-Vehicle / E-Trike</option>
+                                    <option value="E-Vehicle">🚙 E-Vehicle (Electric Mobility)</option>
                                     <option value="Motorcycle">🛵 Motorcycle Taxi (Habal-Habal)</option>
                                 </select>
                                 <button
                                     type="submit"
                                     disabled={isSubmittingChange || selectedNewVehicle === stellarData?.vehicleType}
-                                    className="px-5 py-3 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-black font-black text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5"
+                                    className={`px-5 py-3 disabled:opacity-50 font-black text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 ${ctaStyle}`}
                                 >
                                     {isSubmittingChange ? 'Requesting...' : 'Submit Request'}
                                 </button>
                             </div>
 
                             {changeSuccessMsg && (
-                                <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 pt-1">
+                                <p className={`text-xs font-bold flex items-center gap-1.5 pt-1 ${accentStyle}`}>
                                     <CheckCircle2 className="w-4 h-4" /> {changeSuccessMsg}
                                 </p>
                             )}
@@ -168,28 +152,28 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ stellarData }) => {
                 </div>
             )}
 
-            {/* WALLET ADDRESS KEY CARD */}
-            <div className="p-6 rounded-3xl bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 shadow-xl space-y-4 transition-colors duration-300">
+            {/* ── WALLET ADDRESS KEY CARD ─────────────────────── */}
+            <div className={`p-6 rounded-3xl space-y-4 transition-all duration-300 ${cardStyle}`}>
                 <div className="flex items-center justify-between">
-                    <h3 className="font-black text-sm text-slate-600 dark:text-gray-300 uppercase tracking-wider">Stellar Public Key</h3>
+                    <h3 className="font-black text-sm text-slate-500 dark:text-gray-400 uppercase tracking-wider">Stellar Public Key</h3>
                     <button
                         onClick={handleCopyKey}
-                        className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-xs font-bold text-cyan-600 dark:text-cyan-400 flex items-center gap-1.5 transition-all border border-slate-200 dark:border-white/10"
+                        className={`px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/[0.04] hover:bg-slate-200 dark:hover:bg-white/[0.08] text-xs font-bold flex items-center gap-1.5 transition-all border border-slate-200 dark:border-white/[0.06] ${accentStyle}`}
                     >
-                        {copiedKey ? <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copiedKey ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                         {copiedKey ? 'Copied!' : 'Copy Key'}
                     </button>
                 </div>
 
-                <div className="p-4 bg-slate-50 dark:bg-black/50 border border-dashed border-slate-300 dark:border-white/20 rounded-2xl font-mono text-xs text-cyan-600 dark:text-cyan-400 break-all">
+                <div className={`p-4 bg-white/60 dark:bg-white/[0.03] border border-dashed border-slate-300 dark:border-white/[0.1] rounded-2xl font-mono text-xs break-all ${accentStyle}`}>
                     {obfuscatedKey}
                 </div>
 
                 <button
                     onClick={() => setShowQr(!showQr)}
-                    className="w-full py-3 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-900 dark:text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 transition-all border border-slate-200 dark:border-white/10"
+                    className="w-full py-3 bg-white/60 dark:bg-white/[0.03] hover:bg-white/80 dark:hover:bg-white/[0.06] text-slate-700 dark:text-gray-300 font-bold rounded-2xl text-xs flex items-center justify-center gap-2 transition-all border border-slate-200/60 dark:border-white/[0.06]"
                 >
-                    <QrCode className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+                    <QrCode className={`w-4 h-4 ${accentStyle}`} />
                     {showQr ? 'Hide Public Key QR' : 'Show Wallet QR Code'}
                 </button>
 
@@ -205,41 +189,41 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ stellarData }) => {
                 )}
             </div>
 
-            {/* CATEGORIZED SETTINGS LIST */}
-            <div className="p-6 rounded-3xl bg-white dark:bg-[#121418] border border-slate-200 dark:border-white/10 shadow-xl space-y-2 transition-colors duration-300">
-                <h3 className="font-black text-xs text-slate-400 dark:text-gray-400 uppercase tracking-widest mb-3 px-2">Account Preferences</h3>
+            {/* ── SETTINGS LIST ───────────────────────────────── */}
+            <div className={`p-6 rounded-3xl space-y-2 transition-all duration-300 ${cardStyle}`}>
+                <h3 className="font-black text-[10px] text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-3 px-2">Account Preferences</h3>
 
-                <div className="p-4 bg-slate-50 dark:bg-black/30 rounded-2xl flex items-center justify-between text-xs font-medium">
+                <div className="p-4 bg-white/60 dark:bg-white/[0.03] rounded-2xl flex items-center justify-between text-xs font-medium">
                     <div className="flex items-center gap-3">
-                        <User className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-                        <span>Account Type</span>
+                        <User className={`w-4 h-4 ${accentStyle}`} />
+                        <span className="text-slate-600 dark:text-gray-400">Account Type</span>
                     </div>
-                    <span className="font-mono text-slate-900 dark:text-gray-300 font-bold capitalize">{stellarData?.role}</span>
+                    <span className={`font-mono font-bold capitalize ${accentStyle}`}>{stellarData?.role}</span>
                 </div>
 
                 {stellarData?.phone && (
-                    <div className="p-4 bg-slate-50 dark:bg-black/30 rounded-2xl flex items-center justify-between text-xs font-medium">
+                    <div className="p-4 bg-white/60 dark:bg-white/[0.03] rounded-2xl flex items-center justify-between text-xs font-medium">
                         <div className="flex items-center gap-3">
-                            <Phone className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-                            <span>Contact Phone</span>
+                            <Phone className={`w-4 h-4 ${accentStyle}`} />
+                            <span className="text-slate-600 dark:text-gray-400">Contact Phone</span>
                         </div>
                         <span className="font-mono text-slate-900 dark:text-gray-300">{stellarData.phone}</span>
                     </div>
                 )}
 
                 {stellarData?.todaAffiliation && (
-                    <div className="p-4 bg-slate-50 dark:bg-black/30 rounded-2xl flex items-center justify-between text-xs font-medium">
+                    <div className="p-4 bg-white/60 dark:bg-white/[0.03] rounded-2xl flex items-center justify-between text-xs font-medium">
                         <div className="flex items-center gap-3">
-                            <MapPin className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-                            <span>TODA Cooperative</span>
+                            <MapPin className={`w-4 h-4 ${accentStyle}`} />
+                            <span className="text-slate-600 dark:text-gray-400">TODA Cooperative</span>
                         </div>
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400">{stellarData.todaAffiliation}</span>
+                        <span className={`font-bold ${accentStyle}`}>{stellarData.todaAffiliation}</span>
                     </div>
                 )}
 
                 <button
                     onClick={handleSignOut}
-                    className="w-full p-4 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-500 border border-red-500/20 rounded-2xl text-xs font-bold flex items-center justify-between transition-all mt-4"
+                    className="w-full p-4 bg-red-500/5 hover:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/15 rounded-2xl text-xs font-bold flex items-center justify-between transition-all mt-4"
                 >
                     <div className="flex items-center gap-3">
                         <LogOut className="w-4 h-4" />

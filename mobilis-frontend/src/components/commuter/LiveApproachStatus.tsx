@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { doc, onSnapshot, setDoc, deleteDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, deleteDoc, addDoc, collection } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { calculateDistanceKm, calculateETA, formatDistance } from '../../utils/geo';
 import { playCommuterChime } from '../../utils/webAudio';
 import { Bell, CheckCircle2, Clock, X } from 'lucide-react';
+import { cardRoleStyle, roleCtaBg, rolePill, roleAccentText } from '../tabs/roleStyleTokens';
 import type { PickupSessionDoc } from '../../types';
 
 interface LiveApproachStatusProps {
@@ -96,6 +97,17 @@ export const LiveApproachStatus: React.FC<LiveApproachStatusProps> = ({
             triggeredSetRef.current.add(threshold);
             playCommuterChime();
             setArrivalNotice(msg);
+
+            // Write Persistent Ride Notification to Firestore
+            addDoc(collection(db, 'notifications'), {
+                recipientUid: commuterUid,
+                type: 'ride',
+                title: threshold <= 10 ? '📍 Driver Arrived' : '🚗 Driver Approaching',
+                message: `${msg} (${activeSession.driverName} - ${activeSession.plateNumber})`,
+                read: false,
+                timestamp: new Date().toISOString(),
+            }).catch((err) => console.warn("Firestore ride notification note:", err));
+
             setTimeout(() => setArrivalNotice(null), 6000);
         }
     }, [activeSession, commuterCoords]);
@@ -157,17 +169,17 @@ export const LiveApproachStatus: React.FC<LiveApproachStatusProps> = ({
         <div className="w-full space-y-2 font-sans">
             {/* Arrival Notice Toast Banner */}
             {arrivalNotice && (
-                <div className="p-3 rounded-2xl bg-emerald-500 text-black font-extrabold text-xs shadow-md flex items-center gap-2 animate-bounce">
+                <div className={`p-3 rounded-2xl font-extrabold text-xs shadow-md flex items-center gap-2 animate-bounce ${roleCtaBg('commuter')}`}>
                     <Bell className="w-4 h-4 flex-shrink-0" />
                     <span>{arrivalNotice}</span>
                 </div>
             )}
 
             {/* Active Approach Floating Glass Card */}
-            <div className="p-4 rounded-3xl bg-white/90 dark:bg-[#07090E]/90 border border-emerald-500/30 shadow-md backdrop-blur-md space-y-3">
+            <div className={`p-4 rounded-3xl backdrop-blur-md space-y-3 ${cardRoleStyle('commuter')}`}>
                 <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center font-extrabold text-xl">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-xl border ${rolePill('commuter')}`}>
                             {activeSession.vehicleType === 'Jeepney' ? '🛻' :
                              activeSession.vehicleType === 'UV Express' ? '🚐' :
                              activeSession.vehicleType === 'Bus' ? '🚌' :
@@ -189,7 +201,7 @@ export const LiveApproachStatus: React.FC<LiveApproachStatusProps> = ({
 
                     <div className="flex items-center gap-3">
                         <div className="text-right">
-                            <span className="text-xs font-mono font-extrabold text-emerald-500 block">
+                            <span className={`text-xs font-mono font-extrabold block ${roleAccentText('commuter')}`}>
                                 {eta}
                             </span>
                             <span className="text-[9px] font-mono text-gray-400 uppercase">ETA</span>
@@ -208,7 +220,7 @@ export const LiveApproachStatus: React.FC<LiveApproachStatusProps> = ({
 
                 {/* Auto-Cancel Countdown Bar */}
                 <div className="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center justify-between text-[11px] text-gray-500 font-mono">
-                    <span className="flex items-center gap-1 text-emerald-500 font-bold">
+                    <span className={`flex items-center gap-1 font-bold ${roleAccentText('commuter')}`}>
                         <CheckCircle2 className="w-3.5 h-3.5" /> Driver En Route
                     </span>
                     <span className="flex items-center gap-1 text-amber-500 font-bold">

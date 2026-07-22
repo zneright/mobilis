@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { collection, query, where, onSnapshot, setDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, setDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { calculateDistanceKm, calculateETA, formatDistance } from '../../utils/geo';
+import { calculateDistanceKm, calculateETA, formatDistance, fetchRealRoadRoute } from '../../utils/geo';
 import { playDriverAlertChime } from '../../utils/webAudio';
+import { applyRoleMapStyle } from '../../utils/mapStyle';
 import { Navigation, Radio, Check, Gauge, MapPin } from 'lucide-react';
+import { cardRoleStyle, roleCtaBg, rolePill, roleAccentText } from '../tabs/roleStyleTokens';
 import type { WaitingBeaconDoc, UserData } from '../../types';
 import DriverApproachNotifier from './DriverApproachNotifier';
 
@@ -13,18 +15,34 @@ interface DriverOperationsMapProps {
     driverData: UserData;
     currencyMode: 'XLM' | 'PHP';
     setCurrencyMode: React.Dispatch<React.SetStateAction<'XLM' | 'PHP'>>;
+    theme?: 'dark' | 'light';
 }
 
-export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driverData }) => {
+interface PickupSessionDoc {
+    id: string;
+    driverUid: string;
+    commuterUid: string;
+    commuterName?: string;
+    status: 'accepted' | 'en_route' | 'completed' | 'cancelled';
+    commuterLat: number;
+    commuterLng: number;
+    driverLat?: number;
+    driverLng?: number;
+    acceptedAt?: string;
+}
+
+export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driverData, theme = 'dark' }) => {
     const searchRadiusKm = 5.0; // 5-kilometer passenger discovery radius
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<maplibregl.Map | null>(null);
     const driverMarkerRef = useRef<maplibregl.Marker | null>(null);
     const passengerMarkersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
+    const activeRouteIdsRef = useRef<Set<string>>(new Set());
 
     const [driverCoords, setDriverCoords] = useState<{ lat: number; lng: number } | null>(null);
     const [gpsStatus, setGpsStatus] = useState<'acquiring' | 'ready' | 'denied' | 'error'>('acquiring');
     const [waitingBeacons, setWaitingBeacons] = useState<WaitingBeaconDoc[]>([]);
+    const [activePickupSessions, setActivePickupSessions] = useState<PickupSessionDoc[]>([]);
     const [isLoadingPassengers, setIsLoadingPassengers] = useState<boolean>(true);
     const [acceptingId, setAcceptingId] = useState<string | null>(null);
     const [mapPitch, setMapPitch] = useState<number>(45);
@@ -100,6 +118,161 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
         return () => unsubscribe();
     }, [driverVehicleType]);
 
+    // Firestore Listener for ACTIVE PICKUP SESSIONS accepted by this Driver
+    useEffect(() => {
+        if (!driverData.uid) return;
+        const qSessions = query(
+            collection(db, 'active_pickup_sessions'),
+            where('driverUid', '==', driverData.uid),
+            where('status', 'in', ['accepted', 'en_route'])
+        );
+
+        const unsubscribe = onSnapshot(
+            qSessions,
+            (snapshot) => {
+                const list: PickupSessionDoc[] = [];
+                snapshot.forEach((docSnap) => {
+                    list.push({ ...docSnap.data(), id: docSnap.id } as PickupSessionDoc);
+                });
+                setActivePickupSessions(list);
+            },
+            (err) => {
+                console.warn("Active pickup sessions listener warning:", err);
+            }
+        );
+
+        return () => unsubscribe();
+    }, [driverData.uid]);
+
+    // Auto-complete/remove route session when driver is within 15 meters (0.015 km) or goes beyond commuter
+    useEffect(() => {
+        if (!driverCoords || activePickupSessions.length === 0) return;
+
+        activePickupSessions.forEach(async (session) => {
+            if (typeof session.commuterLat === 'number' && typeof session.commuterLng === 'number') {
+                const distKm = calculateDistanceKm(driverCoords.lat, driverCoords.lng, session.commuterLat, session.commuterLng);
+                if (distKm <= 0.015) {
+                    try {
+                        await updateDoc(doc(db, 'active_pickup_sessions', session.id), {
+                            status: 'completed',
+                            completedAt: new Date().toISOString(),
+                        });
+                    } catch (e) {
+                        console.warn("Auto completing pickup session warning:", e);
+                    }
+                }
+            }
+        });
+    }, [driverCoords, activePickupSessions]);
+
+    // Render Multi-Passenger Route Lines on MapLibre Canvas
+    useEffect(() => {
+        if (!mapRef.current) return;
+        const map = mapRef.current;
+
+        const drawRoutes = async () => {
+            if (!mapRef.current || !driverCoords) return;
+            const currentSessionIds = new Set<string>();
+
+            for (const session of activePickupSessions) {
+                if (typeof session.commuterLat !== 'number' || typeof session.commuterLng !== 'number') continue;
+                const id = session.id;
+                currentSessionIds.add(id);
+
+                const sourceId = `route-source-${id}`;
+                const layerGlowId = `route-layer-glow-${id}`;
+                const layerLineId = `route-layer-line-${id}`;
+
+                // Fetch real turn-by-turn road geometry from OSRM
+                const roadGeometry = await fetchRealRoadRoute(
+                    driverCoords.lng,
+                    driverCoords.lat,
+                    session.commuterLng,
+                    session.commuterLat
+                );
+
+                const geojson: GeoJSON.Feature<GeoJSON.LineString> = {
+                    type: 'Feature',
+                    properties: {},
+                    geometry: roadGeometry,
+                };
+
+                if (map.getSource(sourceId)) {
+                    (map.getSource(sourceId) as maplibregl.GeoJSONSource).setData(geojson);
+                } else {
+                    map.addSource(sourceId, {
+                        type: 'geojson',
+                        data: geojson,
+                    });
+
+                    // Glowing Under-Layer Path (Driver Role Amber Gold)
+                    map.addLayer({
+                        id: layerGlowId,
+                        type: 'line',
+                        source: sourceId,
+                        layout: { 'line-join': 'round', 'line-cap': 'round' },
+                        paint: {
+                            'line-color': '#F59E0B',
+                            'line-width': 10,
+                            'line-opacity': 0.6,
+                        },
+                    });
+
+                    // High-Visibility Guidance Line (Driver Bright Amber)
+                    map.addLayer({
+                        id: layerLineId,
+                        type: 'line',
+                        source: sourceId,
+                        layout: { 'line-join': 'round', 'line-cap': 'round' },
+                        paint: {
+                            'line-color': '#FCD34D',
+                            'line-width': 5,
+                            'line-dasharray': [2, 2],
+                        },
+                    });
+                }
+            }
+
+            // Clean up completed / removed route lines from MapLibre canvas
+            activeRouteIdsRef.current.forEach((prevId) => {
+                if (!currentSessionIds.has(prevId)) {
+                    const sourceId = `route-source-${prevId}`;
+                    const layerGlowId = `route-layer-glow-${prevId}`;
+                    const layerLineId = `route-layer-line-${prevId}`;
+
+                    if (map.getLayer(layerLineId)) map.removeLayer(layerLineId);
+                    if (map.getLayer(layerGlowId)) map.removeLayer(layerGlowId);
+                    if (map.getSource(sourceId)) map.removeSource(sourceId);
+                }
+            });
+
+            activeRouteIdsRef.current = currentSessionIds;
+        };
+
+        if (map.isStyleLoaded()) {
+            drawRoutes();
+        } else {
+            const onStyleData = () => {
+                if (map.isStyleLoaded()) {
+                    drawRoutes();
+                    map.off('styledata', onStyleData);
+                }
+            };
+            map.on('styledata', onStyleData);
+        }
+    }, [driverCoords, activePickupSessions]);
+
+    const handleCompletePickup = async (sessionId: string) => {
+        try {
+            await updateDoc(doc(db, 'active_pickup_sessions', sessionId), {
+                status: 'completed',
+                completedAt: new Date().toISOString(),
+            });
+        } catch (err) {
+            console.error("Failed to complete pickup session:", err);
+        }
+    };
+
     const centerCoords = driverCoords || DEFAULT_COORDS;
     const nearbyPassengers = useMemo(() => {
         return waitingBeacons
@@ -113,12 +286,24 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
 
     const nearestPassenger = nearbyPassengers[0] || null;
 
-    // Initialize Driver Cyberpunk MapLibre Map
+    // Initialize Driver Cyberpunk MapLibre Map with dynamic theme switching
     useEffect(() => {
         if (!mapContainerRef.current) return;
 
+        // Clean up previous map instance if re-initializing for theme change
+        if (mapRef.current) {
+            passengerMarkersRef.current.forEach((marker) => marker.remove());
+            passengerMarkersRef.current.clear();
+            if (driverMarkerRef.current) {
+                driverMarkerRef.current.remove();
+                driverMarkerRef.current = null;
+            }
+            mapRef.current.remove();
+            mapRef.current = null;
+        }
+
         try {
-            const isDarkMode = document.documentElement.classList.contains('dark');
+            const isDarkMode = theme === 'dark';
             const styleUrl = isDarkMode
                 ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
                 : 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
@@ -131,6 +316,12 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
                 pitch: mapPitch,
                 bearing: -15,
                 attributionControl: false,
+            });
+
+            map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
+
+            map.on('load', () => {
+                applyRoleMapStyle(map, 'driver', isDarkMode);
             });
 
             mapRef.current = map;
@@ -150,7 +341,7 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
                 mapRef.current = null;
             }
         };
-    }, []);
+    }, [theme]);
 
     // Update Driver Vehicle & Passenger Markers
     useEffect(() => {
@@ -163,8 +354,8 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
                 const el = document.createElement('div');
                 el.className = 'relative flex items-center justify-center';
                 el.innerHTML = `
-                    <div class="absolute w-14 h-14 rounded-full bg-orange-500/30 border border-orange-500/60 animate-ping pointer-events-none"></div>
-                    <div class="relative z-10 px-3 py-1.5 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-black font-mono font-black flex items-center gap-1.5 shadow-[0_0_25px_rgba(255,107,0,1)] border-2 border-white text-xs whitespace-nowrap">
+                    <div class="absolute w-14 h-14 rounded-full bg-cyan-400/30 border border-cyan-400/60 animate-ping pointer-events-none"></div>
+                    <div class="relative z-10 px-3 py-1.5 rounded-2xl bg-gradient-to-r from-cyan-400 to-teal-500 text-black font-mono font-black flex items-center gap-1.5 shadow-[0_0_25px_rgba(6,182,212,1)] border-2 border-white text-xs whitespace-nowrap">
                         <span>${driverVehicleType === 'Jeepney' ? '🛻' :
                           driverVehicleType === 'UV Express' ? '🚐' :
                           driverVehicleType === 'Bus' ? '🚌' :
@@ -289,30 +480,30 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
             )}
 
             {/* TOP CYBERPUNK HUD TELEMETRY STRIP */}
-            <div className="w-full bg-white/90 dark:bg-[#07090E]/90 border border-orange-500/30 rounded-3xl p-4 shadow-[0_0_30px_rgba(255,107,0,0.15)] backdrop-blur-xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+            <div className={`w-full p-4 rounded-3xl backdrop-blur-xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono ${cardRoleStyle('driver')}`}>
                 <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full bg-orange-500 animate-ping" />
-                    <span className="font-black text-orange-600 dark:text-orange-400 tracking-wider uppercase">
+                    <div className="w-3 h-3 rounded-full bg-cyan-400 animate-ping" />
+                    <span className={`font-black tracking-wider uppercase ${roleAccentText('driver')}`}>
                         DRIVER MISSION CONTROL • HUD ONLINE
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30 text-[10px] font-bold">
+                    <span className={`px-2.5 py-0.5 rounded-full border text-[10px] font-bold ${rolePill('driver')}`}>
                         {driverData.isDuty ? 'ON DUTY • GPS BROADCASTING' : 'OFF DUTY'}
                     </span>
                 </div>
 
                 <div className="flex items-center gap-6 font-bold text-slate-700 dark:text-slate-300">
-                    <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                    <span className={`flex items-center gap-1.5 ${roleAccentText('driver')}`}>
                         <Gauge className="w-3.5 h-3.5" /> ~22 KM/H SPEED
                     </span>
-                    <span className="flex items-center gap-1.5 text-cyan-600 dark:text-cyan-400">
+                    <span className={`flex items-center gap-1.5 ${roleAccentText('driver')}`}>
                         <Radio className="w-3.5 h-3.5 animate-pulse" /> {nearbyPassengers.length} PASSENGERS IN RADAR
                     </span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-black">STELLAR TESTNET</span>
+                    <span className={`font-black ${roleAccentText('driver')}`}>STELLAR TESTNET</span>
                 </div>
             </div>
 
             {/* MAIN DRIVER OPERATIONAL MAP */}
-            <div className="w-full bg-slate-100 dark:bg-[#050505] border border-orange-500/30 rounded-[2.5rem] p-3 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center min-h-[480px]">
+            <div className="w-full bg-slate-100 dark:bg-[#050505] border border-cyan-500/30 rounded-[2.5rem] p-3 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center min-h-[480px]">
                 <div className="w-full h-[460px] rounded-[2rem] overflow-hidden relative border border-slate-300 dark:border-white/10">
                     <div ref={mapContainerRef} className="w-full h-full" />
                     
@@ -321,14 +512,14 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
                         <button
                             onClick={recenterMap}
                             title="Locate Driver"
-                            className="w-11 h-11 rounded-2xl bg-white/90 dark:bg-[#0A0D14]/90 text-orange-600 dark:text-orange-400 border border-orange-500/30 flex items-center justify-center shadow-lg hover:scale-110 transition-transform backdrop-blur-md"
+                            className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform backdrop-blur-md border ${rolePill('driver')}`}
                         >
                             <Navigation className="w-5 h-5" />
                         </button>
                         <button
                             onClick={togglePitch}
                             title="Toggle 45° Cockpit Pitch"
-                            className="w-11 h-11 rounded-2xl bg-white/90 dark:bg-[#0A0D14]/90 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center justify-center shadow-lg hover:scale-110 transition-transform backdrop-blur-md text-xs font-mono font-black"
+                            className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform backdrop-blur-md text-xs font-mono font-black border ${rolePill('driver')}`}
                         >
                             {mapPitch}°
                         </button>
@@ -347,11 +538,11 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
             {/* PASSENGER DISPATCH QUEUE */}
             <div className="w-full space-y-3">
                 <div className="flex items-center justify-between">
-                    <h4 className="font-black text-sm text-slate-300 uppercase tracking-widest font-mono flex items-center gap-2">
-                        <Radio className="w-4 h-4 text-orange-400 animate-pulse" />
+                    <h4 className="font-black text-sm uppercase tracking-widest font-mono flex items-center gap-2 text-slate-800 dark:text-slate-200">
+                        <Radio className={`w-4 h-4 animate-pulse ${roleAccentText('driver')}`} />
                         Passenger Dispatch Queue ({driverVehicleType})
                     </h4>
-                    <span className="text-xs font-mono font-bold text-orange-400">
+                    <span className={`text-xs font-mono font-bold ${roleAccentText('driver')}`}>
                         AUTOMATIC MATCHING ACTIVE
                     </span>
                 </div>
@@ -370,22 +561,22 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
                             return (
                                 <div
                                     key={pass.id}
-                                    className="p-5 rounded-3xl bg-[#090C12] border border-orange-500/30 shadow-xl flex items-center justify-between gap-4 transition-all hover:border-orange-400"
+                                    className={`p-5 rounded-3xl shadow-xl flex items-center justify-between gap-4 transition-all ${cardRoleStyle('driver')}`}
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-400/30 text-cyan-400 flex items-center justify-center font-black text-xl shadow-[0_0_15px_rgba(0,210,255,0.4)]">
+                                        <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center font-black text-xl shadow-sm ${rolePill('driver')}`}>
                                             📡
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <h5 className="font-black text-sm text-white">
+                                                <h5 className="font-black text-sm text-slate-900 dark:text-white">
                                                     Waiting Passenger
                                                 </h5>
-                                                <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                                                <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold border ${rolePill('driver')}`}>
                                                     Target: {pass.preferredVehicleType || 'All'}
                                                 </span>
                                             </div>
-                                            <p className="text-xs text-slate-400 font-mono mt-0.5">
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                                                 {formattedDist} • ETA: {eta}
                                             </p>
                                         </div>
@@ -394,7 +585,7 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
                                     <button
                                         onClick={() => handleAcceptPickup(pass)}
                                         disabled={acceptingId === pass.id}
-                                        className="px-5 py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-black font-black text-xs rounded-2xl transition-all shadow-[0_0_20px_rgba(255,107,0,0.6)] flex items-center gap-1.5 hover:scale-105"
+                                        className={`px-5 py-3 font-black text-xs rounded-2xl transition-all shadow-md flex items-center gap-1.5 hover:scale-105 ${roleCtaBg('driver')}`}
                                     >
                                         <Check className="w-4 h-4" /> Accept Pickup
                                     </button>
@@ -403,10 +594,10 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
                         })}
                     </div>
                 ) : (
-                    <div className="p-8 bg-[#080A10] border border-white/10 rounded-3xl text-center space-y-2 font-mono">
-                        <Radio className="w-8 h-8 text-slate-500 mx-auto animate-pulse" />
-                        <h5 className="font-bold text-sm text-slate-300">No Passengers Waiting Nearby</h5>
-                        <p className="text-xs text-slate-500">
+                    <div className={`p-8 rounded-3xl text-center space-y-2 font-mono ${cardRoleStyle('driver')}`}>
+                        <Radio className={`w-8 h-8 mx-auto animate-pulse ${roleAccentText('driver')}`} />
+                        <h5 className="font-bold text-sm text-slate-900 dark:text-white">No Passengers Waiting Nearby</h5>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                             Waiting passengers requesting {driverVehicleType} will automatically appear in your Mission Control HUD.
                         </p>
                     </div>

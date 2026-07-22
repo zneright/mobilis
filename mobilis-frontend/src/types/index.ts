@@ -16,8 +16,8 @@ export interface UserData {
     phone?: string;
     plateNumber?: string;
     todaAffiliation?: string; // Which TODA they belong to
-    vehicleType?: 'Jeepney' | 'Tricycle' | 'UV Express' | 'Bus' | 'E-Vehicle' | 'Motorcycle';
-    pendingVehicleType?: 'Jeepney' | 'Tricycle' | 'UV Express' | 'Bus' | 'E-Vehicle' | 'Motorcycle';
+    vehicleType?: 'Jeepney' | 'E-Jeepney' | 'Tricycle' | 'E-Trike' | 'UV Express' | 'Bus' | 'E-Vehicle' | 'Motorcycle';
+    pendingVehicleType?: 'Jeepney' | 'E-Jeepney' | 'Tricycle' | 'E-Trike' | 'UV Express' | 'Bus' | 'E-Vehicle' | 'Motorcycle';
     vehicleChangeStatus?: 'pending' | 'approved' | 'rejected';
     isDuty?: boolean;
     lastLocation?: {
@@ -41,7 +41,7 @@ export interface DriverLocationDoc {
     driverName: string;
     plateNumber: string;
     todaAffiliation: string;
-    vehicleType?: 'Jeepney' | 'Tricycle' | 'UV Express' | 'Bus' | 'E-Vehicle' | 'Motorcycle';
+    vehicleType?: 'Jeepney' | 'E-Jeepney' | 'Tricycle' | 'E-Trike' | 'UV Express' | 'Bus' | 'E-Vehicle' | 'Motorcycle';
     lat: number;
     lng: number;
     active: boolean;

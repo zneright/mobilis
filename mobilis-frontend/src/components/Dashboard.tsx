@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { auth, db } from '../firebase';
 import { signOut } from 'firebase/auth';
@@ -17,7 +17,8 @@ import {
     Transaction
 } from '@stellar/stellar-sdk';
 import { requestAccess, signTransaction, isConnected, isAllowed } from '@stellar/freighter-api';
-import { Copy, ArrowUpRight, X, Wallet, Zap, Bell, Radio, ShieldCheck, Megaphone } from 'lucide-react';
+import { Copy, ArrowUpRight, X, Wallet, Zap, Bell, Radio, ShieldCheck, Megaphone, Navigation, CheckCircle2 } from 'lucide-react';
+import { cardRoleStyle, roleCtaBg, rolePill, roleAccentText, roleShellBg } from './tabs/roleStyleTokens';
 import Header from './Header';
 import BottomNav from './BottomNav';
 import Sidebar from './Sidebar';
@@ -29,7 +30,7 @@ import ProfileTab from './tabs/ProfileTab';
 
 import { CommuterRadar } from './commuter/CommuterRadar';
 import { DriverDutyToggle } from './driver/DriverDutyToggle';
-import { DriverRadar } from './driver/DriverRadar';
+import { DriverOperationsMap } from './driver/DriverOperationsMap';
 import MobilisLoader from './common/MobilisLoader';
 import { playDoubleChime } from '../utils/webAudio';
 import { setupFcmNotifications } from '../services/fcm';
@@ -113,20 +114,34 @@ const Dashboard: React.FC = () => {
     const [sendDest, setSendDest] = useState('');
     const [sendAmt, setSendAmt] = useState('');
 
-    const [paymentToast, setPaymentToast] = useState<{ amount: string; commuterName: string } | null>(null);
+    const [paymentToast, setPaymentToast] = useState<{
+        title: string;
+        message: string;
+        amountXlm: string;
+        amountPhp: string;
+        isIncoming: boolean;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        tx: any;
+    } | null>(null);
 
-    // REAL-TIME DRIVER FARE PAYMENT NOTIFICATION LISTENER
+    // REAL-TIME BOTH-PARTY FARE PAYMENT NOTIFICATION LISTENER
     useEffect(() => {
-        if (!stellarData?.uid || stellarData.role !== 'driver') return;
+        if (!stellarData?.uid) return;
 
         // Register FCM Push Token
         setupFcmNotifications(stellarData.uid);
 
         let isInitial = true;
-        const q = query(
-            collection(db, 'fare_transactions'),
-            where('driverId', '==', stellarData.uid)
-        );
+        const role = stellarData.role;
+
+        let q;
+        if (role === 'commuter') {
+            q = query(collection(db, 'fare_transactions'), where('commuterId', '==', stellarData.uid));
+        } else if (role === 'driver') {
+            q = query(collection(db, 'fare_transactions'), where('driverId', '==', stellarData.uid));
+        } else {
+            q = query(collection(db, 'fare_transactions'));
+        }
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             if (isInitial) {
@@ -137,20 +152,32 @@ const Dashboard: React.FC = () => {
             snapshot.docChanges().forEach((change) => {
                 if (change.type === 'added') {
                     const data = change.doc.data();
-                    const amount = data.amount || '0.00';
-                    const commuterName = data.commuterName || 'Commuter';
+                    const numXlm = parseFloat(data.amount || '0').toFixed(4);
+                    const numPhp = data.amountPhp || (parseFloat(data.amount || '0') * 60.69).toFixed(2);
+                    const isIncoming = role === 'driver' || data.driverId === stellarData.uid;
 
-                    // 1. Play Web Audio API double chime (no mp3 asset needed)
+                    // 1. Play Web Audio API double chime (GCash sound ping)
                     playDoubleChime();
 
-                    // 2. Animated in-app toast notification banner
-                    setPaymentToast({ amount, commuterName });
-                    setTimeout(() => setPaymentToast(null), 6000);
+                    // 2. Animated GCash-style in-app toast notification banner
+                    setPaymentToast({
+                        title: isIncoming ? '⚡ Payment Received!' : '⚡ Fare Payment Sent!',
+                        message: isIncoming
+                            ? `Received from ${data.commuterName || 'Commuter'}`
+                            : `Paid to ${data.driverName || 'Driver'} (${data.plateNumber || 'Mobilis Fleet'})`,
+                        amountXlm: numXlm,
+                        amountPhp: numPhp,
+                        isIncoming,
+                        tx: data,
+                    });
+                    setTimeout(() => setPaymentToast(null), 8000);
 
                     // 3. Native Browser Notification
                     if ('Notification' in window && Notification.permission === 'granted') {
-                        new Notification('⚡ New Fare Received!', {
-                            body: `Received ${amount} XLM from ${commuterName}`,
+                        new Notification(isIncoming ? '⚡ Payment Received!' : '⚡ Fare Sent!', {
+                            body: isIncoming
+                                ? `Received ₱${numPhp} PHP (${numXlm} XLM) from ${data.commuterName || 'Commuter'}`
+                                : `Sent ₱${numPhp} PHP (${numXlm} XLM) to ${data.driverName || 'Driver'}`,
                             icon: '/favicon.svg',
                         });
                     }
@@ -165,6 +192,129 @@ const Dashboard: React.FC = () => {
 
     const [broadcasts, setBroadcasts] = useState<{ id: string; title: string; message: string; senderName: string; timestamp: string }[]>([]);
     const [broadcastToast, setBroadcastToast] = useState<{ title: string; message: string; senderName: string } | null>(null);
+
+    // Helper: Safely convert any Firestore field (Timestamp object, number, string, null) to ISO String
+    const toIsoString = (ts: any): string => {
+        if (!ts) return new Date().toISOString();
+        if (typeof ts === 'string') return ts;
+        if (typeof ts === 'number') return new Date(ts).toISOString();
+        if (typeof ts === 'object') {
+            if (typeof ts.toDate === 'function') {
+                try {
+                    return ts.toDate().toISOString();
+                } catch {
+                    return new Date().toISOString();
+                }
+            }
+            if (typeof ts.seconds === 'number') {
+                return new Date(ts.seconds * 1000).toISOString();
+            }
+        }
+        return new Date().toISOString();
+    };
+
+    const formatNotifDate = (ts?: any) => {
+        const iso = toIsoString(ts);
+        try {
+            const d = new Date(iso);
+            return isNaN(d.getTime()) ? new Date().toLocaleString() : d.toLocaleString();
+        } catch {
+            return new Date().toLocaleString();
+        }
+    };
+
+    // REAL-TIME RIDE & TRANSIT STATUS NOTIFICATION LISTENER
+    const [rideNotifications, setRideNotifications] = useState<{
+        id: string;
+        type: 'ride';
+        title: string;
+        message: string;
+        timestamp: string;
+    }[]>([]);
+
+    useEffect(() => {
+        if (!stellarData?.uid) return;
+
+        const role = stellarData.role;
+        if (role !== 'commuter' && role !== 'driver') return;
+
+        let isInitial = true;
+
+        const q1 = query(collection(db, 'active_pickups'), where(role === 'commuter' ? 'commuterId' : 'driverId', '==', stellarData.uid));
+        const q2 = query(collection(db, 'active_pickup_sessions'), where(role === 'commuter' ? 'commuterUid' : 'driverUid', '==', stellarData.uid));
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const handleDocs = (snapshot: any) => {
+            const list: {
+                id: string;
+                type: 'ride';
+                title: string;
+                message: string;
+                timestamp: string;
+            }[] = [];
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            snapshot.forEach((docSnap: any) => {
+                const data = docSnap.data();
+                if (!data) return;
+
+                const status = data.status || 'waiting';
+                const driverName = data.driverName || 'Driver';
+                const commuterName = data.commuterName || 'Commuter';
+                const plateNumber = data.plateNumber || 'Mobilis Fleet';
+                const isoTime = toIsoString(data.updatedAt || data.timestamp || data.acceptedAt);
+
+                if (status === 'approaching' || status === 'assigned' || status === 'accepted') {
+                    list.push({
+                        id: `ride-${docSnap.id}-approaching`,
+                        type: 'ride',
+                        title: '🚗 Driver Approaching',
+                        message: role === 'commuter' ? `${driverName} (${plateNumber}) is approaching your pickup spot!` : `Approaching ${commuterName}...`,
+                        timestamp: isoTime,
+                    });
+                } else if (status === 'arrived') {
+                    list.push({
+                        id: `ride-${docSnap.id}-arrived`,
+                        type: 'ride',
+                        title: '📍 Driver Arrived',
+                        message: role === 'commuter' ? `${driverName} has arrived at your pickup location!` : `You arrived at ${commuterName}'s location.`,
+                        timestamp: isoTime,
+                    });
+                } else if (status === 'picked_up' || status === 'on_transit') {
+                    list.push({
+                        id: `ride-${docSnap.id}-transit`,
+                        type: 'ride',
+                        title: '🛺 Commuter Picked Up',
+                        message: `Trip in progress with ${role === 'commuter' ? driverName : commuterName}. En route!`,
+                        timestamp: isoTime,
+                    });
+                } else if (status === 'completed') {
+                    list.push({
+                        id: `ride-${docSnap.id}-completed`,
+                        type: 'ride',
+                        title: '🏁 Trip Completed',
+                        message: `Trip successfully completed with ${role === 'commuter' ? driverName : commuterName}.`,
+                        timestamp: isoTime,
+                    });
+                }
+            });
+
+            setRideNotifications(list);
+
+            if (!isInitial && snapshot.docChanges().some((c: { type: string }) => c.type === 'added' || c.type === 'modified')) {
+                playDoubleChime();
+            }
+            isInitial = false;
+        };
+
+        const unsub1 = onSnapshot(q1, handleDocs, (err) => console.warn("active_pickups listener note:", err));
+        const unsub2 = onSnapshot(q2, handleDocs, (err) => console.warn("active_pickup_sessions listener note:", err));
+
+        return () => {
+            unsub1();
+            unsub2();
+        };
+    }, [stellarData]);
 
     // REAL-TIME SYSTEM BROADCAST NOTIFICATION LISTENER
     useEffect(() => {
@@ -195,12 +345,12 @@ const Dashboard: React.FC = () => {
                         title: data.title || 'Announcement',
                         message: data.message || '',
                         senderName: data.senderName || 'Admin',
-                        timestamp: data.timestamp || new Date().toISOString()
+                        timestamp: toIsoString(data.timestamp)
                     });
                 }
             });
 
-            list.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+            list.sort((a, b) => new Date(toIsoString(b.timestamp)).getTime() - new Date(toIsoString(a.timestamp)).getTime());
             setBroadcasts(list);
 
             if (!isInitial && list.length > 0) {
@@ -216,6 +366,189 @@ const Dashboard: React.FC = () => {
 
         return () => unsubscribe();
     }, [stellarData]);
+
+    // REAL-TIME FIRESTORE PERSISTENT NOTIFICATIONS LISTENER
+    const [firestoreNotifications, setFirestoreNotifications] = useState<{
+        id: string;
+        type: 'fare' | 'broadcast' | 'ride' | 'system';
+        title: string;
+        message: string;
+        timestamp: string;
+        amountPhp?: string;
+        amountXlm?: string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        txData?: any;
+    }[]>([]);
+
+    useEffect(() => {
+        if (!stellarData?.uid) return;
+
+        const q = query(
+            collection(db, 'notifications'),
+            where('recipientUid', '==', stellarData.uid)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const list: {
+                id: string;
+                type: 'fare' | 'broadcast' | 'ride' | 'system';
+                title: string;
+                message: string;
+                timestamp: string;
+                amountPhp?: string;
+                amountXlm?: string;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                txData?: any;
+            }[] = [];
+
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                list.push({
+                    id: docSnap.id,
+                    type: data.type || 'system',
+                    title: data.title || 'Notification',
+                    message: data.message || '',
+                    timestamp: toIsoString(data.timestamp),
+                    amountPhp: data.amountPhp,
+                    amountXlm: data.amountXlm,
+                    txData: data.txData,
+                });
+            });
+
+            setFirestoreNotifications(list);
+        }, (err) => {
+            console.warn("Firestore notifications collection note:", err);
+        });
+
+        return () => unsubscribe();
+    }, [stellarData]);
+
+    // Notification Read State & Auto-Clear Unread Dot
+    const [readIds, setReadIds] = useState<Set<string>>(() => {
+        try {
+            const saved = localStorage.getItem('mobilis_read_notifs');
+            return saved ? new Set(JSON.parse(saved)) : new Set();
+        } catch {
+            return new Set();
+        }
+    });
+
+    const [notifCategory, setNotifCategory] = useState<'all' | 'fare' | 'broadcast' | 'ride' | 'system'>('all');
+
+    // Consolidated Dynamic Notification Feed (STRICTLY RECENT AT TOP)
+    const allNotifications = useMemo(() => {
+        const notifMap = new Map<string, {
+            id: string;
+            type: 'fare' | 'broadcast' | 'ride' | 'system';
+            title: string;
+            message: string;
+            timestamp: string;
+            amountPhp?: string;
+            amountXlm?: string;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            txData?: any;
+        }>();
+
+        // 1. Direct Firestore Notifications (Persistent)
+        firestoreNotifications.forEach((fn) => {
+            notifMap.set(fn.id, fn);
+        });
+
+        // 2. System Broadcasts (Admin Announcements)
+        broadcasts.forEach((b) => {
+            if (!notifMap.has(b.id)) {
+                notifMap.set(b.id, {
+                    id: b.id,
+                    type: 'broadcast',
+                    title: b.title || '📢 System Broadcast',
+                    message: b.message || '',
+                    timestamp: toIsoString(b.timestamp),
+                });
+            }
+        });
+
+        // 3. Live Ride Status Events (Approaching, Arrived, Picked Up, Completed)
+        rideNotifications.forEach((r) => {
+            if (!notifMap.has(r.id)) {
+                notifMap.set(r.id, r);
+            }
+        });
+
+        // 4. Fare Payments & Soroban Contract Transactions (from History)
+        firebaseHistory.forEach((f) => {
+            const id = f.id || f.txHash || `tx-${f.timestamp}`;
+            if (!notifMap.has(id)) {
+                const numXlm = parseFloat(f.amount || f.amountSettled || '0').toFixed(4);
+                const numPhp = f.amountPhp || (parseFloat(f.amount || f.amountSettled || '0') * 60.69).toFixed(2);
+                const isIncoming = stellarData?.role === 'driver' || f.driverId === stellarData?.uid;
+
+                notifMap.set(id, {
+                    id,
+                    type: 'fare',
+                    title: isIncoming ? '⚡ Payment Received' : '⚡ Fare Payment Sent',
+                    message: isIncoming
+                        ? `Received from ${f.commuterName || f.senderName || 'Commuter'}`
+                        : `Paid to ${f.driverName || f.receiverName || 'Driver'}`,
+                    timestamp: toIsoString(f.timestamp),
+                    amountPhp: numPhp,
+                    amountXlm: numXlm,
+                    txData: f,
+                });
+            }
+        });
+
+        // 5. System Default Badges
+        if (!notifMap.has('sys-stellar-conn')) {
+            notifMap.set('sys-stellar-conn', {
+                id: 'sys-stellar-conn',
+                type: 'system',
+                title: '⚡ Stellar Testnet Synchronized',
+                message: 'Web3 Keypair connected to Stellar Horizon RPC.',
+                timestamp: new Date().toISOString(),
+            });
+        }
+
+        // Convert Map to Array and SORT STRICTLY BY TIMESTAMP DESCENDING (Most Recent at Top!)
+        const list = Array.from(notifMap.values());
+        return list.sort((a, b) => {
+            const timeA = new Date(toIsoString(a.timestamp)).getTime();
+            const timeB = new Date(toIsoString(b.timestamp)).getTime();
+            const validA = isNaN(timeA) ? 0 : timeA;
+            const validB = isNaN(timeB) ? 0 : timeB;
+            return validB - validA;
+        });
+    }, [firestoreNotifications, broadcasts, rideNotifications, firebaseHistory, stellarData]);
+
+    // Filtered Notifications based on category tab
+    const filteredNotifications = useMemo(() => {
+        return allNotifications.filter((n) => {
+            if (notifCategory === 'fare') return n.type === 'fare';
+            if (notifCategory === 'broadcast' || notifCategory === 'system') return n.type === 'broadcast' || n.type === 'system';
+            if (notifCategory === 'ride') return n.type === 'ride';
+            return true;
+        });
+    }, [allNotifications, notifCategory]);
+
+    // Unread Count for Red Dot Badge
+    const unreadNotificationCount = useMemo(() => {
+        return allNotifications.filter((n) => !readIds.has(n.id)).length;
+    }, [allNotifications, readIds]);
+
+    const markAllNotificationsAsRead = () => {
+        const newSet = new Set(readIds);
+        allNotifications.forEach((n) => newSet.add(n.id));
+        setReadIds(newSet);
+        try {
+            localStorage.setItem('mobilis_read_notifs', JSON.stringify(Array.from(newSet)));
+        } catch (e) {
+            console.warn("LocalStorage save note:", e);
+        }
+    };
+
+    const handleOpenNotifications = () => {
+        markAllNotificationsAsRead();
+        setShowNotificationModal(true);
+    };
 
     useEffect(() => {
         const root = window.document.documentElement;
@@ -698,32 +1031,56 @@ const Dashboard: React.FC = () => {
     }
 
     return (
-        <div className="h-screen w-full overflow-hidden relative flex bg-white dark:bg-[#07090E] text-slate-900 dark:text-white font-sans transition-colors duration-300">
+        <div className={`h-screen w-full overflow-hidden relative flex font-sans ${roleShellBg(stellarData.role)}`}>
             
-            {/* IN-APP REALTIME DRIVER PAYMENT TOAST ALERT */}
+            {/* IN-APP REALTIME GCASH-STYLE PAYMENT TOAST ALERT */}
             {paymentToast && (
-                <div className="fixed top-5 right-5 z-[100] max-w-sm w-full bg-emerald-500 text-black p-4 rounded-2xl shadow-[0_0_30px_rgba(52,211,153,0.6)] border border-emerald-400 flex items-center gap-3 animate-bounce">
-                    <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center flex-shrink-0">
-                        <Zap className="w-6 h-6 text-black" />
+                <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] w-11/12 max-w-md animate-bounce font-mono">
+                    <div className="p-4 bg-gradient-to-r from-[#0052FF] via-[#0066FF] to-[#00A3FF] text-white rounded-3xl shadow-2xl border-2 border-white/30 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center font-black text-xl flex-shrink-0 border border-white/30">
+                                ⚡
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="font-extrabold text-sm tracking-tight">{paymentToast.title}</span>
+                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-widest ${paymentToast.isIncoming ? 'bg-emerald-400 text-slate-950' : 'bg-rose-400 text-slate-950'}`}>
+                                        {paymentToast.isIncoming ? '+RECEIVE' : '-SENT'}
+                                    </span>
+                                </div>
+                                <p className="text-xs font-black text-white/90">
+                                    {paymentToast.isIncoming ? '+' : '-'}{'\u20B1'}{paymentToast.amountPhp} PHP ({paymentToast.amountXlm} XLM)
+                                </p>
+                                <p className="text-[10px] text-white/70 truncate max-w-[190px]">{paymentToast.message}</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <button
+                                onClick={() => {
+                                    setActiveTab('history');
+                                    setPaymentToast(null);
+                                }}
+                                className="px-3.5 py-2 bg-white text-[#0052FF] font-black text-xs rounded-2xl shadow-lg hover:bg-white/90 transition-all active:scale-95"
+                            >
+                                Receipt
+                            </button>
+                            <button onClick={() => setPaymentToast(null)} className="p-1 text-white/70 hover:text-white">
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
-                    <div className="flex-1">
-                        <p className="font-black text-xs uppercase tracking-wider">New Fare Received!</p>
-                        <p className="font-extrabold text-sm">+{paymentToast.amount} XLM from {paymentToast.commuterName}</p>
-                    </div>
-                    <button onClick={() => setPaymentToast(null)} className="p-1 hover:bg-black/10 rounded-lg">
-                        <X className="w-4 h-4" />
-                    </button>
                 </div>
             )}
 
             {/* IN-APP REALTIME BROADCAST ANNOUNCEMENT TOAST */}
             {broadcastToast && (
-                <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[90] max-w-md w-full bg-cyan-500 text-black p-4 rounded-2xl shadow-xl flex items-center justify-between gap-3 animate-bounce">
-                    <div className="flex items-center gap-2 text-xs font-mono font-bold">
+                <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-[90] max-w-md w-full p-4 rounded-2xl shadow-xl flex items-center justify-between gap-3 animate-bounce ${cardRoleStyle(stellarData.role)}`}>
+                    <div className={`flex items-center gap-2 text-xs font-mono font-bold ${roleAccentText(stellarData.role)}`}>
                         <Megaphone className="w-4 h-4 flex-shrink-0" />
-                        <span>📢 {broadcastToast.title}: {broadcastToast.message}</span>
+                        <span>{broadcastToast.title}: {broadcastToast.message}</span>
                     </div>
-                    <button onClick={() => setBroadcastToast(null)} className="p-1 hover:bg-black/10 rounded-lg">
+                    <button onClick={() => setBroadcastToast(null)} className="p-1 hover:bg-black/10 rounded-lg text-slate-500 dark:text-gray-400">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
@@ -735,50 +1092,54 @@ const Dashboard: React.FC = () => {
                     theme={theme}
                     toggleTheme={() => setTheme(p => p === 'dark' ? 'light' : 'dark')}
                     onSignOut={handleFullSignOut}
-                    onOpenNotifications={() => setShowNotificationModal(true)}
+                    onOpenNotifications={handleOpenNotifications}
+                    unreadCount={unreadNotificationCount}
                     role={stellarData.role}
                 />
 
                 <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-8 flex flex-col items-center">
 
                     {activeTab === 'hub' && (
-                        stellarData.role === 'commuter' ? (
-                            <div className="w-full max-w-4xl mx-auto py-2">
+                        <div className="w-full max-w-4xl mx-auto space-y-6 py-2">
+                            {stellarData.role === 'commuter' ? (
                                 <CommuterRadar
                                     commuterData={stellarData}
                                     currencyMode={currencyMode}
                                     setCurrencyMode={setCurrencyMode}
+                                    theme={theme}
                                 />
-                            </div>
-                        ) : stellarData.role === 'driver' ? (
-                            <div className="w-full max-w-4xl mx-auto space-y-8 py-2">
-                                <DriverDutyToggle userData={stellarData} />
-                                <DriverRadar
-                                    driverData={stellarData}
-                                    currencyMode={currencyMode}
-                                    setCurrencyMode={setCurrencyMode}
-                                />
-                            </div>
-                        ) : (
-                            <div className="w-full max-w-4xl mx-auto py-2">
-                                <HubTab
-                                    stellarData={stellarData}
-                                    isAdmin={stellarData.role === 'superadmin' || (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'}
-                                    currencyMode={currencyMode}
-                                    setCurrencyMode={setCurrencyMode}
-                                    formatCurrency={formatCurrency}
-                                    debtState={debtState}
-                                    isProcessing={isProcessing}
-                                    handleRequestAdvance={handleRequestAdvance}
-                                    handleInjectLiquidity={async () => { }}
-                                    handleSettleLoan={handleSettleLoan}
-                                    appNetwork={appNetwork}
-                                    treasuryBalance={treasuryBalance}
-                                    borrowLimit={borrowLimit}
-                                    handleSetBorrowLimit={handleSetBorrowLimit}
-                                />
-                            </div>
-                        )
+                            ) : (
+                                <>
+                                    <HubTab
+                                        stellarData={stellarData}
+                                        isAdmin={stellarData.role === 'superadmin' || (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'}
+                                        currencyMode={currencyMode}
+                                        setCurrencyMode={setCurrencyMode}
+                                        formatCurrency={formatCurrency}
+                                        debtState={debtState}
+                                        isProcessing={isProcessing}
+                                        handleRequestAdvance={handleRequestAdvance}
+                                        handleInjectLiquidity={async () => { }}
+                                        handleSettleLoan={handleSettleLoan}
+                                        appNetwork={appNetwork}
+                                        treasuryBalance={treasuryBalance}
+                                        borrowLimit={borrowLimit}
+                                        handleSetBorrowLimit={handleSetBorrowLimit}
+                                    />
+                                    {stellarData.role === 'driver' && (
+                                        <>
+                                            <DriverDutyToggle userData={stellarData} />
+                                            <DriverOperationsMap
+                                                driverData={stellarData}
+                                                currencyMode={currencyMode}
+                                                setCurrencyMode={setCurrencyMode}
+                                                theme={theme}
+                                            />
+                                        </>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     )}
 
                     {activeTab === 'vault' && (
@@ -807,15 +1168,7 @@ const Dashboard: React.FC = () => {
             {/* SEND MODAL */}
             {showSendModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-                    <div className={`w-full max-w-md bg-white dark:bg-[#0c121e] rounded-[2rem] p-6 shadow-2xl relative transition-all ${
-                        stellarData.role === 'driver'
-                            ? 'border-t-4 border-t-cyan-500 border-x border-b border-cyan-500/30'
-                            : (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'
-                            ? 'border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30'
-                            : stellarData.role === 'superadmin'
-                            ? 'border-t-4 border-t-rose-500 border-x border-b border-rose-500/30'
-                            : 'border-t-4 border-t-emerald-500 border-x border-b border-emerald-500/30'
-                    }`}>
+                    <div className={`w-full max-w-md rounded-3xl p-6 shadow-2xl relative transition-all ${cardRoleStyle(stellarData.role)}`}>
                         <button onClick={() => setShowSendModal(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 dark:hover:text-white"><X className="w-5 h-5" /></button>
                         <h3 className="text-xl font-black mb-6 text-slate-900 dark:text-white">Send XLM</h3>
                         <form onSubmit={handleSendXLM} className="space-y-4">
@@ -827,15 +1180,7 @@ const Dashboard: React.FC = () => {
                                 <label className="block text-xs font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">Amount (XLM)</label>
                                 <input required type="number" step="0.0000001" value={sendAmt} onChange={(e) => setSendAmt(e.target.value)} placeholder="0.00" className="w-full p-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none text-slate-900 dark:text-white focus:border-cyan-500" />
                             </div>
-                            <button type="submit" disabled={isProcessing} className={`w-full py-4 mt-2 font-black text-sm rounded-xl transition-all disabled:opacity-50 ${
-                                stellarData.role === 'driver'
-                                    ? 'bg-cyan-500 hover:bg-cyan-400 text-black shadow-[0_0_20px_rgba(6,182,212,0.3)]'
-                                    : (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'
-                                    ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)]'
-                                    : stellarData.role === 'superadmin'
-                                    ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-[0_0_20px_rgba(244,63,94,0.3)]'
-                                    : 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-[0_0_20px_rgba(16,185,129,0.3)]'
-                            }`}>
+                            <button type="submit" disabled={isProcessing} className={`w-full py-4 mt-2 font-black text-sm rounded-xl transition-all disabled:opacity-50 ${roleCtaBg(stellarData.role)}`}>
                                 {isProcessing ? "Signing Transaction..." : `Confirm & Send on ${appNetwork}`}
                             </button>
                         </form>
@@ -846,15 +1191,7 @@ const Dashboard: React.FC = () => {
             {/* RECEIVE MODAL */}
             {showReceiveModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-                    <div className={`w-full max-w-sm bg-white dark:bg-[#0c121e] rounded-[2rem] p-8 shadow-2xl relative text-center transition-all ${
-                        stellarData.role === 'driver'
-                            ? 'border-t-4 border-t-cyan-500 border-x border-b border-cyan-500/30'
-                            : (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'
-                            ? 'border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30'
-                            : stellarData.role === 'superadmin'
-                            ? 'border-t-4 border-t-rose-500 border-x border-b border-rose-500/30'
-                            : 'border-t-4 border-t-emerald-500 border-x border-b border-emerald-500/30'
-                    }`}>
+                    <div className={`w-full max-w-sm rounded-3xl p-8 shadow-2xl relative text-center transition-all ${cardRoleStyle(stellarData.role)}`}>
                         <button onClick={() => setShowReceiveModal(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 dark:hover:text-white"><X className="w-5 h-5" /></button>
                         <h3 className="text-xl font-black mb-2 text-slate-900 dark:text-white">Receive Assets</h3>
                         <p className="text-sm text-slate-500 dark:text-gray-400 mb-8">Scan to transfer funds to your wallet.</p>
@@ -865,15 +1202,7 @@ const Dashboard: React.FC = () => {
                             <label className="block text-xs font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">Your Address</label>
                             <div className="flex gap-2">
                                 <code className="flex-1 bg-slate-50 dark:bg-black/50 p-4 rounded-xl text-[10px] break-all border border-slate-200 dark:border-white/10 font-mono text-slate-900 dark:text-white">{activePubKey}</code>
-                                <button onClick={() => navigator.clipboard.writeText(activePubKey!)} className={`p-4 rounded-xl font-bold transition-colors ${
-                                    stellarData.role === 'driver'
-                                        ? 'bg-cyan-500 text-black hover:bg-cyan-400'
-                                        : (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'
-                                        ? 'bg-indigo-600 text-white hover:bg-indigo-500'
-                                        : stellarData.role === 'superadmin'
-                                        ? 'bg-rose-600 text-white hover:bg-rose-500'
-                                        : 'bg-emerald-500 text-black hover:bg-emerald-400'
-                                }`}><Copy className="w-4 h-4" /></button>
+                                <button onClick={() => navigator.clipboard.writeText(activePubKey!)} className={`p-4 rounded-xl font-bold transition-colors ${roleCtaBg(stellarData.role)}`}><Copy className="w-4 h-4" /></button>
                             </div>
                         </div>
                     </div>
@@ -883,15 +1212,7 @@ const Dashboard: React.FC = () => {
             {/* WALLET SELECTION MODAL */}
             {showWalletModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-                    <div className={`w-full max-w-sm bg-white dark:bg-[#0c121e] rounded-[2rem] p-8 shadow-2xl relative text-center transition-all ${
-                        stellarData.role === 'driver'
-                            ? 'border-t-4 border-t-cyan-500 border-x border-b border-cyan-500/30'
-                            : (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'
-                            ? 'border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30'
-                            : stellarData.role === 'superadmin'
-                            ? 'border-t-4 border-t-rose-500 border-x border-b border-rose-500/30'
-                            : 'border-t-4 border-t-emerald-500 border-x border-b border-emerald-500/30'
-                    }`}>
+                    <div className={`w-full max-w-sm rounded-3xl p-8 shadow-2xl relative text-center transition-all ${cardRoleStyle(stellarData.role)}`}>
                         <button onClick={() => setShowWalletModal(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 dark:hover:text-white"><X className="w-5 h-5" /></button>
                         <Wallet className="w-12 h-12 text-cyan-500 mx-auto mb-4" />
                         <h3 className="text-xl font-black mb-2 text-slate-900 dark:text-white">Connect Wallet</h3>
@@ -911,97 +1232,171 @@ const Dashboard: React.FC = () => {
 
             {/* INTERACTIVE NOTIFICATION CENTER MODAL */}
             {showNotificationModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-                    <div className={`w-full max-w-md bg-white dark:bg-[#0c121e] rounded-[2.5rem] p-6 shadow-2xl relative text-slate-900 dark:text-white space-y-5 transition-all ${
-                        stellarData.role === 'driver'
-                            ? 'border-t-4 border-t-cyan-500 border-x border-b border-cyan-500/30'
-                            : (stellarData.role as string) === 'admin' || (stellarData.role as string) === 'cooperative'
-                            ? 'border-t-4 border-t-indigo-500 border-x border-b border-indigo-500/30'
-                            : stellarData.role === 'superadmin'
-                            ? 'border-t-4 border-t-rose-500 border-x border-b border-rose-500/30'
-                            : 'border-t-4 border-t-emerald-500 border-x border-b border-emerald-500/30'
-                    }`}>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-xl animate-fade-in font-sans">
+                    <div className={`w-full max-w-xl rounded-[2.5rem] p-6 sm:p-8 shadow-2xl relative text-slate-900 dark:text-white space-y-5 transition-all ${cardRoleStyle(stellarData.role)}`}>
                         
-                        <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-white/10">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 text-cyan-500 dark:text-cyan-400 flex items-center justify-center">
-                                    <Bell className="w-5 h-5" />
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between pb-4 border-b border-slate-200/80 dark:border-white/10">
+                            <div className="flex items-center gap-3.5">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${rolePill(stellarData.role)}`}>
+                                    <Bell className="w-6 h-6" />
                                 </div>
                                 <div>
-                                    <h3 className="font-black text-lg tracking-tight">Notification Center</h3>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">Real-Time Transit Alerts</p>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="font-black text-xl tracking-tight">Notification Center</h3>
+                                        {unreadNotificationCount > 0 && (
+                                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500 text-white font-mono animate-pulse shadow-md">
+                                                {unreadNotificationCount} NEW
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-slate-500 dark:text-gray-400 font-mono flex items-center gap-1.5 pt-0.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                                        Verified Mobilis Network Feed
+                                    </p>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => setShowNotificationModal(false)}
-                                className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-white/10"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={markAllNotificationsAsRead}
+                                    className={`text-xs font-mono font-bold hover:underline px-2.5 py-1 transition-all ${roleAccentText(stellarData.role)}`}
+                                >
+                                    Mark Read
+                                </button>
+                                <button
+                                    onClick={() => setShowNotificationModal(false)}
+                                    className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
 
-                        {/* Notifications List */}
-                        <div className="space-y-3 max-h-72 overflow-y-auto custom-scrollbar">
-                            {/* Real Broadcast Announcements */}
-                            {broadcasts.length > 0 && broadcasts.map((b) => (
-                                <div key={b.id} className="p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl space-y-1">
-                                    <div className="flex items-center justify-between text-xs">
-                                        <span className="font-bold text-cyan-600 dark:text-cyan-400 flex items-center gap-1.5">
-                                            <Megaphone className="w-3.5 h-3.5" /> {b.title}
-                                        </span>
-                                        <span className="text-[9px] font-mono text-cyan-500">{b.senderName}</span>
-                                    </div>
-                                    <p className="text-xs text-slate-700 dark:text-gray-300 font-medium">
-                                        {b.message}
-                                    </p>
-                                    <span className="text-[9px] font-mono text-slate-400 block pt-1">
-                                        {new Date(b.timestamp).toLocaleString()}
-                                    </span>
-                                </div>
+                        {/* Notification Filter Category Bar */}
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs font-mono font-bold">
+                            {[
+                                { id: 'all', label: `All (${allNotifications.length})` },
+                                { id: 'fare', label: '⚡ Fares & Loans' },
+                                { id: 'broadcast', label: '📢 System' },
+                                { id: 'ride', label: '🛺 Ride Status' },
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    onClick={() => setNotifCategory(tab.id as any)}
+                                    className={`px-3.5 py-2 rounded-2xl font-bold transition-all border whitespace-nowrap ${
+                                        notifCategory === tab.id
+                                            ? `${roleCtaBg(stellarData.role)} border-transparent shadow-md scale-102 text-white`
+                                            : 'bg-slate-100 dark:bg-white/[0.05] border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-gray-300 hover:scale-102'
+                                    }`}
+                                >
+                                    {tab.label}
+                                </button>
                             ))}
+                        </div>
 
-                            <div className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl space-y-1">
-                                <div className="flex items-center justify-between text-xs">
-                                    <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                                        <Zap className="w-3.5 h-3.5" /> Stellar Testnet Connected
-                                    </span>
-                                    <span className="text-[10px] font-mono text-gray-400">Live</span>
-                                </div>
-                                <p className="text-xs text-gray-600 dark:text-gray-300">
-                                    Your Web3 transport wallet is synchronized on the Stellar Testnet ledger.
-                                </p>
-                            </div>
+                        {/* Notifications Feed */}
+                        <div className="space-y-3 max-h-84 overflow-y-auto custom-scrollbar font-mono">
+                            {filteredNotifications.length > 0 ? (
+                                filteredNotifications.map((notif) => {
+                                    if (!notif) return null;
+                                    try {
+                                        const notifId = notif.id || `notif-${Math.random()}`;
+                                        const isUnread = !readIds.has(notifId);
+                                        const notifType = notif.type || 'system';
+                                        const notifTitle = notif.title || 'Notification';
+                                        const notifMessage = notif.message || '';
+                                        const formattedTime = formatNotifDate(notif.timestamp);
 
-                            <div className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl space-y-1">
-                                <div className="flex items-center justify-between text-xs">
-                                    <span className="font-bold text-cyan-600 dark:text-cyan-400 flex items-center gap-1.5">
-                                        <Radio className="w-3.5 h-3.5" /> 50m Radar Active
-                                    </span>
-                                    <span className="text-[10px] font-mono text-gray-400">Active</span>
-                                </div>
-                                <p className="text-xs text-gray-600 dark:text-gray-300">
-                                    GPS radar location broadcasts automatically when active drivers are ON TRANSIT.
-                                </p>
-                            </div>
+                                        return (
+                                            <div
+                                                key={notifId}
+                                                className={`p-4.5 rounded-2xl border transition-all duration-200 relative ${
+                                                    isUnread
+                                                        ? 'bg-white dark:bg-[#0f1420] border-cyan-500/50 shadow-md'
+                                                        : 'bg-slate-50/80 dark:bg-white/[0.03] border-slate-200/60 dark:border-white/[0.06] opacity-90'
+                                                }`}
+                                            >
+                                                {isUnread && (
+                                                    <span className="absolute top-3.5 right-3.5 w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping shadow-sm" />
+                                                )}
+                                                <div className="flex items-start justify-between gap-3.5">
+                                                    <div className="flex items-start gap-3.5">
+                                                        <div className={`p-3 rounded-2xl border flex-shrink-0 mt-0.5 shadow-sm ${rolePill(stellarData.role)}`}>
+                                                            {notifType === 'fare' ? <Zap className="w-5 h-5 text-emerald-500" /> :
+                                                             notifType === 'broadcast' || notifType === 'system' ? <Megaphone className="w-5 h-5 text-cyan-500" /> :
+                                                             notifType === 'ride' ? <Navigation className="w-5 h-5 text-amber-500" /> :
+                                                             <ShieldCheck className="w-5 h-5 text-indigo-500" />}
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="text-xs font-black text-slate-900 dark:text-white tracking-tight">{notifTitle}</p>
+                                                            </div>
 
-                            <div className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl space-y-1">
-                                <div className="flex items-center justify-between text-xs">
-                                    <span className="font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
-                                        <ShieldCheck className="w-3.5 h-3.5" /> Account Verified
-                                    </span>
-                                    <span className="text-[10px] font-mono text-gray-400">Secured</span>
+                                                            <p className="text-xs text-slate-600 dark:text-gray-300 font-medium leading-relaxed">{notifMessage}</p>
+
+                                                            {/* Prominent Amount Display if Available */}
+                                                            {notif.amountPhp && (
+                                                                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono font-black text-xs mt-1.5 border border-emerald-500/25 shadow-xs">
+                                                                    <span>₱{notif.amountPhp} PHP</span>
+                                                                    {notif.amountXlm && <span className="opacity-75">({notif.amountXlm} XLM)</span>}
+                                                                </div>
+                                                            )}
+
+                                                            <p className="text-[9px] text-slate-400 font-mono pt-1">
+                                                                {formattedTime}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                                                        {notifType === 'fare' && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    setShowNotificationModal(false);
+                                                                    setActiveTab('history');
+                                                                }}
+                                                                className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all active:scale-95 shadow-sm ${roleCtaBg(stellarData.role)}`}
+                                                            >
+                                                                Receipt
+                                                            </button>
+                                                        )}
+                                                        {notifType === 'ride' && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    setShowNotificationModal(false);
+                                                                    setActiveTab('hub');
+                                                                }}
+                                                                className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all active:scale-95 shadow-sm ${roleCtaBg(stellarData.role)}`}
+                                                            >
+                                                                View Map
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    } catch (err) {
+                                        console.warn("Notification item render note:", err);
+                                        return null;
+                                    }
+                                })
+                            ) : (
+                                <div className="py-12 text-center text-slate-400 font-mono space-y-2.5">
+                                    <CheckCircle2 className="w-10 h-10 mx-auto opacity-30 text-emerald-500" />
+                                    <p className="text-xs font-bold">All clear! No notifications in this category.</p>
                                 </div>
-                                <p className="text-xs text-gray-600 dark:text-gray-300">
-                                    Cryptographic keypairs signed and ready for instant fare clearing.
-                                </p>
-                            </div>
+                            )}
                         </div>
 
                         <button
-                            onClick={() => setShowNotificationModal(false)}
-                            className="w-full py-4 bg-gray-900 text-white dark:bg-emerald-500 dark:text-black font-black text-xs rounded-2xl transition-all shadow-md"
+                            onClick={() => {
+                                markAllNotificationsAsRead();
+                                setShowNotificationModal(false);
+                            }}
+                            className={`w-full py-4 font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-xl hover:opacity-90 active:scale-98 ${roleCtaBg(stellarData.role)}`}
                         >
-                            Done & Dismiss
+                            Done & Dismiss All
                         </button>
                     </div>
                 </div>

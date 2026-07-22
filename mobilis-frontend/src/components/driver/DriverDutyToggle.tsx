@@ -4,6 +4,7 @@ import { db } from '../../firebase';
 import { calculateDistanceKm } from '../../utils/geo';
 import { trackDriverDutyToggled } from '../../services/analytics';
 import { Navigation, ShieldAlert, Power } from 'lucide-react';
+import { cardRoleStyle, roleCtaBg, rolePill, roleAccentText } from '../tabs/roleStyleTokens';
 import type { UserData } from '../../types';
 
 interface DriverDutyToggleProps {
@@ -144,12 +145,12 @@ export const DriverDutyToggle: React.FC<DriverDutyToggleProps> = ({ userData }) 
     }, []);
 
     return (
-        <div className="w-full bg-white dark:bg-[#0c1322] border-t-4 border-t-cyan-500 border-x border-b border-slate-200 dark:border-cyan-500/20 rounded-2xl p-6 shadow-[0_10px_30px_rgba(6,182,212,0.15)] transition-all">
+        <div className={`w-full rounded-3xl p-6 transition-all ${cardRoleStyle('driver')}`}>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
                         isOnDuty 
-                            ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 shadow-[0_0_20px_rgba(6,182,212,0.4)] animate-pulse' 
+                            ? `${rolePill('driver')} border shadow-lg animate-pulse` 
                             : 'bg-slate-100 dark:bg-white/5 text-slate-400 border border-slate-200 dark:border-white/10'
                     }`}>
                         <Navigation className="w-7 h-7" />
@@ -171,7 +172,7 @@ export const DriverDutyToggle: React.FC<DriverDutyToggleProps> = ({ userData }) 
                     className={`w-full sm:w-auto px-7 py-4 rounded-xl font-black text-sm flex items-center justify-center gap-2.5 transition-all shadow-lg ${
                         isOnDuty
                             ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/40'
-                            : 'bg-cyan-500 text-black hover:bg-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.4)]'
+                            : roleCtaBg('driver')
                     }`}
                 >
                     <Power className="w-5 h-5" />
