@@ -91,6 +91,26 @@ With **Mobilis**, commuters can now discover nearby drivers on a real-time radar
 | :---: | :---: |
 | <img src="./docs/screenshots/coop_transactions.png" width="280" alt="Coop Transactions" /> | <img src="./docs/screenshots/coop_profile.png" width="280" alt="Coop Profile" /> |
 
+### 🛠️ System Admin UI Suite (Verified Desktop Views)
+
+| Super Admin Command Center (Verify & Broadcast) | Super Admin Soroban Vault (Platform Treasury) |
+| :---: | :---: |
+| <img src="./docs/screenshots/superadmin_dashboard.jpg" width="385" alt="Super Admin Dashboard" /> | <img src="./docs/screenshots/superadmin_wallet.jpg" width="385" alt="Super Admin Wallet" /> |
+
+| Super Admin Transactions (System Receipts) | Super Admin Profile & Settings |
+| :---: | :---: |
+| <img src="./docs/screenshots/superadmin_transactions.jpg" width="385" alt="Super Admin Transactions" /> | <img src="./docs/screenshots/superadmin_profile.jpg" width="385" alt="Super Admin Profile" /> |
+
+### 🔐 Authentication & Onboarding Gateway (Verified Mobile Flows)
+
+| Login Gateway (Passkey / Email) | Onboarding Step 1: Role Selector |
+| :---: | :---: |
+| <img src="./docs/screenshots/login_view.png" width="280" alt="Login Gateway" /> | <img src="./docs/screenshots/onboarding_step_1.png" width="280" alt="Role Selector" /> |
+
+| Onboarding Step 2: Credentials Setup | Onboarding Step 3: Profile Specifications |
+| :---: | :---: |
+| <img src="./docs/screenshots/onboarding_step_2.png" width="280" alt="Credentials Setup" /> | <img src="./docs/screenshots/onboarding_step_3.png" width="280" alt="Profile Specifications" /> |
+
 ---
 
 ### CI/CD Deployment Pipeline & Test Suite Performance
@@ -188,45 +208,3 @@ npm run build
 - **Pre-Flight Asset Assurances:** The UI prevents double-borrowing and double-spending by verifying available XLM and smart contract debt mappings via pre-flight simulations.
 - **Dynamic Fee Allocation:** Upon repayment, fees are programmatically routed across structural accounts (0.3% to Coop Admins for risk mitigation, 0.2% to Platform core maintenance).
 - **Fail-Safe Cryptography:** Wallet actions utilize loading state overlays, intercepting user mistakes and handling runtime ledger rejections cleanly.
-
----
-
-## 🟢 Level 4 - Green Belt Submission Validation
-
-
-### 📊 Real-Time Analytics & Monitoring Integration
-Mobilis integrates a combined diagnostic layer tracking platform health and transaction throughput:
-1. **Firebase performance monitoring & Firestore usage logs**: Tracks network read/write counts and latency for real-time driver coordinates polling.
-2. **Sentry / React Error Boundaries**: Custom error boundaries wrapping critical Web3 payment layers and Leaflet/MapLibre maps.
-3. **Stellar Expert testnet tracking**: Tracks Soroban contract execution fee metrics and transaction success rates.
-
-| Diagnostic Tool | Monitoring Scope | Screenshot Proof |
-| :--- | :--- | :--- |
-| **Sentry Monitoring** | Front-end runtime errors and performance latency | <img src="https://github.com/user-attachments/assets/aae6fa43-43a4-471b-a7a4-27ec278dc4cc" width="280" alt="Sentry Boundary" /> |
-| **Firebase Analytics** | Real-time user coordinates polling and active routes count | <img src="https://github.com/user-attachments/assets/aae6fa43-43a4-471b-a7a4-27ec278dc4cc" width="280" alt="Firebase Console" /> |
-
-### 👥 Onboarded Users & Wallet Interactions Proof
-The following 10 transport commuters, drivers, and cooperative managers were successfully onboarded and executed real wallet transactions on the Stellar Testnet ledger:
-
-| Participant Role | Public Wallet Address (Stellar Testnet) | Verified Activity | Hash Proof / Interaction |
-| :--- | :--- | :--- | :--- |
-| Commuter 1 | `GDQWXB5NYWHPWZX4L3TRKJZ72Y65D74HPWNXB7HPWZHPWZHPWZX4L3TR` | Wallet Provisioning & Fare Payment | `64d87c59f1d037475199dfd8e56425cf7a9dc0b183ab6da6838b961eb1dcd481` |
-| Commuter 2 | `GCRX4OLK4OLK4OLK4OLK4OLK4OLK4OLK4OLK4OLK4OLK4OLK4OLK4OLK` | Fare payment to Driver 1 | `1ab1a0a09207bbaefda4f8f696866c43eed23995904303d063cb52c0e13994d3` |
-| Commuter 3 | `GAYKP2MSP2MSP2MSP2MSP2MSP2MSP2MSP2MSP2MSP2MSP2MSP2MSP2MS` | Multi-asset balance check & payments | `fc0766df376f13ca3b1e5e4583fe7c01738a244206d30269dd8912bb0ccd1d5a` |
-| Commuter 4 | `GB5W9QRT9QRT9QRT9QRT9QRT9QRT9QRT9QRT9QRT9QRT9QRT9QRT9QRT` | Passenger broadcast beacon launch | `702d83033adcdc63375368ab6292b9e5e44a24fba01a8b206e542cf516faf331` |
-| Commuter 5 | `GDKS6BVL6BVL6BVL6BVL6BVL6BVL6BVL6BVL6BVL6BVL6BVL6BVL6BVL` | Direct XLM transit transfer | `54d87c59f1d037475199dfd8e56425cf7a9dc0b183ab6da6838b961eb1dcd123` |
-| Driver 1 (Jeepney) | `GDRV9WPL9WPL9WPL9WPL9WPL9WPL9WPL9WPL9WPL9WPL9WPL9WPL9WPL` | Location broadcasting & Fare receipt | `ac0766df376f13ca3b1e5e4583fe7c01738a244206d30269dd8912bb0ccd543a` |
-| Driver 2 (Tricycle) | `GBUY4JKO4JKO4JKO4JKO4JKO4JKO4JKO4JKO4JKO4JKO4JKO4JKO4JKO` | Soroban credit advance request | `1bb1a0a09207bbaefda4f8f696866c43eed23995904303d063cb52c0e139976b` |
-| Driver 3 (E-Jeepney) | `GCYN5MNB5MNB5MNB5MNB5MNB5MNB5MNB5MNB5MNB5MNB5MNB5MNB5MNB` | Real GPS velocity broadcast (25km/h) | `772d83033adcdc63375368ab6292b9e5e44a24fba01a8b206e542cf516faf882` |
-| Coop Admin 1 | `GCOA4KLO4KLO4KLO4KLO4KLO4KLO4KLO4KLO4KLO4KLO4KLO4KLO4KLO` | Driver verification & credit issuance | `3ab1a0a09207bbaefda4f8f696866c43eed23995904303d063cb52c0e139999c` |
-| Superadmin | `GBAYAGKSNBKQAHL5GBAYAGKSNBKQAHL5GBAYAGKSNBKQAHL5GBAYAGKS` | Command Center verification approval | `84d87c59f1d037475199dfd8e56425cf7a9dc0b183ab6da6838b961eb1dcd234` |
-
-### 📝 User Feedback & Actioned Improvements
-We collected feedback from our pilot transport participants and refined the application design:
-
-| Pilot Segment | Feedback Received | Actioned Product Improvement |
-| :--- | :--- | :--- |
-| **Jeepney Drivers** | "When I drive, my phone makes location chime noises non-stop, which is distracting." | Refactored sound alert states to transition chimes only upon direct transaction status change (`accepted` -> `arrived`), ignoring continuous GPS updates. |
-| **Commuters** | "I cannot scroll the filter list horizontally on my mobile phone to see the Bus option." | Added `.scrollbar-none` layout classes and enabled cross-browser swipe events to allow horizontal swiping without cutting off views. |
-| **Coop Admins** | "We need to approve cooperatives at the platform level, but the dashboard queue only shows drivers." | Redesigned the Superadmin command center tab to dynamically query and verify pending cooperatives and todad organizations. |
-| **Commuters** | "I cannot scroll down the main landing page to read the tech stack." | Removed the viewport constraint overlay in the root layout to allow full native vertical scrolling across Landing, Login, and Signup pages. |

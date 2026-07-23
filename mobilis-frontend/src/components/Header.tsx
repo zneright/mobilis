@@ -52,7 +52,9 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onOpenNotifications
         <motion.header className="fixed top-3 left-4 right-4 max-w-5xl mx-auto z-50 rounded-full transition-all duration-300 h-14 px-5 flex items-center justify-between border font-sans bg-white/85 dark:bg-[#07090E]/85 text-slate-900 dark:text-white border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-md" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
             {/* Left: Brand & Dynamic Role Indicator */}
             <div className="flex items-center gap-3">
-                <MobilisLogo size={28} showText />
+                <div className="md:hidden">
+                    <MobilisLogo size={28} showText />
+                </div>
                 
                 {/* Role-Based Pill Badge */}
                 <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wide border transition-all duration-200 ${pillClass}`}>

@@ -360,153 +360,162 @@ export const HubTab: React.FC<HubTabProps> = ({
                 </div>
             )}
 
-            {/* ADMIN BROADCAST ANNOUNCEMENT CENTER BUTTON */}
+            {/* ADMIN SUITE GRID SECTION */}
             {isAdmin && (
-                <div className={`p-6 rounded-3xl bg-white dark:bg-[#0e121a] flex flex-col sm:flex-row items-center justify-between gap-4 ${cardBorder}`}>
-                    <div className="flex items-center gap-3 text-center sm:text-left">
-                        <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0">
-                            <Megaphone className="w-6 h-6 animate-pulse" />
-                        </div>
-                        <div>
-                            <h3 className="font-black text-lg text-slate-900 dark:text-white">Broadcast Notification Center</h3>
-                            <p className="text-xs text-slate-500 dark:text-gray-400">
-                                {isSuperAdmin
-                                    ? 'Send targeted alerts to commuters, drivers, or cooperatives.'
-                                    : `Send announcements to all drivers affiliated with ${stellarData.coopName || 'your TODA'}.`}
-                            </p>
-                        </div>
-                    </div>
-
-                    <button
-                        onClick={() => setShowBroadcastModal(true)}
-                        className={`px-6 py-3.5 font-black text-xs rounded-2xl transition-all flex items-center gap-2 flex-shrink-0 ${ctaStyle}`}
-                    >
-                        <BellRing className="w-4 h-4" /> Send Announcement
-                    </button>
-                </div>
-            )}
-
-            {/* COOPERATIVE ADMIN VEHICLE TYPE CHANGE REQUESTS QUEUE */}
-            {isAdmin && vehicleChangeRequests.length > 0 && (
-                <div className={`p-8 rounded-3xl bg-white dark:bg-[#0e121a] space-y-6 transition-colors duration-300 ${cardBorder}`}>
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
-                                <Truck className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <h3 className="font-black text-xl text-slate-900 dark:text-white">Vehicle Change Approvals</h3>
-                                <p className="text-xs text-slate-500 dark:text-gray-400">Review & approve driver vehicle designation change requests</p>
-                            </div>
-                        </div>
-                        <span className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-mono font-bold border border-indigo-500/20">
-                            {vehicleChangeRequests.length} Pending
-                        </span>
-                    </div>
-
-                    <div className="space-y-4">
-                        {vehicleChangeRequests.map((driver) => (
-                            <div
-                                key={driver.uid}
-                                className="p-5 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-400 flex items-center justify-center text-white font-black text-lg">
-                                        {(driver.fullName || 'Driver').charAt(0)}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                    
+                    {/* Left Column: Verification Queues (Col-span 8) */}
+                    <div className="md:col-span-8 space-y-6 flex flex-col h-full justify-start">
+                        
+                        {/* COOPERATIVE ADMIN PENDING DRIVERS / SUPERADMIN COOPERATIVES QUEUE */}
+                        <div className={`p-8 rounded-3xl bg-white dark:bg-[#0e121a] space-y-6 transition-colors duration-300 ${cardBorder}`}>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+                                        <Building2 className="w-6 h-6" />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-base text-slate-900 dark:text-white">{driver.fullName}</h4>
-                                        <p className="text-xs text-slate-500 dark:text-gray-400 font-mono">
-                                            Current: <span className="font-bold">{driver.vehicleType || 'Tricycle'}</span> ➔ Requested: <span className="font-black text-indigo-400">{driver.pendingVehicleType}</span>
+                                        <h3 className="font-black text-xl text-slate-900 dark:text-white">
+                                            {isSuperAdmin ? 'Cooperative Verification Queue' : 'Cooperative Member Queue'}
+                                        </h3>
+                                        <p className="text-xs text-slate-500 dark:text-gray-400">
+                                            {isSuperAdmin ? 'Review & approve new cooperative registration requests' : `Review & approve driver registration requests for ${stellarData.coopName || 'Cooperative TODA'}`}
                                         </p>
                                     </div>
                                 </div>
-
-                                <button
-                                    onClick={() => handleApproveVehicleChange(driver.uid, driver.pendingVehicleType)}
-                                    disabled={approvingVehicleUid === driver.uid}
-                                    className="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-black text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(99,102,241,0.4)] flex items-center justify-center gap-2"
-                                >
-                                    <CheckCircle2 className="w-4 h-4" />
-                                    {approvingVehicleUid === driver.uid ? 'Approving...' : `Approve ${driver.pendingVehicleType}`}
-                                </button>
+                                <span className="self-start sm:self-auto px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold border border-emerald-500/20">
+                                    {pendingDrivers.length} Pending
+                                </span>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            )}
 
-            {/* COOPERATIVE ADMIN PENDING DRIVERS / SUPERADMIN COOPERATIVES QUEUE */}
-            {isAdmin && (
-                <div className={`p-8 rounded-3xl bg-white dark:bg-[#0e121a] space-y-6 transition-colors duration-300 ${cardBorder}`}>
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
-                                <Building2 className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <h3 className="font-black text-xl text-slate-900 dark:text-white">
-                                    {isSuperAdmin ? 'Cooperative Verification Queue' : 'Cooperative Member Queue'}
-                                </h3>
-                                <p className="text-xs text-slate-500 dark:text-gray-400">
-                                    {isSuperAdmin ? 'Review & approve new cooperative registration requests' : `Review & approve driver registration requests for ${stellarData.coopName || 'Cooperative TODA'}`}
-                                </p>
+                            <div className="space-y-4">
+                                {loadingDrivers ? (
+                                    <div className="p-6 bg-slate-50 dark:bg-black/40 rounded-2xl text-center text-xs text-slate-500 dark:text-gray-400 animate-pulse">
+                                        {isSuperAdmin ? 'Loading pending cooperatives...' : 'Loading pending member drivers...'}
+                                    </div>
+                                ) : pendingDrivers.length > 0 ? (
+                                    pendingDrivers.map((driver) => (
+                                        <div
+                                            key={driver.uid}
+                                            className="p-5 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-emerald-400 flex items-center justify-center text-black font-black text-lg">
+                                                    {((isSuperAdmin ? driver.coopName : driver.fullName) || 'Coop').charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-base text-slate-900 dark:text-white">
+                                                        {isSuperAdmin ? driver.coopName : driver.fullName}
+                                                    </h4>
+                                                    <p className="text-xs text-slate-500 dark:text-gray-400 font-mono">
+                                                        {isSuperAdmin
+                                                            ? `Reg #: ${driver.registrationNumber || 'N/A'} • Contact: ${driver.contactPerson || driver.fullName || 'N/A'}`
+                                                            : `🛺 Plate: ${driver.plateNumber} • Phone: ${driver.phone}`
+                                                        }
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                onClick={() => handleApproveDriver(driver.uid)}
+                                                disabled={approvingUid === driver.uid}
+                                                className={`w-full sm:w-auto px-6 py-3 disabled:opacity-50 font-black text-xs rounded-xl transition-all flex items-center justify-center gap-2 ${ctaStyle}`}
+                                            >
+                                                <UserCheck className="w-4 h-4" />
+                                                {approvingUid === driver.uid ? 'Approving...' : isSuperAdmin ? 'Approve Cooperative' : 'Approve Driver'}
+                                            </button>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="p-8 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5 text-center space-y-2">
+                                        <CheckCircle2 className="w-8 h-8 text-emerald-500 dark:text-emerald-400 mx-auto" />
+                                        <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                                            {isSuperAdmin ? 'All Cooperatives Approved' : 'All Driver Requests Approved'}
+                                        </h4>
+                                        <p className="text-xs text-slate-500 dark:text-gray-400">
+                                            {isSuperAdmin ? 'No pending cooperatives waiting for platform verification.' : 'No pending drivers waiting for verification in your cooperative queue.'}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         </div>
-                        <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold border border-emerald-500/20">
-                            {pendingDrivers.length} Pending
-                        </span>
-                    </div>
 
-                    <div className="space-y-4">
-                        {loadingDrivers ? (
-                            <div className="p-6 bg-slate-50 dark:bg-black/40 rounded-2xl text-center text-xs text-slate-500 dark:text-gray-400 animate-pulse">
-                                {isSuperAdmin ? 'Loading pending cooperatives...' : 'Loading pending member drivers...'}
-                            </div>
-                        ) : pendingDrivers.length > 0 ? (
-                            pendingDrivers.map((driver) => (
-                                <div
-                                    key={driver.uid}
-                                    className="p-5 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-emerald-400 flex items-center justify-center text-black font-black text-lg">
-                                            {((isSuperAdmin ? driver.coopName : driver.fullName) || 'Coop').charAt(0)}
+                        {/* COOPERATIVE ADMIN VEHICLE TYPE CHANGE REQUESTS QUEUE */}
+                        {vehicleChangeRequests.length > 0 && (
+                            <div className={`p-8 rounded-3xl bg-white dark:bg-[#0e121a] space-y-6 transition-colors duration-300 ${cardBorder}`}>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
+                                            <Truck className="w-6 h-6" />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-base text-slate-900 dark:text-white">
-                                                {isSuperAdmin ? driver.coopName : driver.fullName}
-                                            </h4>
-                                            <p className="text-xs text-slate-500 dark:text-gray-400 font-mono">
-                                                {isSuperAdmin
-                                                    ? `Reg #: ${driver.registrationNumber || 'N/A'} • Contact: ${driver.contactPerson || driver.fullName || 'N/A'}`
-                                                    : `🛺 Plate: ${driver.plateNumber} • Phone: ${driver.phone}`
-                                                }
-                                            </p>
+                                            <h3 className="font-black text-xl text-slate-900 dark:text-white">Vehicle Change Approvals</h3>
+                                            <p className="text-xs text-slate-500 dark:text-gray-400">Review & approve driver vehicle designation change requests</p>
                                         </div>
                                     </div>
-
-                                    <button
-                                        onClick={() => handleApproveDriver(driver.uid)}
-                                        disabled={approvingUid === driver.uid}
-                                        className={`w-full sm:w-auto px-6 py-3 disabled:opacity-50 font-black text-xs rounded-xl transition-all flex items-center justify-center gap-2 ${ctaStyle}`}
-                                    >
-                                        <UserCheck className="w-4 h-4" />
-                                        {approvingUid === driver.uid ? 'Approving...' : isSuperAdmin ? 'Approve Cooperative' : 'Approve Driver'}
-                                    </button>
+                                    <span className="self-start sm:self-auto px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-mono font-bold border border-indigo-500/20">
+                                        {vehicleChangeRequests.length} Pending
+                                    </span>
                                 </div>
-                            ))
-                        ) : (
-                            <div className="p-8 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5 text-center space-y-2">
-                                <CheckCircle2 className="w-8 h-8 text-emerald-500 dark:text-emerald-400 mx-auto" />
-                                <h4 className="font-bold text-sm text-slate-900 dark:text-white">
-                                    {isSuperAdmin ? 'All Cooperatives Approved' : 'All Driver Requests Approved'}
-                                </h4>
-                                <p className="text-xs text-slate-500 dark:text-gray-400">
-                                    {isSuperAdmin ? 'No pending cooperatives waiting for platform verification.' : 'No pending drivers waiting for verification in your cooperative queue.'}
-                                </p>
+
+                                <div className="space-y-4">
+                                    {vehicleChangeRequests.map((driver) => (
+                                        <div
+                                            key={driver.uid}
+                                            className="p-5 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-400 flex items-center justify-center text-white font-black text-lg">
+                                                    {(driver.fullName || 'Driver').charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-base text-slate-900 dark:text-white">{driver.fullName}</h4>
+                                                    <p className="text-xs text-slate-500 dark:text-gray-400 font-mono">
+                                                        Current: <span className="font-bold">{driver.vehicleType || 'Tricycle'}</span> ➔ Requested: <span className="font-black text-indigo-400">{driver.pendingVehicleType}</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                onClick={() => handleApproveVehicleChange(driver.uid, driver.pendingVehicleType)}
+                                                disabled={approvingVehicleUid === driver.uid}
+                                                className="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-black text-xs rounded-xl transition-all shadow-[0_0_15px_rgba(99,102,241,0.4)] flex items-center justify-center gap-2"
+                                            >
+                                                <CheckCircle2 className="w-4 h-4" />
+                                                {approvingVehicleUid === driver.uid ? 'Approving...' : `Approve ${driver.pendingVehicleType}`}
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
+                    </div>
+
+                    {/* Right Column: Actions / Broadcast Tool (Col-span 4) */}
+                    <div className="md:col-span-4 space-y-6">
+                        
+                        {/* ADMIN BROADCAST ANNOUNCEMENT CENTER CARD */}
+                        <div className={`p-6 rounded-3xl bg-white dark:bg-[#0e121a] flex flex-col gap-4 text-left transition-colors duration-300 ${cardBorder}`}>
+                            <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 flex items-center justify-center flex-shrink-0">
+                                <Megaphone className="w-6 h-6 animate-pulse" />
+                            </div>
+                            <div>
+                                <h3 className="font-black text-lg text-slate-900 dark:text-white">Broadcast Notification Center</h3>
+                                <p className="text-xs text-slate-500 dark:text-gray-400 mt-1 leading-relaxed">
+                                    {isSuperAdmin
+                                        ? 'Send targeted push alerts and dashboard updates to commuters, drivers, or cooperatives.'
+                                        : `Send announcements to all drivers affiliated with ${stellarData.coopName || 'your TODA'}.`}
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={() => setShowBroadcastModal(true)}
+                                className={`w-full py-3.5 font-black text-xs rounded-2xl transition-all flex items-center justify-center gap-2 ${ctaStyle}`}
+                            >
+                                <BellRing className="w-4 h-4" /> Send Announcement
+                            </button>
+                        </div>
+
                     </div>
                 </div>
             )}
