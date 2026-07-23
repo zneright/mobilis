@@ -139,8 +139,10 @@ const Dashboard: React.FC = () => {
             q = query(collection(db, 'fare_transactions'), where('commuterId', '==', stellarData.uid));
         } else if (role === 'driver') {
             q = query(collection(db, 'fare_transactions'), where('driverId', '==', stellarData.uid));
+        } else if (role === 'admin') {
+            q = query(collection(db, 'fare_transactions'), where('coopName', '==', stellarData.coopName || ''));
         } else {
-            q = query(collection(db, 'fare_transactions'));
+            q = query(collection(db, 'fare_transactions'), where('commuterId', '==', stellarData.uid));
         }
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -363,7 +365,7 @@ const Dashboard: React.FC = () => {
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const list: { id: string; title: string; message: string; senderName: string; timestamp: string }[] = [];
-            
+
             snapshot.forEach((docSnap) => {
                 const data = docSnap.data();
                 const targetRole = data.targetRole;
@@ -371,7 +373,7 @@ const Dashboard: React.FC = () => {
                 const userRole = stellarData.role;
                 const userCoop = stellarData.todaAffiliation || stellarData.coopName;
 
-                const isTarget = 
+                const isTarget =
                     targetRole === 'all' ||
                     targetRole === userRole ||
                     (targetCoop && targetCoop === userCoop) ||
@@ -670,9 +672,7 @@ const Dashboard: React.FC = () => {
         if (!stellarData) return;
         try {
             let q;
-            if (stellarData.role === 'superadmin') {
-                q = query(collection(db, 'transactions'));
-            } else if (stellarData.role === 'admin') {
+            if (stellarData.role === 'admin') {
                 q = query(collection(db, 'transactions'), where('coopName', '==', stellarData.coopName));
             } else {
                 q = query(collection(db, 'transactions'), where('senderUid', '==', stellarData.uid));
@@ -1070,7 +1070,7 @@ const Dashboard: React.FC = () => {
 
     return (
         <div className={`h-screen w-full overflow-hidden relative flex font-sans ${roleShellBg(stellarData.role)}`}>
-            
+
             {/* IN-APP REALTIME GCASH-STYLE PAYMENT TOAST ALERT */}
             {paymentToast && (
                 <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] w-11/12 max-w-md animate-bounce font-mono">
@@ -1272,7 +1272,7 @@ const Dashboard: React.FC = () => {
             {showNotificationModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-xl animate-fade-in font-sans">
                     <div className={`w-full max-w-xl rounded-[2.5rem] p-6 sm:p-8 shadow-2xl relative text-slate-900 dark:text-white space-y-5 transition-all ${cardRoleStyle(stellarData.role)}`}>
-                        
+
                         {/* Modal Header */}
                         <div className="flex items-center justify-between pb-4 border-b border-slate-200/80 dark:border-white/10">
                             <div className="flex items-center gap-3.5">
@@ -1322,11 +1322,10 @@ const Dashboard: React.FC = () => {
                                     key={tab.id}
                                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     onClick={() => setNotifCategory(tab.id as any)}
-                                    className={`px-3.5 py-2 rounded-2xl font-bold transition-all border whitespace-nowrap ${
-                                        notifCategory === tab.id
+                                    className={`px-3.5 py-2 rounded-2xl font-bold transition-all border whitespace-nowrap ${notifCategory === tab.id
                                             ? `${roleCtaBg(stellarData.role)} border-transparent shadow-md scale-102 text-white`
                                             : 'bg-slate-100 dark:bg-white/[0.05] border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-gray-300 hover:scale-102'
-                                    }`}
+                                        }`}
                                 >
                                     {tab.label}
                                 </button>
@@ -1349,11 +1348,10 @@ const Dashboard: React.FC = () => {
                                         return (
                                             <div
                                                 key={notifId}
-                                                className={`p-4.5 rounded-2xl border transition-all duration-200 relative ${
-                                                    isUnread
+                                                className={`p-4.5 rounded-2xl border transition-all duration-200 relative ${isUnread
                                                         ? 'bg-white dark:bg-[#0f1420] border-cyan-500/50 shadow-md'
                                                         : 'bg-slate-50/80 dark:bg-white/[0.03] border-slate-200/60 dark:border-white/[0.06] opacity-90'
-                                                }`}
+                                                    }`}
                                             >
                                                 {isUnread && (
                                                     <span className="absolute top-3.5 right-3.5 w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping shadow-sm" />
@@ -1362,9 +1360,9 @@ const Dashboard: React.FC = () => {
                                                     <div className="flex items-start gap-3.5">
                                                         <div className={`p-3 rounded-2xl border flex-shrink-0 mt-0.5 shadow-sm ${rolePill(stellarData.role)}`}>
                                                             {notifType === 'fare' ? <Zap className="w-5 h-5 text-emerald-500" /> :
-                                                             notifType === 'broadcast' || notifType === 'system' ? <Megaphone className="w-5 h-5 text-cyan-500" /> :
-                                                             notifType === 'ride' ? <Navigation className="w-5 h-5 text-amber-500" /> :
-                                                             <ShieldCheck className="w-5 h-5 text-indigo-500" />}
+                                                                notifType === 'broadcast' || notifType === 'system' ? <Megaphone className="w-5 h-5 text-cyan-500" /> :
+                                                                    notifType === 'ride' ? <Navigation className="w-5 h-5 text-amber-500" /> :
+                                                                        <ShieldCheck className="w-5 h-5 text-indigo-500" />}
                                                         </div>
                                                         <div className="space-y-1">
                                                             <div className="flex items-center gap-2">

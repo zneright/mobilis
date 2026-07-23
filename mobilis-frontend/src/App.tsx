@@ -19,7 +19,7 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <SplashScreen />
-      <div className="h-screen w-full overflow-hidden relative bg-transparent font-sans">
+      <div className="min-h-screen w-full relative bg-transparent font-sans">
         <Router>
           <Routes>
             <Route path="/" element={<Landing />} />

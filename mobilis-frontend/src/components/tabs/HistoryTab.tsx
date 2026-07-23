@@ -205,8 +205,10 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ txHistory, appNetwork, s
             q = query(collection(db, 'fare_transactions'), where('commuterId', '==', stellarData.uid));
         } else if (role === 'driver') {
             q = query(collection(db, 'fare_transactions'), where('driverId', '==', stellarData.uid));
+        } else if (role === 'admin') {
+            q = query(collection(db, 'fare_transactions'), where('coopName', '==', stellarData.coopName || ''));
         } else {
-            q = query(collection(db, 'fare_transactions'));
+            q = query(collection(db, 'fare_transactions'), where('commuterId', '==', stellarData.uid));
         }
 
         const unsubscribe = onSnapshot(
@@ -234,12 +236,10 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ txHistory, appNetwork, s
         const role = stellarData.role;
         let q;
 
-        if (role === 'commuter' || role === 'driver') {
-            q = query(collection(db, 'transactions'), where('senderUid', '==', stellarData.uid));
-        } else if (role === 'cooperative' || role === 'admin') {
+        if (role === 'admin') {
             q = query(collection(db, 'transactions'), where('coopName', '==', stellarData.coopName || ''));
         } else {
-            q = query(collection(db, 'transactions'));
+            q = query(collection(db, 'transactions'), where('senderUid', '==', stellarData.uid));
         }
 
         const unsubscribe = onSnapshot(
@@ -453,17 +453,15 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ txHistory, appNetwork, s
                                     key={cat.id}
                                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     onClick={() => setFilterCategory(cat.id as any)}
-                                    className={`snap-start px-3.5 py-2 rounded-2xl text-xs font-mono font-bold transition-all duration-200 border flex items-center gap-2 flex-shrink-0 active:scale-95 ${
-                                        isActive
+                                    className={`snap-start px-3.5 py-2 rounded-2xl text-xs font-mono font-bold transition-all duration-200 border flex items-center gap-2 flex-shrink-0 active:scale-95 ${isActive
                                             ? `${ctaStyle} border-transparent shadow-md scale-[1.02]`
                                             : 'bg-white/80 dark:bg-white/5 border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/10'
-                                    }`}
+                                        }`}
                                 >
                                     <Icon className="w-3.5 h-3.5" />
                                     <span>{cat.label}</span>
-                                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold ${
-                                        isActive ? 'bg-black/20 text-white' : 'bg-slate-200/60 dark:bg-white/10 text-slate-700 dark:text-gray-300'
-                                    }`}>
+                                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold ${isActive ? 'bg-black/20 text-white' : 'bg-slate-200/60 dark:bg-white/10 text-slate-700 dark:text-gray-300'
+                                        }`}>
                                         {cat.count}
                                     </span>
                                 </button>
@@ -637,11 +635,10 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ txHistory, appNetwork, s
                             {/* Print Receipt Card Container */}
                             <div
                                 id="mobilis-printable-receipt-card"
-                                className={`bg-white text-slate-900 rounded-3xl p-6 text-left shadow-lg relative border-2 mb-6 overflow-hidden ${
-                                    role === 'superadmin' ? 'border-rose-400' :
-                                    role === 'admin' || role === 'cooperative' ? 'border-violet-400' :
-                                    role === 'driver' ? 'border-cyan-400' : 'border-emerald-400'
-                                }`}
+                                className={`bg-white text-slate-900 rounded-3xl p-6 text-left shadow-lg relative border-2 mb-6 overflow-hidden ${role === 'superadmin' ? 'border-rose-400' :
+                                        role === 'admin' || role === 'cooperative' ? 'border-violet-400' :
+                                            role === 'driver' ? 'border-cyan-400' : 'border-emerald-400'
+                                    }`}
                             >
                                 {/* Official Receipt Watermark Stamp with Mobilis Logo */}
                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.06] rotate-[-22deg] z-0">

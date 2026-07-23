@@ -58,13 +58,16 @@ export const HubTab: React.FC<HubTabProps> = ({
 
     const isSuperAdmin = stellarData?.role === 'superadmin';
 
-    // Fetch Pending Drivers for Cooperative Admin
+    // Fetch Pending Drivers for Cooperative Admin (or Coop Admins for Superadmin)
     React.useEffect(() => {
         if (!isAdmin) return;
         setLoadingDrivers(true);
+
+        const targetRole = isSuperAdmin ? 'admin' : 'driver';
+
         const q = query(
             collection(db, 'users'),
-            where('role', '==', 'driver'),
+            where('role', '==', targetRole),
             where('status', '==', 'pending')
         );
 
@@ -72,18 +75,18 @@ export const HubTab: React.FC<HubTabProps> = ({
             q,
             (snapshot) => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const drivers: any[] = [];
+                const list: any[] = [];
                 snapshot.forEach((docSnap) => {
                     const d = docSnap.data();
-                    if (d.todaAffiliation === stellarData.coopName || isSuperAdmin) {
-                        drivers.push({ uid: docSnap.id, ...d });
+                    if (isSuperAdmin || d.todaAffiliation === stellarData.coopName) {
+                        list.push({ uid: docSnap.id, ...d });
                     }
                 });
-                setPendingDrivers(drivers);
+                setPendingDrivers(list);
                 setLoadingDrivers(false);
             },
             (err) => {
-                console.warn("Error fetching pending drivers:", err);
+                console.warn("Error fetching pending drivers/coops:", err);
                 setLoadingDrivers(false);
             }
         );
@@ -433,7 +436,7 @@ export const HubTab: React.FC<HubTabProps> = ({
                 </div>
             )}
 
-            {/* COOPERATIVE ADMIN PENDING DRIVERS QUEUE */}
+            {/* COOPERATIVE ADMIN PENDING DRIVERS / SUPERADMIN COOPERATIVES QUEUE */}
             {isAdmin && (
                 <div className={`p-8 rounded-3xl bg-white dark:bg-[#0e121a] space-y-6 transition-colors duration-300 ${cardBorder}`}>
                     <div className="flex items-center justify-between">
@@ -442,8 +445,12 @@ export const HubTab: React.FC<HubTabProps> = ({
                                 <Building2 className="w-6 h-6" />
                             </div>
                             <div>
-                                <h3 className="font-black text-xl text-slate-900 dark:text-white">Cooperative Member Queue</h3>
-                                <p className="text-xs text-slate-500 dark:text-gray-400">Review & approve driver registration requests for {stellarData.coopName || 'Cooperative TODA'}</p>
+                                <h3 className="font-black text-xl text-slate-900 dark:text-white">
+                                    {isSuperAdmin ? 'Cooperative Verification Queue' : 'Cooperative Member Queue'}
+                                </h3>
+                                <p className="text-xs text-slate-500 dark:text-gray-400">
+                                    {isSuperAdmin ? 'Review & approve new cooperative registration requests' : `Review & approve driver registration requests for ${stellarData.coopName || 'Cooperative TODA'}`}
+                                </p>
                             </div>
                         </div>
                         <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-bold border border-emerald-500/20">
@@ -454,7 +461,7 @@ export const HubTab: React.FC<HubTabProps> = ({
                     <div className="space-y-4">
                         {loadingDrivers ? (
                             <div className="p-6 bg-slate-50 dark:bg-black/40 rounded-2xl text-center text-xs text-slate-500 dark:text-gray-400 animate-pulse">
-                                Loading pending member drivers...
+                                {isSuperAdmin ? 'Loading pending cooperatives...' : 'Loading pending member drivers...'}
                             </div>
                         ) : pendingDrivers.length > 0 ? (
                             pendingDrivers.map((driver) => (
@@ -464,11 +471,18 @@ export const HubTab: React.FC<HubTabProps> = ({
                                 >
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-emerald-400 flex items-center justify-center text-black font-black text-lg">
-                                            {(driver.fullName || 'Driver').charAt(0)}
+                                            {((isSuperAdmin ? driver.coopName : driver.fullName) || 'Coop').charAt(0)}
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-base text-slate-900 dark:text-white">{driver.fullName}</h4>
-                                            <p className="text-xs text-slate-500 dark:text-gray-400 font-mono">🛺 Plate: {driver.plateNumber} • Phone: {driver.phone}</p>
+                                            <h4 className="font-bold text-base text-slate-900 dark:text-white">
+                                                {isSuperAdmin ? driver.coopName : driver.fullName}
+                                            </h4>
+                                            <p className="text-xs text-slate-500 dark:text-gray-400 font-mono">
+                                                {isSuperAdmin
+                                                    ? `Reg #: ${driver.registrationNumber || 'N/A'} • Contact: ${driver.contactPerson || driver.fullName || 'N/A'}`
+                                                    : `🛺 Plate: ${driver.plateNumber} • Phone: ${driver.phone}`
+                                                }
+                                            </p>
                                         </div>
                                     </div>
 
@@ -478,15 +492,19 @@ export const HubTab: React.FC<HubTabProps> = ({
                                         className={`w-full sm:w-auto px-6 py-3 disabled:opacity-50 font-black text-xs rounded-xl transition-all flex items-center justify-center gap-2 ${ctaStyle}`}
                                     >
                                         <UserCheck className="w-4 h-4" />
-                                        {approvingUid === driver.uid ? 'Approving...' : 'Approve Driver'}
+                                        {approvingUid === driver.uid ? 'Approving...' : isSuperAdmin ? 'Approve Cooperative' : 'Approve Driver'}
                                     </button>
                                 </div>
                             ))
                         ) : (
                             <div className="p-8 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5 text-center space-y-2">
                                 <CheckCircle2 className="w-8 h-8 text-emerald-500 dark:text-emerald-400 mx-auto" />
-                                <h4 className="font-bold text-sm text-slate-900 dark:text-white">All Driver Requests Approved</h4>
-                                <p className="text-xs text-slate-500 dark:text-gray-400">No pending drivers waiting for verification in your cooperative queue.</p>
+                                <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                                    {isSuperAdmin ? 'All Cooperatives Approved' : 'All Driver Requests Approved'}
+                                </h4>
+                                <p className="text-xs text-slate-500 dark:text-gray-400">
+                                    {isSuperAdmin ? 'No pending cooperatives waiting for platform verification.' : 'No pending drivers waiting for verification in your cooperative queue.'}
+                                </p>
                             </div>
                         )}
                     </div>
