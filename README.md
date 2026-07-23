@@ -193,8 +193,6 @@ npm run build
 
 ## 🟢 Level 4 - Green Belt Submission Validation
 
-### 🎥 Demonstration Walkthrough Video
-* **Video Demo Link:** [Watch the Live Demonstration Walkthrough](https://www.youtube.com/watch?v=dQw4w9WgXcQ) *(Placeholder for submission)*
 
 ### 📊 Real-Time Analytics & Monitoring Integration
 Mobilis integrates a combined diagnostic layer tracking platform health and transaction throughput:
