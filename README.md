@@ -91,16 +91,6 @@ With **Mobilis**, commuters can now discover nearby drivers on a real-time radar
 | :---: | :---: |
 | <img src="./docs/screenshots/coop_transactions.png" width="280" alt="Coop Transactions" /> | <img src="./docs/screenshots/coop_profile.png" width="280" alt="Coop Profile" /> |
 
-### Mobile Responsive UI Ecosystem
-
-| Landing View | Security Gateway / Login | Driver Registration Node |
-| :---: | :---: | :---: |
-| <img src="https://github.com/user-attachments/assets/b4a66160-d9cf-4511-907c-dc3e33b8840d" width="240" alt="Landing Page" /> | <img src="https://github.com/user-attachments/assets/818d9164-fc87-4925-95f8-c023855cc99d" width="240" alt="Login View" /> | <img src="https://github.com/user-attachments/assets/025aefda-5177-4659-9b32-037de1b80bae" width="240" alt="Signup Driver" /> |
-
-| Cooperative Admin Registration | Cooperative Command Center | Profile Management |
-| :---: | :---: | :---: |
-| <img src="https://github.com/user-attachments/assets/a7ecac52-0080-437c-998d-1460ac524976" width="240" alt="Signup Cooperative" /> | <img src="https://github.com/user-attachments/assets/447adb3d-2ede-402a-a4e3-f208d2639bbb" width="240" alt="Cooperative Dashboard Driver" /> | <img src="https://github.com/user-attachments/assets/8acd4ec7-1bbe-4a45-9747-eca2a1fc19b8" width="240" alt="Profile Control" /> |
-
 ---
 
 ### CI/CD Deployment Pipeline & Test Suite Performance
