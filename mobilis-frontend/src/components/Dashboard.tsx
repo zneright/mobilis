@@ -17,7 +17,7 @@ import {
     Transaction
 } from '@stellar/stellar-sdk';
 import { requestAccess, signTransaction, isConnected, isAllowed } from '@stellar/freighter-api';
-import { Copy, ArrowUpRight, X, Wallet, Zap, Bell, Radio, ShieldCheck, Megaphone, Navigation, CheckCircle2 } from 'lucide-react';
+import { Copy, ArrowUpRight, X, Wallet, Zap, Bell, ShieldCheck, Megaphone, Navigation, CheckCircle2 } from 'lucide-react';
 import { cardRoleStyle, roleCtaBg, rolePill, roleAccentText, roleShellBg } from './tabs/roleStyleTokens';
 import Header from './Header';
 import BottomNav from './BottomNav';
@@ -238,22 +238,25 @@ const Dashboard: React.FC = () => {
         const role = stellarData.role;
         if (role !== 'commuter' && role !== 'driver') return;
 
-        let isInitial = true;
+        let isInitial1 = true;
+        let isInitial2 = true;
+        const prevStatusesRef = { current: {} as Record<string, string> };
+        const list1Ref = { current: [] as any[] };
+        const list2Ref = { current: [] as any[] };
 
         const q1 = query(collection(db, 'active_pickups'), where(role === 'commuter' ? 'commuterId' : 'driverId', '==', stellarData.uid));
         const q2 = query(collection(db, 'active_pickup_sessions'), where(role === 'commuter' ? 'commuterUid' : 'driverUid', '==', stellarData.uid));
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const handleDocs = (snapshot: any) => {
-            const list: {
+        const updateListAndChime = (snapshot: any, isQ2: boolean) => {
+            const currentList: {
                 id: string;
                 type: 'ride';
                 title: string;
                 message: string;
                 timestamp: string;
             }[] = [];
+            let statusChanged = false;
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             snapshot.forEach((docSnap: any) => {
                 const data = docSnap.data();
                 if (!data) return;
@@ -265,7 +268,7 @@ const Dashboard: React.FC = () => {
                 const isoTime = toIsoString(data.updatedAt || data.timestamp || data.acceptedAt);
 
                 if (status === 'approaching' || status === 'assigned' || status === 'accepted') {
-                    list.push({
+                    currentList.push({
                         id: `ride-${docSnap.id}-approaching`,
                         type: 'ride',
                         title: '🚗 Driver Approaching',
@@ -273,7 +276,7 @@ const Dashboard: React.FC = () => {
                         timestamp: isoTime,
                     });
                 } else if (status === 'arrived') {
-                    list.push({
+                    currentList.push({
                         id: `ride-${docSnap.id}-arrived`,
                         type: 'ride',
                         title: '📍 Driver Arrived',
@@ -281,7 +284,7 @@ const Dashboard: React.FC = () => {
                         timestamp: isoTime,
                     });
                 } else if (status === 'picked_up' || status === 'on_transit') {
-                    list.push({
+                    currentList.push({
                         id: `ride-${docSnap.id}-transit`,
                         type: 'ride',
                         title: '🛺 Commuter Picked Up',
@@ -289,7 +292,7 @@ const Dashboard: React.FC = () => {
                         timestamp: isoTime,
                     });
                 } else if (status === 'completed') {
-                    list.push({
+                    currentList.push({
                         id: `ride-${docSnap.id}-completed`,
                         type: 'ride',
                         title: '🏁 Trip Completed',
@@ -299,16 +302,51 @@ const Dashboard: React.FC = () => {
                 }
             });
 
-            setRideNotifications(list);
+            if (isQ2) {
+                list2Ref.current = currentList;
+            } else {
+                list1Ref.current = currentList;
+            }
 
-            if (!isInitial && snapshot.docChanges().some((c: { type: string }) => c.type === 'added' || c.type === 'modified')) {
+            setRideNotifications([...list1Ref.current, ...list2Ref.current]);
+
+            const isInitial = isQ2 ? isInitial2 : isInitial1;
+
+            snapshot.docChanges().forEach((change: any) => {
+                const data = change.doc.data();
+                if (!data) return;
+                const docId = change.doc.id;
+                const newStatus = data.status || '';
+                const oldStatus = prevStatusesRef.current[docId];
+
+                if (change.type === 'added') {
+                    prevStatusesRef.current[docId] = newStatus;
+                    if (!isInitial) {
+                        statusChanged = true;
+                    }
+                } else if (change.type === 'modified') {
+                    if (oldStatus !== newStatus) {
+                        prevStatusesRef.current[docId] = newStatus;
+                        statusChanged = true;
+                    }
+                } else if (change.type === 'removed') {
+                    delete prevStatusesRef.current[docId];
+                }
+            });
+
+            if (statusChanged) {
                 playDoubleChime();
             }
-            isInitial = false;
+
+            if (isQ2) {
+                isInitial2 = false;
+            } else {
+                isInitial1 = false;
+            }
         };
 
-        const unsub1 = onSnapshot(q1, handleDocs, (err) => console.warn("active_pickups listener note:", err));
-        const unsub2 = onSnapshot(q2, handleDocs, (err) => console.warn("active_pickup_sessions listener note:", err));
+        const unsub1 = onSnapshot(q1, (snap) => updateListAndChime(snap, false), (err) => console.warn("active_pickups listener note:", err));
+        const unsub2 = onSnapshot(q2, (snap) => updateListAndChime(snap, true), (err) => console.warn("active_pickup_sessions listener note:", err));
 
         return () => {
             unsub1();
@@ -476,10 +514,10 @@ const Dashboard: React.FC = () => {
 
         // 4. Fare Payments & Soroban Contract Transactions (from History)
         firebaseHistory.forEach((f) => {
-            const id = f.id || f.txHash || `tx-${f.timestamp}`;
+            const id = f.id || String(f.txHash || '') || `tx-${f.timestamp}`;
             if (!notifMap.has(id)) {
-                const numXlm = parseFloat(f.amount || f.amountSettled || '0').toFixed(4);
-                const numPhp = f.amountPhp || (parseFloat(f.amount || f.amountSettled || '0') * 60.69).toFixed(2);
+                const numXlm = parseFloat(String(f.amount || f.amountSettled || '0')).toFixed(4);
+                const numPhp = String(f.amountPhp || (parseFloat(String(f.amount || f.amountSettled || '0')) * 60.69).toFixed(2));
                 const isIncoming = stellarData?.role === 'driver' || f.driverId === stellarData?.uid;
 
                 notifMap.set(id, {

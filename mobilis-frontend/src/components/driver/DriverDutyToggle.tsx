@@ -4,7 +4,7 @@ import { db } from '../../firebase';
 import { calculateDistanceKm } from '../../utils/geo';
 import { trackDriverDutyToggled } from '../../services/analytics';
 import { Navigation, ShieldAlert, Power } from 'lucide-react';
-import { cardRoleStyle, roleCtaBg, rolePill, roleAccentText } from '../tabs/roleStyleTokens';
+import { cardRoleStyle, roleCtaBg, rolePill } from '../tabs/roleStyleTokens';
 import type { UserData } from '../../types';
 
 interface DriverDutyToggleProps {
@@ -20,7 +20,7 @@ export const DriverDutyToggle: React.FC<DriverDutyToggleProps> = ({ userData }) 
     const watchIdRef = useRef<number | null>(null);
     const lastCoordsRef = useRef<{ lat: number; lng: number; time: number } | null>(null);
 
-    const publishLocation = async (lat: number, lng: number) => {
+    const publishLocation = async (lat: number, lng: number, speedKmh: number = 0) => {
         if (!userData.uid) return;
         setIsUpdating(true);
         try {
@@ -33,6 +33,7 @@ export const DriverDutyToggle: React.FC<DriverDutyToggleProps> = ({ userData }) 
                 vehicleType: userData.vehicleType || 'Tricycle',
                 lat,
                 lng,
+                speed: speedKmh,
                 active: true,
                 updatedAt: new Date().toISOString(),
             };
@@ -44,7 +45,7 @@ export const DriverDutyToggle: React.FC<DriverDutyToggleProps> = ({ userData }) 
             await setDoc(doc(db, 'users', userData.uid), { isDuty: true, lastLocation: { lat, lng, updatedAt: new Date().toISOString() } }, { merge: true });
 
             lastCoordsRef.current = { lat, lng, time: Date.now() };
-            setStatusText(`On Duty • Broadcasting GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+            setStatusText(`On Duty • GPS Active (${lat.toFixed(4)}, ${lng.toFixed(4)}) • ${speedKmh} km/h`);
             setLocationError(null);
         } catch (err) {
             console.error('Error publishing location:', err);
@@ -93,9 +94,25 @@ export const DriverDutyToggle: React.FC<DriverDutyToggleProps> = ({ userData }) 
 
         watchIdRef.current = navigator.geolocation.watchPosition(
             (position) => {
-                const { latitude, longitude } = position.coords;
+                const { latitude, longitude, speed } = position.coords;
 
-                // Battery & Network Optimization: Only publish if position shifted > 10m (0.01 km) or 30s elapsed
+                let calculatedSpeedKmh = 0;
+                if (typeof speed === 'number' && speed > 0) {
+                    calculatedSpeedKmh = Math.round(speed * 3.6);
+                } else if (lastCoordsRef.current) {
+                    const distMovedKm = calculateDistanceKm(
+                        lastCoordsRef.current.lat,
+                        lastCoordsRef.current.lng,
+                        latitude,
+                        longitude
+                    );
+                    const timeElapsedSec = (Date.now() - lastCoordsRef.current.time) / 1000;
+                    if (timeElapsedSec > 0 && distMovedKm > 0.005) {
+                        calculatedSpeedKmh = Math.min(120, Math.round(distMovedKm / (timeElapsedSec / 3600)));
+                    }
+                }
+
+                // Battery & Network Optimization: Only publish if position shifted > 5m or 30s elapsed
                 if (lastCoordsRef.current) {
                     const distMoved = calculateDistanceKm(
                         lastCoordsRef.current.lat,
@@ -105,12 +122,12 @@ export const DriverDutyToggle: React.FC<DriverDutyToggleProps> = ({ userData }) 
                     );
                     const timeElapsedSec = (Date.now() - lastCoordsRef.current.time) / 1000;
 
-                    if (distMoved < 0.01 && timeElapsedSec < 30) {
+                    if (distMoved < 0.005 && timeElapsedSec < 30) {
                         return; // Skip unnecessary Firestore write
                     }
                 }
 
-                publishLocation(latitude, longitude);
+                publishLocation(latitude, longitude, calculatedSpeedKmh);
             },
             (error) => {
                 console.warn('Geolocation watch error:', error);

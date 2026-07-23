@@ -3,7 +3,7 @@ import { collection, query, where, onSnapshot, setDoc, doc } from 'firebase/fire
 import { db } from '../../firebase';
 import { calculateDistanceKm, calculateETA, formatDistance } from '../../utils/geo';
 import { playDriverAlertChime } from '../../utils/webAudio';
-import { UserCheck, Check, Navigation } from 'lucide-react';
+import { UserCheck, Check } from 'lucide-react';
 import { cardRoleStyle, roleCtaBg, rolePill, roleAccentText } from '../tabs/roleStyleTokens';
 import type { WaitingBeaconDoc } from '../../types';
 

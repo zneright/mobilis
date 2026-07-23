@@ -71,6 +71,26 @@ With **Mobilis**, commuters can now discover nearby drivers on a real-time radar
 | :---: | :---: |
 | <img src="./docs/screenshots/driver_transactions.png" width="280" alt="Driver Transactions" /> | <img src="./docs/screenshots/driver_profile.png" width="280" alt="Driver Profile" /> |
 
+### 🧍‍♂️ Commuter Transit UI Suite (Verified Mobile Views)
+
+| Commuter Radar (Live Vector Map & Filters) | Commuter Soroban Vault (Wallet) |
+| :---: | :---: |
+| <img src="./docs/screenshots/commuter_dashboard.png" width="280" alt="Commuter Dashboard" /> | <img src="./docs/screenshots/commuter_wallet.png" width="280" alt="Commuter Wallet" /> |
+
+| Commuter Transactions (Fare History) | Commuter Profile & Security |
+| :---: | :---: |
+| <img src="./docs/screenshots/commuter_transactions.png" width="280" alt="Commuter Transactions" /> | <img src="./docs/screenshots/commuter_profile.png" width="280" alt="Commuter Profile" /> |
+
+### 🏢 Cooperative Treasury UI Suite (Verified Mobile Views)
+
+| Coop Dashboard & Member Queue | Coop Soroban Vault (Coop Treasury) |
+| :---: | :---: |
+| <img src="./docs/screenshots/coop_dashboard.png" width="280" alt="Coop Dashboard" /> | <img src="./docs/screenshots/coop_wallet.png" width="280" alt="Coop Wallet" /> |
+
+| Coop Transactions (Fuel Advances & Loans) | Coop Profile & Settings |
+| :---: | :---: |
+| <img src="./docs/screenshots/coop_transactions.png" width="280" alt="Coop Transactions" /> | <img src="./docs/screenshots/coop_profile.png" width="280" alt="Coop Profile" /> |
+
 ### Mobile Responsive UI Ecosystem
 
 | Landing View | Security Gateway / Login | Driver Registration Node |

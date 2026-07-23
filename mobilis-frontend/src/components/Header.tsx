@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Sun, Moon, Bell, ShieldCheck, Navigation, Radio, Building2, ShieldAlert } from 'lucide-react';
-import { rolePill, roleAccentText } from './tabs/roleStyleTokens';
+import { rolePill } from './tabs/roleStyleTokens';
 import MobilisLogo from './common/MobilisLogo';
 import { motion } from 'framer-motion';
 import { playCommuterChime, playDriverAlertChime, playStartupChime } from '../utils/webAudio';
@@ -28,7 +28,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onOpenNotifications
         : { label: 'COMMUTER TRANSIT', dot: 'bg-emerald-500', Icon: Radio };
 
     const pillClass = rolePill(role ?? 'commuter');
-    const accentClass = roleAccentText(role ?? 'commuter');
 
     // Play role‑specific chime when role changes
     useEffect(() => {

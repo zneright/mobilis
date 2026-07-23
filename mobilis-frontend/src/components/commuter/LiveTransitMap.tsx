@@ -6,7 +6,7 @@ import { db } from '../../firebase';
 import { calculateDistanceKm, calculateBearing, calculateETA, formatDistance } from '../../utils/geo';
 import { playCommuterChime } from '../../utils/webAudio';
 import { applyRoleMapStyle } from '../../utils/mapStyle';
-import { Zap, EyeOff, ShieldCheck, Filter, Bell, Check, Navigation, MapPin } from 'lucide-react';
+import { Zap, Filter, Bell, Check, Navigation, MapPin, X } from 'lucide-react';
 import { cardRoleStyle, roleCtaBg, rolePill, roleAccentText } from '../tabs/roleStyleTokens';
 import type { DriverLocationDoc } from '../../types';
 
@@ -16,6 +16,9 @@ interface LiveTransitMapProps {
     onSelectVehicleToPay?: (driverDoc: DriverLocationDoc) => void;
     commuterUid?: string;
     theme?: 'dark' | 'light';
+    vehicleFilter?: string;
+    setVehicleFilter?: (filter: string) => void;
+    userRole?: 'commuter' | 'driver' | 'coop' | 'admin';
 }
 
 interface AnonymizedVehicle {
@@ -49,6 +52,9 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
     onSelectVehicleToPay,
     commuterUid,
     theme = 'dark',
+    vehicleFilter: propVehicleFilter,
+    setVehicleFilter: propSetVehicleFilter,
+    userRole = 'commuter',
 }) => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<maplibregl.Map | null>(null);
@@ -56,7 +62,12 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
     const commuterMarkerRef = useRef<maplibregl.Marker | null>(null);
 
     const [selectedAnonId, setSelectedAnonId] = useState<string | null>(null);
-    const [vehicleFilter, setVehicleFilter] = useState<string>('all');
+    const [internalFilter, setInternalFilter] = useState<string>('All');
+
+    const vehicleFilter = propVehicleFilter !== undefined ? propVehicleFilter : internalFilter;
+    const setVehicleFilter = propSetVehicleFilter || setInternalFilter;
+
+    const [showFilterModal, setShowFilterModal] = useState<boolean>(false);
     const [webGlSupported, setWebGlSupported] = useState<boolean>(true);
     const [displayMode, setDisplayMode] = useState<'maplibre' | 'sonar'>('sonar');
     const [notifyingId, setNotifyingId] = useState<string | null>(null);
@@ -134,28 +145,37 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
         }).sort((a, b) => a.distanceKm - b.distanceKm);
     }, [activeDrivers, commuterCoords]);
 
-    // Filtered Vehicles by category
+    // Filtered Vehicles by exact category
     const filteredVehicles = useMemo(() => {
-        if (vehicleFilter === 'all') return anonymizedVehicles;
-        return anonymizedVehicles.filter((v) => v.vehicleType.toLowerCase() === vehicleFilter.toLowerCase());
+        if (!vehicleFilter || vehicleFilter.toLowerCase() === 'all') return anonymizedVehicles;
+        const target = vehicleFilter.trim().toLowerCase();
+
+        return anonymizedVehicles.filter((v) => {
+            const vt = (v.vehicleType || '').trim().toLowerCase();
+
+            if (target === 'e-jeepney' || target === 'ejeepney' || target === 'modern e-jeepney') {
+                return vt.includes('e-jeepney') || vt === 'ejeepney' || vt.includes('modern');
+            }
+            if (target === 'jeepney' || target === 'traditional jeepney') {
+                return vt.includes('jeepney') && !vt.includes('e-jeepney') && !vt.includes('ejeepney') && !vt.includes('modern');
+            }
+            if (target === 'e-trike' || target === 'etrike') {
+                return vt.includes('e-trike') || vt === 'etrike';
+            }
+            if (target === 'tricycle') {
+                return vt.includes('tricycle') && !vt.includes('e-trike') && !vt.includes('etrike');
+            }
+            if (target === 'uv express' || target === 'uv') {
+                return vt.includes('uv') || vt.includes('express');
+            }
+            if (target === 'bus') {
+                return vt.includes('bus');
+            }
+
+            return vt.includes(target);
+        });
     }, [anonymizedVehicles, vehicleFilter]);
 
-    // Vehicle Density Summary
-    const vehicleCounts = useMemo(() => {
-        const counts: Record<string, number> = {};
-        anonymizedVehicles.forEach((v) => {
-            counts[v.vehicleType] = (counts[v.vehicleType] || 0) + 1;
-        });
-        return counts;
-    }, [anonymizedVehicles]);
-
-    const activeVehicleSummary = useMemo(() => {
-        const entries = Object.entries(vehicleCounts);
-        if (entries.length === 0) return 'No public transit broadcasting nearby.';
-        return entries
-            .map(([type, count]) => `${count} ${type}${count > 1 ? 's' : ''}`)
-            .join(' • ') + ' Approaching Nearby';
-    }, [vehicleCounts]);
 
     const selectedVehicle = useMemo(() => {
         return filteredVehicles.find((v) => v.anonId === selectedAnonId) || filteredVehicles[0] || null;
@@ -228,7 +248,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
         };
     }, [displayMode, theme]);
 
-    // Update Commuter Marker & Center Map on GPS updates
+    // Update Commuter / Driver User Marker & Center Map on GPS updates
     useEffect(() => {
         if (!mapRef.current) return;
         const map = mapRef.current;
@@ -236,13 +256,27 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
         try {
             if (!commuterMarkerRef.current) {
                 const el = document.createElement('div');
-                el.className = 'relative flex items-center justify-center cursor-pointer';
-                el.innerHTML = `
-                    <div class="absolute w-14 h-14 rounded-full bg-emerald-400/30 border border-emerald-400/60 animate-ping pointer-events-none"></div>
-                    <div class="relative z-10 px-3.5 py-1.5 rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-400 text-black font-mono font-black flex items-center gap-1.5 shadow-[0_0_25px_rgba(16,185,129,1)] border-2 border-white text-xs whitespace-nowrap">
-                        <span>📍 YOU</span>
-                    </div>
-                `;
+                el.className = 'relative flex items-center justify-center cursor-pointer group';
+
+                if (userRole === 'driver') {
+                    // DRIVER USER: Directional Navigation Arrow Pin
+                    el.innerHTML = `
+                        <div class="absolute w-14 h-14 rounded-full bg-cyan-400/30 border border-cyan-400/60 animate-ping pointer-events-none"></div>
+                        <div class="relative z-10 w-11 h-11 rounded-full bg-gradient-to-tr from-cyan-500 to-emerald-400 p-2 text-black flex items-center justify-center shadow-2xl border-2 border-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="animate-pulse"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                        </div>
+                    `;
+                } else {
+                    // COMMUTER USER: Pure 3D White Stickman Pin (No Letters, Larger Size)
+                    el.innerHTML = `
+                        <div class="absolute w-24 h-24 rounded-full bg-emerald-400/35 border-2 border-emerald-400/70 animate-ping pointer-events-none"></div>
+                        <div class="relative z-10 flex items-center justify-center group">
+                            <div class="w-20 h-24 flex items-center justify-center filter drop-shadow-[0_6px_14px_rgba(0,0,0,0.8)] drop-shadow-[0_0_20px_rgba(16,185,129,1)] transition-transform group-hover:scale-125">
+                                <img src="/commuter-stickman.png" alt="Commuter" class="w-full h-full object-contain filter brightness-115 contrast-105" />
+                            </div>
+                        </div>
+                    `;
+                }
 
                 commuterMarkerRef.current = new maplibregl.Marker({
                     element: el,
@@ -257,11 +291,11 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
 
             map.easeTo({ center: [commuterCoords.lng, commuterCoords.lat], duration: 1000 });
         } catch (err) {
-            console.warn("Error updating commuter marker:", err);
+            console.warn("Error updating user marker:", err);
         }
-    }, [commuterCoords, displayMode]);
+    }, [commuterCoords, displayMode, userRole]);
 
-    // Update Vehicle Markers on MapLibre Canvas
+    // Update Vehicle Markers on MapLibre Canvas (Color-Coded Circles + Speed Badge)
     useEffect(() => {
         if (!mapRef.current) return;
         const map = mapRef.current;
@@ -273,8 +307,8 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                 const isSelected = selectedAnonId === v.anonId;
 
                 const vt = v.vehicleType.toLowerCase();
-                let gradientClass = 'from-cyan-400 to-emerald-400';
-                let glowClass = 'shadow-[0_0_20px_rgba(0,210,255,0.9)]';
+                let gradientClass = 'from-emerald-500 to-teal-400';
+                let glowClass = 'shadow-[0_0_20px_rgba(16,185,129,0.9)]';
 
                 if (vt.includes('e-jeepney') || vt === 'ejeepney') {
                     gradientClass = 'from-emerald-500 to-teal-400';
@@ -282,6 +316,9 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                 } else if (vt.includes('jeepney')) {
                     gradientClass = 'from-amber-500 to-yellow-400';
                     glowClass = 'shadow-[0_0_20px_rgba(245,158,11,0.9)]';
+                } else if (vt.includes('e-trike') || vt === 'etrike') {
+                    gradientClass = 'from-teal-400 to-emerald-400';
+                    glowClass = 'shadow-[0_0_20px_rgba(20,184,166,0.9)]';
                 } else if (vt.includes('tricycle')) {
                     gradientClass = 'from-cyan-500 to-blue-400';
                     glowClass = 'shadow-[0_0_20px_rgba(6,182,212,0.9)]';
@@ -294,10 +331,9 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                 } else if (vt.includes('motorcycle') || vt.includes('habal')) {
                     gradientClass = 'from-rose-500 to-red-400';
                     glowClass = 'shadow-[0_0_20px_rgba(244,63,94,0.9)]';
-                } else if (vt.includes('taxi')) {
-                    gradientClass = 'from-yellow-400 to-amber-300';
-                    glowClass = 'shadow-[0_0_20px_rgba(255,204,0,0.9)]';
                 }
+
+                const vehicleSpeed = typeof v.rawDoc.speed === 'number' && v.rawDoc.speed > 0 ? Math.round(v.rawDoc.speed) : 20;
 
                 if (markersRef.current.has(v.anonId)) {
                     const marker = markersRef.current.get(v.anonId)!;
@@ -306,12 +342,12 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                     const el = document.createElement('div');
                     el.className = 'cursor-pointer group relative flex items-center justify-center';
                     el.innerHTML = `
-                        <div class="absolute w-12 h-12 rounded-full bg-white/20 border border-white/50 animate-ping pointer-events-none"></div>
-                        <div class="relative z-10 w-11 h-11 rounded-full bg-gradient-to-tr ${gradientClass} p-0.5 ${glowClass} ${isSelected ? 'scale-125 border-4 border-white' : 'border-2 border-white'} group-hover:scale-125 transition-transform flex items-center justify-center shadow-2xl">
-                            <span class="text-xl inline-block transition-transform duration-500" style="transform: rotate(${v.bearing.angle}deg);">${v.icon}</span>
-                        </div>
-                        <div class="absolute -bottom-6 px-2.5 py-0.5 rounded-full bg-[#070A12]/95 border border-white/20 text-[9px] font-mono font-black text-white shadow-xl whitespace-nowrap">
-                            ${v.vehicleType} (${v.anonId})
+                        <div class="absolute w-10 h-10 rounded-full bg-white/20 border border-white/50 animate-ping pointer-events-none"></div>
+                        <div class="relative z-10 w-9 h-9 rounded-full bg-gradient-to-tr ${gradientClass} ${glowClass} ${isSelected ? 'scale-125 border-4 border-white' : 'border-2 border-white'} group-hover:scale-125 transition-transform flex items-center justify-center text-white shadow-2xl">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="transform: rotate(${v.bearing.angle}deg);" class="transition-transform duration-500"><polygon points="12 2 19 21 12 17 5 21 12 2"/></svg>
+                            <span class="absolute -top-1.5 -right-1.5 px-1.5 py-0.2 rounded-full bg-slate-950 text-white font-mono font-black text-[9px] border border-white/30 shadow-md">
+                                ${vehicleSpeed}
+                            </span>
                         </div>
                     `;
 
@@ -354,79 +390,6 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
     return (
         <div className="w-full space-y-6 text-slate-900 dark:text-white font-sans transition-colors duration-300">
 
-            {/* PRIVACY GUARANTEE & VEHICLE DENSITY BAR */}
-            <div className={`p-5 rounded-[2rem] flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg backdrop-blur-xl ${cardRoleStyle('commuter')}`}>
-                <div className="flex items-center gap-3.5 text-center sm:text-left">
-                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0 border ${rolePill('commuter')}`}>
-                        <ShieldCheck className="w-5 h-5" />
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${rolePill('commuter')}`}>
-                                {webGlSupported ? 'MapLibre Vector Engine' : '50m Sonar Engine'}
-                            </span>
-                            <span className="text-xs text-slate-500 dark:text-gray-400 font-mono">100% Privacy Redacted</span>
-                        </div>
-                        <p className="text-xs font-bold text-slate-900 dark:text-white mt-1">
-                            {activeVehicleSummary}
-                        </p>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-2 flex-shrink-0">
-                    <button
-                        onClick={() => {
-                            if (!webGlSupported) return;
-                            setDisplayMode('maplibre');
-                        }}
-                        disabled={!webGlSupported}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition-all border ${displayMode === 'maplibre'
-                                ? roleCtaBg('commuter')
-                                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/10 disabled:opacity-40'
-                            }`}
-                    >
-                        🗺️ MapLibre GL Map {!webGlSupported && '(WebGL Unavailable)'}
-                    </button>
-                    <button
-                        onClick={() => setDisplayMode('sonar')}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition-all border ${displayMode === 'sonar'
-                                ? roleCtaBg('commuter')
-                                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/10'
-                            }`}
-                    >
-                        🌐 50m Sonar Radar
-                    </button>
-                </div>
-            </div>
-
-            {/* VEHICLE CATEGORY FILTER PILLS */}
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1 text-xs">
-                <span className={`font-mono font-bold flex items-center gap-1 uppercase tracking-wider text-[10px] flex-shrink-0 ${roleAccentText('commuter')}`}>
-                    <Filter className="w-3 h-3" /> Filter:
-                </span>
-                {[
-                    { label: 'All Vehicles', value: 'all', icon: '🚗' },
-                    { label: 'Jeepney', value: 'jeepney', icon: '🛻' },
-                    { label: 'Tricycle', value: 'tricycle', icon: '🛺' },
-                    { label: 'UV Express', value: 'uv express', icon: '🚐' },
-                    { label: 'Bus', value: 'bus', icon: '🚌' },
-                    { label: 'E-Vehicle', value: 'e-vehicle', icon: '🚙' },
-                    { label: 'Motorcycle', value: 'motorcycle', icon: '🛵' },
-                ].map((pill) => (
-                    <button
-                        key={pill.value}
-                        onClick={() => setVehicleFilter(pill.value)}
-                        className={`px-3.5 py-1.5 rounded-full font-bold font-mono whitespace-nowrap transition-all border flex items-center gap-1.5 flex-shrink-0 ${vehicleFilter === pill.value
-                                ? `${roleCtaBg('commuter')} border-transparent shadow-sm scale-105`
-                                : 'bg-white dark:bg-[#07090E] border-gray-200/60 dark:border-white/10 text-gray-700 dark:text-gray-300'
-                            }`}
-                    >
-                        <span>{pill.icon}</span>
-                        <span>{pill.label}</span>
-                    </button>
-                ))}
-            </div>
-
             {/* DISPLAY MODE 1: MAPLIBRE GL JS VECTOR MAP */}
             {displayMode === 'maplibre' && webGlSupported ? (
                 <div className="relative w-full h-[460px] rounded-3xl overflow-hidden border border-gray-100 dark:border-white/10 shadow-md">
@@ -437,9 +400,18 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                             <Navigation className="w-3.5 h-3.5" /> Live Vector Transit Map
                         </div>
                         <p className="text-[10px] text-gray-500 font-mono">
-                            Tap any anonymized vehicle marker to view ETA and send ride signals.
+                            Tap any vehicle marker pin to view ETA and pay fare.
                         </p>
                     </div>
+
+                    {/* Floating Map Filter Button */}
+                    <button
+                        onClick={() => setShowFilterModal(true)}
+                        className="absolute top-4 right-4 z-20 px-3 py-1.5 rounded-2xl bg-white/90 dark:bg-[#07090E]/90 backdrop-blur-md border border-slate-200/80 dark:border-white/10 shadow-md font-mono text-xs font-bold flex items-center gap-1.5 hover:scale-105 transition-all text-slate-900 dark:text-white"
+                    >
+                        <Filter className={`w-3.5 h-3.5 ${roleAccentText('commuter')}`} />
+                        <span>Filter ({vehicleFilter})</span>
+                    </button>
 
                     {/* Floating Locate Button */}
                     <button
@@ -487,12 +459,11 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                                 <div className="w-1 h-8 bg-gradient-to-t from-emerald-500/40 to-transparent rounded-full mb-1 animate-pulse" />
                                 <div
                                     className={`p-2.5 rounded-2xl flex items-center gap-1.5 shadow-md transition-all ${isSelected
-                                            ? 'bg-emerald-500 text-black scale-110 shadow-lg border-2 border-white'
-                                            : 'bg-white/90 text-gray-900 dark:bg-white/10 dark:text-white border border-gray-200 dark:border-white/20 hover:scale-105'
+                                        ? 'bg-emerald-500 text-black scale-110 shadow-lg border-2 border-white'
+                                        : 'bg-white/90 text-gray-900 dark:bg-white/10 dark:text-white border border-gray-200 dark:border-white/20 hover:scale-105'
                                         }`}
                                 >
                                     <span className="text-lg">{v.icon}</span>
-                                    <span className="text-[10px] font-black font-mono">{v.anonId}</span>
                                     <span className="text-[9px] font-mono opacity-80">({v.eta})</span>
                                 </div>
                             </div>
@@ -510,7 +481,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                 </div>
             )}
 
-            {/* SELECTED ANONYMIZED VEHICLE ETA DETAILS & PAY FARE CARD */}
+            {/* SELECTED VEHICLE DETAILS & PAY FARE CARD */}
             {selectedVehicle && (
                 <div className="p-5 rounded-3xl bg-white dark:bg-[#07090E] border border-gray-100 dark:border-white/10 shadow-md space-y-4 font-sans">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -522,7 +493,7 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                             <div>
                                 <div className="flex items-center gap-2">
                                     <h3 className="font-extrabold text-base text-gray-900 dark:text-white">
-                                        {selectedVehicle.vehicleType} <span className="text-emerald-500 font-mono">({selectedVehicle.anonId})</span>
+                                        {selectedVehicle.vehicleType}
                                     </h3>
                                     <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-mono font-bold border border-emerald-500/20">
                                         ON TRANSIT
@@ -539,7 +510,6 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                                 <span className="text-xs font-mono font-black text-emerald-500 block">
                                     {selectedVehicle.eta}
                                 </span>
-                                <span className="text-[9px] font-mono text-gray-400 uppercase">Avg Speed ~20 km/h</span>
                             </div>
 
                             <div className="flex items-center gap-2">
@@ -569,13 +539,67 @@ export const LiveTransitMap: React.FC<LiveTransitMapProps> = ({
                             <Check className="w-4 h-4" /> {notifySuccessMsg}
                         </div>
                     )}
+                </div>
+            )}
 
-                    {/* Privacy Guarantee Footer */}
-                    <div className="pt-3 border-t border-gray-100 dark:border-white/10 flex items-center justify-between text-[10px] text-gray-400 font-mono">
-                        <span className="flex items-center gap-1">
-                            <EyeOff className="w-3 h-3 text-emerald-500" /> Mobilis Privacy Protected
-                        </span>
-                        <span className="text-emerald-500 font-bold">Stellar Transit</span>
+            {/* FILTER CHECKLIST MODAL */}
+            {showFilterModal && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl animate-fade-in font-sans">
+                    <div className={`w-full max-w-md rounded-[2.5rem] p-6 shadow-2xl relative text-slate-900 dark:text-white space-y-4 border ${cardRoleStyle('commuter')}`}>
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-200/80 dark:border-white/10">
+                            <div className="flex items-center gap-2.5">
+                                <div className={`p-2.5 rounded-2xl border ${rolePill('commuter')}`}>
+                                    <Filter className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-lg tracking-tight">Filter Transport Vehicles</h3>
+                                    <p className="text-xs text-slate-500 font-mono">Live Map & Broadcast Beacon Target</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowFilterModal(false)} className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar font-mono text-xs font-bold">
+                            {[
+                                { label: 'All Vehicles', value: 'All', icon: '🚗' },
+                                { label: 'Traditional Jeepney', value: 'Jeepney', icon: '🛻' },
+                                { label: 'Modern E-Jeepney', value: 'E-Jeepney', icon: '⚡🚍' },
+                                { label: 'Tricycle', value: 'Tricycle', icon: '🛺' },
+                                { label: 'E-Trike', value: 'E-Trike', icon: '⚡🛺' },
+                                { label: 'UV Express', value: 'UV Express', icon: '🚐' },
+                                { label: 'Bus', value: 'Bus', icon: '🚌' },
+                            ].map((item) => {
+                                const isSelected = vehicleFilter.toLowerCase() === item.value.toLowerCase();
+                                return (
+                                    <button
+                                        key={item.value}
+                                        onClick={() => {
+                                            if (setVehicleFilter) setVehicleFilter(item.value);
+                                            setShowFilterModal(false);
+                                        }}
+                                        className={`w-full p-3.5 rounded-2xl border transition-all flex items-center justify-between ${isSelected
+                                            ? `${roleCtaBg('commuter')} border-transparent text-white shadow-md`
+                                            : 'bg-slate-50 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/10'
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-lg">{item.icon}</span>
+                                            <span>{item.label}</span>
+                                        </div>
+                                        {isSelected && <Check className="w-4 h-4 text-white" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <button
+                            onClick={() => setShowFilterModal(false)}
+                            className={`w-full py-3.5 font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-md text-white ${roleCtaBg('commuter')}`}
+                        >
+                            Apply Filter
+                        </button>
                     </div>
                 </div>
             )}

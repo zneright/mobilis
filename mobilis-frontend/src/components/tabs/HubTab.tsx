@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Fuel, Building2, UserCheck, ArrowUpRight, ShieldCheck, CheckCircle2, Megaphone, Send, BellRing, X, Truck, Radio } from 'lucide-react';
-import { cardRoleStyle, rolePill, roleAccentText, roleCtaBg, roleCardBorder } from './roleStyleTokens';
+import { Fuel, Building2, UserCheck, ArrowUpRight, ShieldCheck, CheckCircle2, Megaphone, Send, BellRing, X, Truck } from 'lucide-react';
+import { roleCtaBg, roleCardBorder } from './roleStyleTokens';
 
 interface HubTabProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -134,7 +134,7 @@ export const HubTab: React.FC<HubTabProps> = ({
             // Also sync active location document using setDoc merge:true
             await setDoc(doc(db, 'driver_locations', driverUid), {
                 vehicleType: newVehicleType,
-            }, { merge: true }).catch(() => {});
+            }, { merge: true }).catch(() => { });
         } catch (err) {
             console.error("Failed to approve vehicle change:", err);
         } finally {
@@ -189,9 +189,6 @@ export const HubTab: React.FC<HubTabProps> = ({
 
     const isDriver = stellarData?.role?.toLowerCase() === 'driver';
     const role = stellarData?.role ?? 'commuter';
-    const cardStyle = cardRoleStyle(role);
-    const pillStyle = rolePill(role);
-    const accentStyle = roleAccentText(role);
     const ctaStyle = roleCtaBg(role);
     const cardBorder = roleCardBorder(role);
 
@@ -202,7 +199,7 @@ export const HubTab: React.FC<HubTabProps> = ({
 
     return (
         <div className="w-full max-w-4xl mx-auto space-y-5 text-slate-900 dark:text-white font-sans">
-            
+
             {/* DRIVER / MEMBER SOROBAN CREDIT HERO GAUGE CARD */}
             {isDriver && (
                 <div className={`p-8 rounded-3xl bg-white dark:bg-[#0e121a] relative overflow-hidden space-y-6 transition-colors duration-300 ${cardBorder}`}>
@@ -223,7 +220,7 @@ export const HubTab: React.FC<HubTabProps> = ({
 
                     {/* Circular Debt Gauge Visualizer */}
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-8 p-6 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-3xl">
-                        
+
                         <div className="relative w-36 h-36 flex items-center justify-center">
                             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                                 <path
@@ -500,7 +497,7 @@ export const HubTab: React.FC<HubTabProps> = ({
             {showBroadcastModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
                     <div className="w-full max-w-md bg-white dark:bg-[#0a0a14] border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-6 shadow-2xl relative text-slate-900 dark:text-white space-y-5">
-                        
+
                         <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">

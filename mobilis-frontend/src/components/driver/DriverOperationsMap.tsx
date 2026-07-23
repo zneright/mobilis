@@ -191,7 +191,7 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
                     session.commuterLat
                 );
 
-                const geojson: GeoJSON.Feature<GeoJSON.LineString> = {
+                const geojson: { type: 'Feature'; properties: Record<string, unknown>; geometry: { type: string; coordinates: number[][] } } = {
                     type: 'Feature',
                     properties: {},
                     geometry: roadGeometry,
@@ -261,17 +261,6 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
             map.on('styledata', onStyleData);
         }
     }, [driverCoords, activePickupSessions]);
-
-    const handleCompletePickup = async (sessionId: string) => {
-        try {
-            await updateDoc(doc(db, 'active_pickup_sessions', sessionId), {
-                status: 'completed',
-                completedAt: new Date().toISOString(),
-            });
-        } catch (err) {
-            console.error("Failed to complete pickup session:", err);
-        }
-    };
 
     const centerCoords = driverCoords || DEFAULT_COORDS;
     const nearbyPassengers = useMemo(() => {
@@ -348,19 +337,15 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
         if (!mapRef.current) return;
         const map = mapRef.current;
 
-        // Driver Vehicle Marker (Bright Self Badge)
+        // Driver Vehicle Marker (Pure Navigation Arrow - No Text)
         try {
             if (!driverMarkerRef.current) {
                 const el = document.createElement('div');
-                el.className = 'relative flex items-center justify-center';
+                el.className = 'relative flex items-center justify-center cursor-pointer group';
                 el.innerHTML = `
                     <div class="absolute w-14 h-14 rounded-full bg-cyan-400/30 border border-cyan-400/60 animate-ping pointer-events-none"></div>
-                    <div class="relative z-10 px-3 py-1.5 rounded-2xl bg-gradient-to-r from-cyan-400 to-teal-500 text-black font-mono font-black flex items-center gap-1.5 shadow-[0_0_25px_rgba(6,182,212,1)] border-2 border-white text-xs whitespace-nowrap">
-                        <span>${driverVehicleType === 'Jeepney' ? '🛻' :
-                          driverVehicleType === 'UV Express' ? '🚐' :
-                          driverVehicleType === 'Bus' ? '🚌' :
-                          driverVehicleType === 'E-Vehicle' ? '🚙' :
-                          driverVehicleType === 'Motorcycle' ? '🛵' : '🛺'} MY VEHICLE (ON DUTY)</span>
+                    <div class="relative z-10 w-11 h-11 rounded-full bg-gradient-to-tr from-cyan-500 to-emerald-400 text-black flex items-center justify-center shadow-2xl border-2 border-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="animate-pulse"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
                     </div>
                 `;
                 driverMarkerRef.current = new maplibregl.Marker({
@@ -377,7 +362,7 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
             console.warn("Driver marker render error:", e);
         }
 
-        // Passenger Pulse Echo Markers (Cyberpunk Beacon Waves)
+        // Passenger Markers (3D White Stickman Pins - No Text Badges)
         try {
             const currentKeys = new Set<string>();
             nearbyPassengers.forEach((p) => {
@@ -386,15 +371,11 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
                     passengerMarkersRef.current.get(p.id)!.setLngLat([p.lng, p.lat]);
                 } else {
                     const el = document.createElement('div');
-                    el.className = 'cursor-pointer group relative flex items-center justify-center';
+                    el.className = 'cursor-pointer group relative flex flex-col items-center justify-center';
                     el.innerHTML = `
-                        <div class="absolute w-12 h-12 rounded-full bg-cyan-400/20 border border-cyan-400/50 animate-ping"></div>
-                        <div class="absolute w-8 h-8 rounded-full bg-amber-400/30 border border-amber-400/60 animate-pulse"></div>
-                        <div class="relative z-10 w-6 h-6 rounded-full bg-gradient-to-tr from-cyan-300 via-emerald-200 to-white shadow-[0_0_20px_rgba(0,210,255,1)] border-2 border-white group-hover:scale-130 transition-transform flex items-center justify-center">
-                            <div class="w-2 h-2 rounded-full bg-cyan-500 animate-ping"></div>
-                        </div>
-                        <div class="absolute -bottom-6 px-2 py-0.5 rounded-md bg-[#090C14]/90 border border-cyan-400/40 text-[9px] font-mono font-black text-cyan-300 shadow-lg whitespace-nowrap">
-                            📍 PASSENGER WAITING
+                        <div class="absolute w-20 h-20 rounded-full bg-emerald-400/35 border-2 border-emerald-400/70 animate-ping pointer-events-none"></div>
+                        <div class="relative z-10 w-16 h-20 flex items-center justify-center filter drop-shadow-[0_6px_14px_rgba(0,0,0,0.8)] drop-shadow-[0_0_20px_rgba(16,185,129,1)] transition-transform group-hover:scale-125">
+                            <img src="/commuter-stickman.png" alt="Commuter" class="w-full h-full object-contain filter brightness-115 contrast-105" />
                         </div>
                     `;
                     el.addEventListener('click', () => handleAcceptPickup(p));

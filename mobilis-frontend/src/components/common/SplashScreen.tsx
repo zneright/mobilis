@@ -72,7 +72,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
                     <div className="flex items-center justify-center gap-2">
                         <Zap className="w-5 h-5 text-emerald-400 animate-pulse" />
                         <h1 className="text-3xl font-black tracking-[0.25em] text-white uppercase font-mono">
-                            Mobilis<span className="text-emerald-400">Pay</span>
+                            Mobilis
                         </h1>
                     </div>
                     <p className="text-xs font-mono text-emerald-400 font-bold uppercase tracking-widest bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">

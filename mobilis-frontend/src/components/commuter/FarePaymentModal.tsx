@@ -5,7 +5,7 @@ import { db } from '../../firebase';
 import { Keypair, Horizon, TransactionBuilder, Operation, Asset, StrKey, Transaction } from '@stellar/stellar-sdk';
 import { requestAccess, signTransaction, isConnected } from '@stellar/freighter-api';
 import { X, Check, Copy, Printer, ExternalLink, Receipt, ShieldCheck } from 'lucide-react';
-import { cardRoleStyle, roleCtaBg, rolePill, roleAccentText } from '../tabs/roleStyleTokens';
+import { roleCtaBg, rolePill, roleAccentText } from '../tabs/roleStyleTokens';
 import { playDoubleChime } from '../../utils/webAudio';
 
 interface DriverLocation {
@@ -146,7 +146,8 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
                     networkPassphrase: "Test Stellar Network ; September 2015",
                 });
 
-                const signedTx = TransactionBuilder.fromXDR(signedXdr, "Test Stellar Network ; September 2015");
+                const signedXdrStr = typeof signedXdr === 'string' ? signedXdr : (signedXdr as { signedTxXdr: string }).signedTxXdr;
+                const signedTx = TransactionBuilder.fromXDR(signedXdrStr, "Test Stellar Network ; September 2015");
                 try {
                     const submitRes = await server.submitTransaction(signedTx as Transaction);
                     txHash = submitRes.hash;
@@ -227,7 +228,7 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
             // Record Official Digital Receipt in Firestore
             await addDoc(collection(db, 'fare_transactions'), {
                 txHash,
-                commuterId: commuterData.uid || commuterPair.publicKey(),
+                commuterId: commuterData.uid || commuterData.publicKey || '',
                 commuterName: commuterData.fullName || 'Commuter',
                 driverId: driver.uid,
                 driverName: driver.driverName,
@@ -242,7 +243,7 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
 
             // Write Persistent Notification Record for Commuter
             await addDoc(collection(db, 'notifications'), {
-                recipientUid: commuterData.uid || commuterPair.publicKey(),
+                recipientUid: commuterData.uid || commuterData.publicKey || '',
                 type: 'fare',
                 title: '⚡ Fare Payment Sent',
                 message: `Paid to ${driver.driverName} (${driver.plateNumber || 'Mobilis Fleet'})`,

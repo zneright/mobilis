@@ -23,3 +23,12 @@ html.dark body {
   background-color: #07090E;
   color: #f8fafc;
 }
+
+/* Hide scrollbars for cross-browser horizontal/vertical containers */
+.scrollbar-none {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}

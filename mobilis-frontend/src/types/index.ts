@@ -44,6 +44,7 @@ export interface DriverLocationDoc {
     vehicleType?: 'Jeepney' | 'E-Jeepney' | 'Tricycle' | 'E-Trike' | 'UV Express' | 'Bus' | 'E-Vehicle' | 'Motorcycle';
     lat: number;
     lng: number;
+    speed?: number;
     active: boolean;
     updatedAt: string | number;
 }
@@ -63,6 +64,8 @@ export interface PickupSessionDoc {
     id: string;
     driverUid: string;
     commuterUid: string;
+    driverName?: string;
+    plateNumber?: string;
     status: 'accepted' | 'approaching' | 'arrived' | 'completed' | 'cancelled';
     vehicleType: string;
     driverLat: number;
