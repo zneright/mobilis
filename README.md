@@ -65,51 +65,41 @@ With **Mobilis**, commuters can now discover nearby drivers on a real-time radar
 
 | Driver Dashboard (Radar & Dispatch Queue) | Driver Digital Wallet (Soroban Vault) |
 | :---: | :---: |
-| <img src="./docs/screenshots/driver_dashboard.png" width="280" alt="Driver Dashboard" /> | <img src="./docs/screenshots/driver_wallet.png" width="280" alt="Driver Wallet" /> |
-
-| Driver Transactions (Fare Receipts) | Driver Profile & Transport Vehicle |
-| :---: | :---: |
-| <img src="./docs/screenshots/driver_transactions.png" width="280" alt="Driver Transactions" /> | <img src="./docs/screenshots/driver_profile.png" width="280" alt="Driver Profile" /> |
+| <img src="./docs/screenshots/driver_dashboard.png" width="380" alt="Driver Dashboard" /> | <img src="./docs/screenshots/driver_wallet.png" width="380" alt="Driver Wallet" /> |
+| **Driver Transactions (Fare Receipts)** | **Driver Profile & Transport Vehicle** |
+| <img src="./docs/screenshots/driver_transactions.png" width="380" alt="Driver Transactions" /> | <img src="./docs/screenshots/driver_profile.png" width="380" alt="Driver Profile" /> |
 
 ### 🧍‍♂️ Commuter Transit UI Suite (Verified Mobile Views)
 
 | Commuter Radar (Live Vector Map & Filters) | Commuter Soroban Vault (Wallet) |
 | :---: | :---: |
-| <img src="./docs/screenshots/commuter_dashboard.png" width="280" alt="Commuter Dashboard" /> | <img src="./docs/screenshots/commuter_wallet.png" width="280" alt="Commuter Wallet" /> |
-
-| Commuter Transactions (Fare History) | Commuter Profile & Security |
-| :---: | :---: |
-| <img src="./docs/screenshots/commuter_transactions.png" width="280" alt="Commuter Transactions" /> | <img src="./docs/screenshots/commuter_profile.png" width="280" alt="Commuter Profile" /> |
+| <img src="./docs/screenshots/commuter_dashboard.png" width="380" alt="Commuter Dashboard" /> | <img src="./docs/screenshots/commuter_wallet.png" width="380" alt="Commuter Wallet" /> |
+| **Commuter Transactions (Fare History)** | **Commuter Profile & Security** |
+| <img src="./docs/screenshots/commuter_transactions.png" width="380" alt="Commuter Transactions" /> | <img src="./docs/screenshots/commuter_profile.png" width="380" alt="Commuter Profile" /> |
 
 ### 🏢 Cooperative Treasury UI Suite (Verified Mobile Views)
 
 | Coop Dashboard & Member Queue | Coop Soroban Vault (Coop Treasury) |
 | :---: | :---: |
-| <img src="./docs/screenshots/coop_dashboard.png" width="280" alt="Coop Dashboard" /> | <img src="./docs/screenshots/coop_wallet.png" width="280" alt="Coop Wallet" /> |
-
-| Coop Transactions (Fuel Advances & Loans) | Coop Profile & Settings |
-| :---: | :---: |
-| <img src="./docs/screenshots/coop_transactions.png" width="280" alt="Coop Transactions" /> | <img src="./docs/screenshots/coop_profile.png" width="280" alt="Coop Profile" /> |
+| <img src="./docs/screenshots/coop_dashboard.png" width="380" alt="Coop Dashboard" /> | <img src="./docs/screenshots/coop_wallet.png" width="380" alt="Coop Wallet" /> |
+| **Coop Transactions (Fuel Advances & Loans)** | **Coop Profile & Settings** |
+| <img src="./docs/screenshots/coop_transactions.png" width="380" alt="Coop Transactions" /> | <img src="./docs/screenshots/coop_profile.png" width="380" alt="Coop Profile" /> |
 
 ### 🛠️ System Admin UI Suite (Verified Desktop Views)
 
 | Super Admin Command Center (Verify & Broadcast) | Super Admin Soroban Vault (Platform Treasury) |
 | :---: | :---: |
-| <img src="./docs/screenshots/superadmin_dashboard.jpg" width="385" alt="Super Admin Dashboard" /> | <img src="./docs/screenshots/superadmin_wallet.jpg" width="385" alt="Super Admin Wallet" /> |
-
-| Super Admin Transactions (System Receipts) | Super Admin Profile & Settings |
-| :---: | :---: |
-| <img src="./docs/screenshots/superadmin_transactions.jpg" width="385" alt="Super Admin Transactions" /> | <img src="./docs/screenshots/superadmin_profile.jpg" width="385" alt="Super Admin Profile" /> |
+| <img src="./docs/screenshots/superadmin_dashboard.jpg" width="380" alt="Super Admin Dashboard" /> | <img src="./docs/screenshots/superadmin_wallet.jpg" width="380" alt="Super Admin Wallet" /> |
+| **Super Admin Transactions (System Receipts)** | **Super Admin Profile & Settings** |
+| <img src="./docs/screenshots/superadmin_transactions.jpg" width="380" alt="Super Admin Transactions" /> | <img src="./docs/screenshots/superadmin_profile.jpg" width="380" alt="Super Admin Profile" /> |
 
 ### 🔐 Authentication & Onboarding Gateway (Verified Mobile Flows)
 
 | Login Gateway (Passkey / Email) | Onboarding Step 1: Role Selector |
 | :---: | :---: |
-| <img src="./docs/screenshots/login_view.png" width="280" alt="Login Gateway" /> | <img src="./docs/screenshots/onboarding_step_1.png" width="280" alt="Role Selector" /> |
-
-| Onboarding Step 2: Credentials Setup | Onboarding Step 3: Profile Specifications |
-| :---: | :---: |
-| <img src="./docs/screenshots/onboarding_step_2.png" width="280" alt="Credentials Setup" /> | <img src="./docs/screenshots/onboarding_step_3.png" width="280" alt="Profile Specifications" /> |
+| <img src="./docs/screenshots/login_view.png" width="380" alt="Login Gateway" /> | <img src="./docs/screenshots/onboarding_step_1.png" width="380" alt="Role Selector" /> |
+| **Onboarding Step 2: Credentials Setup** | **Onboarding Step 3: Profile Specifications** |
+| <img src="./docs/screenshots/onboarding_step_2.png" width="380" alt="Credentials Setup" /> | <img src="./docs/screenshots/onboarding_step_3.png" width="380" alt="Profile Specifications" /> |
 
 ---
 
