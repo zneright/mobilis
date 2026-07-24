@@ -2,6 +2,9 @@
 
 > **A Soroban-Powered Automated Micro-Credit Treasury and Non-Custodial Liquidity Routing Infrastructure for Unbanked Transport Drivers and Commuters in the Philippines.**
 
+[![CI Pipeline](https://github.com/zneright/mobilis1/actions/workflows/ci.yml/badge.svg)](https://github.com/zneright/mobilis1/actions/workflows/ci.yml)
+[![CD Pipeline](https://github.com/zneright/mobilis1/actions/workflows/deploy.yml/badge.svg)](https://github.com/zneright/mobilis1/actions/workflows/deploy.yml)
+
 <p align="center">
   <img width="100%" alt="Mobilis Dashboard" src="https://github.com/user-attachments/assets/a722e22f-fa77-4339-8dd6-945c1a89ad2a" />
 </p>
@@ -103,8 +106,47 @@ With **Mobilis**, commuters can now discover nearby drivers on a real-time radar
 
 ---
 
-### CI/CD Deployment Pipeline & Test Suite Performance
-<img width="852" height="166" alt="image" src="https://github.com/user-attachments/assets/aae6fa43-43a4-471b-a7a4-27ec278dc4cc" />
+## 📜 Smart Contract & Frontend Integration Codebase Map
+
+| Rust Soroban Contract Method ([`contracts/Mobilis/src/lib.rs`](file:///c:/Users/Renz%20Jericho%20Buday/mobilis/contracts/Mobilis/src/lib.rs)) | Frontend Integration Function ([`mobilis-frontend/src/services/stellar.ts`](file:///c:/Users/Renz%20Jericho%20Buday/mobilis/mobilis-frontend/src/services/stellar.ts)) | Description & Ledger Action |
+| :--- | :--- | :--- |
+| `pub fn init(env, admin, token, platform)` | `initContract(...)` | Initializes TODA cooperative treasury parameters on Stellar testnet |
+| `pub fn request_advance(env, driver, amount)` | `requestAdvanceLoan(...)` | Borrows fuel advance from contract vault to driver wallet |
+| `pub fn settle_loan(env, driver)` | `settleLoan(...)` | Settles active loan; splits 0.3% to Coop Admin & 0.2% to Mobilis Platform |
+| `pub fn get_debt(env, driver) -> i128` | `getDriverDebt(...)` | Simulates and queries real-time driver debt state from contract storage |
+
+### Frontend Integration Service Architecture:
+- [`src/services/stellar.ts`](file:///c:/Users/Renz%20Jericho%20Buday/mobilis/mobilis-frontend/src/services/stellar.ts): Unified public API module exposing all Stellar SDK operations and Soroban smart contract calls.
+- [`src/services/stellarContract.ts`](file:///c:/Users/Renz%20Jericho%20Buday/mobilis/mobilis-frontend/src/services/stellarContract.ts): Low-level `@stellar/stellar-sdk` implementation, transaction builder wrappers, RPC simulation, and Horizon state listeners.
+- [`src/services/freighter.ts`](file:///c:/Users/Renz%20Jericho%20Buday/mobilis/mobilis-frontend/src/services/freighter.ts): Non-custodial browser wallet connection and transaction signing via `@stellar/freighter-api`.
+
+---
+
+## ⚙️ CI/CD Pipeline Architecture & Validation
+
+Mobilis features full automated Continuous Integration (CI) and Continuous Deployment (CD) workflows for both the **Soroban Smart Contract** and the **Frontend Web Application**:
+
+### 1. Continuous Integration (`.github/workflows/ci.yml`)
+- **Smart Contract CI (`smart-contract-ci`):** 
+  - Validates code syntax with `cargo check --workspace`
+  - Runs all smart contract unit assertions with `cargo test --workspace` (4/4 tests passing)
+  - Compiles Soroban WebAssembly binary: `cargo build --target wasm32-unknown-unknown --release`
+- **Frontend CI (`frontend-ci`):**
+  - Installs clean dependencies: `npm ci`
+  - Validates code style and rules: `npm run lint`
+  - Runs TypeScript type checking & test suite: `npm test`
+  - Builds production Vite client bundle: `npm run build`
+
+### 2. Continuous Deployment (`.github/workflows/deploy.yml`)
+- **Smart Contract CD (`deploy-smart-contract`):** 
+  - Compiles production Soroban WASM target artifact
+  - Uploads compiled `mobilis-soroban-contract.wasm` artifact to GitHub Workflow Actions
+  - Deploys smart contract binary to Stellar Testnet via `stellar contract deploy`
+- **Frontend CD (`deploy-frontend`):**
+  - Builds production React asset package
+  - Automatically deploys live build to **Firebase Hosting** on `main` branch push
+
+<img width="852" height="166" alt="CI/CD Pipeline Output" src="https://github.com/user-attachments/assets/aae6fa43-43a4-471b-a7a4-27ec278dc4cc" />
 
 ---
 

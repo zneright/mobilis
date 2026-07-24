@@ -1,0 +1,72 @@
+name: CI Pipeline - Smart Contract & Frontend
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  smart-contract-ci:
+    name: Smart Contract CI (Soroban / Rust)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Cargo Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Run Cargo Check
+        run: cargo check --workspace
+
+      - name: Run Smart Contract Unit Tests
+        run: cargo test --workspace
+
+      - name: Build WASM Binary
+        run: cargo build --target wasm32-unknown-unknown --release
+
+  frontend-ci:
+    name: Frontend CI (React / TypeScript / Stellar SDK)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: mobilis-frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        run: npm ci
+        working-directory: mobilis-frontend
+
+      - name: Run ESLint Check
+        run: npm run lint
+        working-directory: mobilis-frontend
+
+      - name: Run TypeScript & Integration Tests
+        run: npm test
+        working-directory: mobilis-frontend
+
+      - name: Build Vite Production Bundle
+        run: npm run build
+        working-directory: mobilis-frontend

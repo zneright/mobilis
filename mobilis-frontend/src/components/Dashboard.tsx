@@ -10,7 +10,6 @@ import {
     Contract,
     rpc,
     nativeToScVal,
-    scValToNative,
     Operation,
     Asset,
     xdr,
@@ -34,6 +33,7 @@ import { DriverOperationsMap } from './driver/DriverOperationsMap';
 import MobilisLoader from './common/MobilisLoader';
 import { playDoubleChime } from '../utils/webAudio';
 import { setupFcmNotifications } from '../services/fcm';
+import { getDriverDebt } from '../services/stellar';
 
 declare global {
     interface Window {
@@ -645,25 +645,10 @@ const Dashboard: React.FC = () => {
 
         if (stellarData?.role === 'driver') {
             try {
-                const server = new rpc.Server(RPC_SERVER);
-                const contract = new Contract(CONTRACT_ID);
-
-                const account = await server.getAccount(activePubKey);
-                const tx = new TransactionBuilder(account, { fee: "10000", networkPassphrase: NETWORK_PASSPHRASE })
-                    .addOperation(contract.call("get_debt", nativeToScVal(activePubKey, { type: 'address' })))
-                    .setTimeout(30).build();
-
-                const simulation = await server.simulateTransaction(tx);
-                if (rpc.Api.isSimulationSuccess(simulation)) {
-                    if (simulation.result && simulation.result.retval) {
-                        const rawDebt = scValToNative(simulation.result.retval);
-                        setDebtState(Number(rawDebt) / 10000000);
-                    } else {
-                        setDebtState(0);
-                    }
-                }
+                const debt = await getDriverDebt(activePubKey);
+                setDebtState(debt);
             } catch (error) {
-                console.error("[Dashboard] Smart Contract Debt Simulation Error:", error);
+                console.error("[Dashboard] Smart Contract Debt Query Error:", error);
             }
         }
     };

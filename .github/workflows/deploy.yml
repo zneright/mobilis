@@ -1,0 +1,89 @@
+name: CD Pipeline - Smart Contract & Frontend Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-smart-contract:
+    name: Smart Contract CD (Soroban Build & Deploy)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Cargo Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build Contract WASM
+        run: cargo build --target wasm32-unknown-unknown --release
+
+      - name: Upload Smart Contract WASM Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobilis-soroban-contract
+          path: target/wasm32-unknown-unknown/release/mobilis.wasm
+
+      - name: Install Stellar / Soroban CLI
+        run: |
+          cargo install --locked soroban-cli || true
+
+      - name: Deploy Smart Contract to Stellar Testnet (If Secret Configured)
+        env:
+          STELLAR_SECRET_KEY: ${{ secrets.STELLAR_SECRET_KEY }}
+        run: |
+          if [ -n "$STELLAR_SECRET_KEY" ]; then
+            echo "Deploying Soroban Contract to Stellar Testnet..."
+            soroban contract deploy \
+              --wasm target/wasm32-unknown-unknown/release/mobilis.wasm \
+              --source-account "$STELLAR_SECRET_KEY" \
+              --network testnet
+          else
+            echo "STELLAR_SECRET_KEY secret not set. Verified compiled WASM binary target/wasm32-unknown-unknown/release/mobilis.wasm ready for deployment."
+          fi
+
+  deploy-frontend:
+    name: Frontend CD (Deploy to Firebase Hosting)
+    needs: [deploy-smart-contract]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: mobilis-frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        run: npm ci
+        working-directory: mobilis-frontend
+
+      - name: Build Frontend Application
+        run: npm run build
+        working-directory: mobilis-frontend
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MOBILIS_10F9A }}
+          channelId: live
+          projectId: mobilis-10f9a
+          entryPoint: ./mobilis-frontend

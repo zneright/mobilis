@@ -7,6 +7,7 @@ import { requestAccess, signTransaction, isConnected } from '@stellar/freighter-
 import { X, Check, Copy, Printer, ExternalLink, Receipt, ShieldCheck } from 'lucide-react';
 import { roleCtaBg, rolePill, roleAccentText } from '../tabs/roleStyleTokens';
 import { playDoubleChime } from '../../utils/webAudio';
+import { HORIZON_SERVER as STELLAR_HORIZON_SERVER } from '../../services/stellar';
 
 interface DriverLocation {
     uid: string;
@@ -27,7 +28,7 @@ interface FarePaymentModalProps {
 }
 
 const PHP_RATE = 60.69; // 1 XLM ≈ 60.69 PHP
-const HORIZON_SERVER = "https://horizon-testnet.stellar.org";
+const HORIZON_SERVER = STELLAR_HORIZON_SERVER;
 
 export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
     driver,
