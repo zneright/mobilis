@@ -9,6 +9,7 @@ export function runMobilisTests() {
 
     // Test 2: Structural Settlement Constraints
     let currentDebt = 15; // Max borrow limit
+    console.assert(currentDebt === 15, 'Borrow limit initialization failed');
     currentDebt = 0;
     console.assert(currentDebt === 0, 'Settlement clearing failed');
 

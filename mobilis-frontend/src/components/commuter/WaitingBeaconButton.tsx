@@ -31,6 +31,20 @@ export const WaitingBeaconButton: React.FC<WaitingBeaconButtonProps> = ({
     const beaconDocRef = doc(db, 'waiting_beacons', commuterUid);
 
     // Auto-countdown timer for active beacon (10 minute auto-expiration)
+    const handleStopWaiting = async () => {
+        setIsSubmitting(true);
+        try {
+            await deleteDoc(beaconDocRef).catch(() => {});
+            setIsWaiting(false);
+            setExpiresAt(null);
+            setTimeLeftSec(0);
+        } catch (err) {
+            console.error("Failed to stop waiting beacon:", err);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     useEffect(() => {
         if (!isWaiting || !expiresAt) return;
 
@@ -68,20 +82,6 @@ export const WaitingBeaconButton: React.FC<WaitingBeaconButtonProps> = ({
             setIsWaiting(true);
         } catch (err) {
             console.error("Failed to start waiting beacon:", err);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleStopWaiting = async () => {
-        setIsSubmitting(true);
-        try {
-            await deleteDoc(beaconDocRef).catch(() => {});
-            setIsWaiting(false);
-            setExpiresAt(null);
-            setTimeLeftSec(0);
-        } catch (err) {
-            console.error("Failed to stop waiting beacon:", err);
         } finally {
             setIsSubmitting(false);
         }

@@ -332,6 +332,34 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
         };
     }, [theme]);
 
+    const handleAcceptPickup = async (beacon: WaitingBeaconDoc) => {
+        if (!driverData.uid || !driverCoords) return;
+        setAcceptingId(beacon.id);
+
+        try {
+            const sessionId = `pickup_${beacon.commuterUid}`;
+            await setDoc(doc(db, 'active_pickup_sessions', sessionId), {
+                id: sessionId,
+                driverUid: driverData.uid,
+                commuterUid: beacon.commuterUid,
+                status: 'accepted',
+                vehicleType: driverVehicleType,
+                driverLat: driverCoords.lat,
+                driverLng: driverCoords.lng,
+                commuterLat: beacon.lat,
+                commuterLng: beacon.lng,
+                acceptedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+            });
+
+            playDriverAlertChime();
+        } catch (err) {
+            console.error("Failed to accept pickup session:", err);
+        } finally {
+            setAcceptingId(null);
+        }
+    };
+
     // Update Driver Vehicle & Passenger Markers
     useEffect(() => {
         if (!mapRef.current) return;
@@ -400,34 +428,6 @@ export const DriverOperationsMap: React.FC<DriverOperationsMapProps> = ({ driver
             console.warn("Passenger marker render error:", e);
         }
     }, [centerCoords, nearbyPassengers]);
-
-    const handleAcceptPickup = async (beacon: WaitingBeaconDoc) => {
-        if (!driverData.uid || !driverCoords) return;
-        setAcceptingId(beacon.id);
-
-        try {
-            const sessionId = `pickup_${beacon.commuterUid}`;
-            await setDoc(doc(db, 'active_pickup_sessions', sessionId), {
-                id: sessionId,
-                driverUid: driverData.uid,
-                commuterUid: beacon.commuterUid,
-                status: 'accepted',
-                vehicleType: driverVehicleType,
-                driverLat: driverCoords.lat,
-                driverLng: driverCoords.lng,
-                commuterLat: beacon.lat,
-                commuterLng: beacon.lng,
-                acceptedAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-            });
-
-            playDriverAlertChime();
-        } catch (err) {
-            console.error("Failed to accept pickup session:", err);
-        } finally {
-            setAcceptingId(null);
-        }
-    };
 
     const togglePitch = () => {
         const nextPitch = mapPitch === 45 ? 0 : 45;
