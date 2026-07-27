@@ -2,9 +2,9 @@
 
 > **A Soroban-Powered Automated Micro-Credit Treasury and Non-Custodial Liquidity Routing Infrastructure for Unbanked Transport Drivers and Commuters in the Philippines.**
 
-[![CI Pipeline](https://github.com/zneright/mobilis1/actions/workflows/ci.yml/badge.svg)](https://github.com/zneright/mobilis1/actions/workflows/ci.yml)
-[![CD Pipeline](https://github.com/zneright/mobilis1/actions/workflows/deploy.yml/badge.svg)](https://github.com/zneright/mobilis1/actions/workflows/deploy.yml)
-[![Firebase Deploy Status](https://github.com/zneright/mobilis1/actions/workflows/firebase-hosting-merge.yml/badge.svg)](https://github.com/zneright/mobilis1/actions)
+[![CI Pipeline](https://github.com/zneright/mobilis/actions/workflows/ci.yml/badge.svg)](https://github.com/zneright/mobilis/actions/workflows/ci.yml)
+[![CD Pipeline](https://github.com/zneright/mobilis/actions/workflows/deploy.yml/badge.svg)](https://github.com/zneright/mobilis/actions/workflows/deploy.yml)
+[![Firebase Deploy Status](https://github.com/zneright/mobilis/actions/workflows/firebase-hosting-merge.yml/badge.svg)](https://github.com/zneright/mobilis/actions)
 
 
 <p align="center">
