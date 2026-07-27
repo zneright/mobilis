@@ -63,6 +63,11 @@ jobs:
     environment:
       name: production
       url: https://mobilis-10f9a.web.app
+    permissions:
+      checks: write
+      contents: read
+      deployments: write
+      pull-requests: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
