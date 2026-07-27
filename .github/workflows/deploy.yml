@@ -60,6 +60,9 @@ jobs:
     name: Frontend CD (Deploy to Firebase Hosting)
     needs: [deploy-smart-contract]
     runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://mobilis-10f9a.web.app
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4

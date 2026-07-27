@@ -4,6 +4,8 @@
 
 [![CI Pipeline](https://github.com/zneright/mobilis1/actions/workflows/ci.yml/badge.svg)](https://github.com/zneright/mobilis1/actions/workflows/ci.yml)
 [![CD Pipeline](https://github.com/zneright/mobilis1/actions/workflows/deploy.yml/badge.svg)](https://github.com/zneright/mobilis1/actions/workflows/deploy.yml)
+[![Firebase Deploy Status](https://github.com/zneright/mobilis1/actions/workflows/firebase-hosting-merge.yml/badge.svg)](https://github.com/zneright/mobilis1/actions)
+
 
 <p align="center">
   <img width="100%" alt="Mobilis Dashboard" src="https://github.com/user-attachments/assets/a722e22f-fa77-4339-8dd6-945c1a89ad2a" />
