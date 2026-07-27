@@ -4,7 +4,7 @@
 
 [![CI Pipeline](https://github.com/zneright/mobilis/actions/workflows/ci.yml/badge.svg)](https://github.com/zneright/mobilis/actions/workflows/ci.yml)
 [![CD Pipeline](https://github.com/zneright/mobilis/actions/workflows/deploy.yml/badge.svg)](https://github.com/zneright/mobilis/actions/workflows/deploy.yml)
-[![Firebase Deploy Status](https://github.com/zneright/mobilis/actions/workflows/firebase-hosting-merge.yml/badge.svg)](https://github.com/zneright/mobilis/actions)
+[![Firebase Deploy Status](https://github.com/zneright/mobilis/actions/workflows/firebase-hosting-merge.yml/badge.svg?branch=main)](https://github.com/zneright/mobilis/actions)
 
 
 <p align="center">
