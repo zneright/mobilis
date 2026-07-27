@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: preview
+      url: ${{ steps.deploy_preview.outputs.details_url }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js Environment
@@ -25,6 +26,7 @@ jobs:
       - run: npm ci && npm run build
         working-directory: mobilis-frontend
       - uses: FirebaseExtended/action-hosting-deploy@v0
+        id: deploy_preview
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MOBILIS_10F9A }}

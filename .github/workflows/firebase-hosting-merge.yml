@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: https://mobilis-10f9a.web.app
+      url: ${{ steps.deploy_production.outputs.details_url }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js Environment
@@ -29,6 +29,7 @@ jobs:
       - run: npm ci && npm run build
         working-directory: mobilis-frontend
       - uses: FirebaseExtended/action-hosting-deploy@v0
+        id: deploy_production
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MOBILIS_10F9A }}
