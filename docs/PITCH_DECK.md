@@ -10,17 +10,17 @@
 
 ```mermaid
 flowchart TD
-    S1[1. Title & Vision] --> S2[2. The 5-6 Debt Trap]
-    S2 --> S3[3. The Mobilis Solution]
-    S3 --> S4[4. Soroban Treasury Architecture]
-    S4 --> S5[5. Commuter Radar & Micropayments]
-    S5 --> S6[6. Automated Fee-Routing Engine]
-    S6 --> S7[7. Market Opportunity & TAM]
-    S7 --> S8[8. Pilot Metrics & Traction]
-    S8 --> S9[9. Unit Economics & Sustainability]
-    S9 --> S10[10. Competitive Differentiation]
-    S10 --> S11[11. Roadmap & Scale]
-    S11 --> S12[12. Team & Call to Action]
+    S1["1. Title & Vision"] --> S2["2. The 5-6 Debt Trap"]
+    S2 --> S3["3. The Mobilis Solution"]
+    S3 --> S4["4. Soroban Treasury Architecture"]
+    S4 --> S5["5. Commuter Radar & Micropayments"]
+    S5 --> S6["6. Automated Fee-Routing Engine"]
+    S6 --> S7["7. Market Opportunity & TAM"]
+    S7 --> S8["8. Pilot Metrics & Traction"]
+    S8 --> S9["9. Unit Economics & Sustainability"]
+    S9 --> S10["10. Competitive Differentiation"]
+    S10 --> S11["11. Roadmap & Scale"]
+    S11 --> S12["12. Team & Call to Action"]
 ```
 
 ---
