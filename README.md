@@ -42,42 +42,89 @@ Mobilis deploys non-custodial, decentralized liquidity pools powered by **Stella
 
 ---
 
-## 🏗️ System Architecture & Financial Flow
+## 🏗️ System & Role-Based Flowcharts
 
+Detailed interactive flowcharts modeling the MVP core loop, role-by-role user journeys, and Soroban smart contract state transitions. For full architectural diagrams, see [docs/FLOWCHARTS.md](docs/FLOWCHARTS.md).
+
+### 1. 🚀 MVP Core System Loop
 ```mermaid
 flowchart TB
-    subgraph "Frontend Client Layer (React + Vite + Tailwind)"
-        C[🚶 Commuter App]
-        D[🛺 Driver Dashboard]
-        A[🏢 Coop Admin Portal]
+    subgraph "1. Fast-Pass Onboarding"
+        U[User] -->|1-Click Provisioning| W[Auto-Generate ED25519 Wallet & Fund via Friendbot]
     end
 
-    subgraph "Real-Time State & Location Routing"
-        FS[(🔥 Firebase Firestore)]
-        FCM[📲 Push Notifications]
-        WA[🔊 Web Audio Synthesizer]
+    subgraph "2. Live Transit Discovery & Micropayments"
+        D[🛺 Driver 'Goes On Transit'] -->|Broadcasts Real-Time GPS| FS[(Firestore DB)]
+        C[🚶 Commuter Radar] -->|Haversine Radial Discovery| FS
+        C -->|1-Tap Preset: ₱15 / ₱25 / ₱50| S[⚡ Direct Stellar XLM Payment]
+        S -->|Sub-Second Ledger Settlement| DW[👛 Driver Wallet]
+        DW -->|Zero-Network Synthesizer| CH[🔊 Web Audio Dual-Chime Alert]
     end
 
-    subgraph "Stellar & Soroban On-Chain Layer (Testnet)"
-        RPC[⚡ Soroban RPC & Horizon]
-        ST[🏛️ Soroban Treasury Contract<br/><code>CAVFLXBG4MXG...</code>]
-        CW[👛 Commuter Wallet]
-        DW[👛 Driver Wallet]
-        AW[👛 Coop Admin Wallet]
-        PW[👛 Platform Treasury]
+    subgraph "3. Soroban Micro-Credit Treasury"
+        DW -->|Request 10-25 XLM Fuel Advance| SC[🏛️ Soroban Treasury Contract]
+        SC -->|Disburse Principal| DW
+        DW -->|Shift Completion: Settle Loan| SC
+        SC -->|Principal + 0.3% Risk Yield| AW[🏢 Coop Admin Wallet]
+        SC -->|0.2% Protocol Maintenance Fee| PW[⚙️ Platform Treasury]
     end
 
-    C -- "1. Radar Discovery & GPS" --> FS
-    D -- "Broadcasts On-Duty GPS" --> FS
-    C -- "2. Direct Fare Payment (XLM)" --> DW
-    DW -- "3. Web Audio Alert / FCM" --> WA
-    
-    A -- "Deploy & Capitalize Pool" --> ST
-    D -- "4. Request Fuel Advance (10-25 XLM)" --> ST
-    ST -- "Disburses Principal" --> DW
-    DW -- "5. Settle Loan (Principal + 0.5% Fee)" --> ST
-    ST -- "Principal + 0.3% Risk Margin" --> AW
-    ST -- "0.2% Protocol Maintenance Fee" --> PW
+    W --> D
+    W --> C
+```
+
+### 2. 🚶 Commuter Transit Journey
+```mermaid
+flowchart LR
+    A[1. 🚶 Fast-Pass Signup<br/>Name, Email, Password] -->|Auto-Generated Wallet| B[2. 📡 Radar Discovery<br/>Live Map & Radius Selector]
+    B -->|Haversine Proximity Filter| C[3. 🛺 Select Driver<br/>View TODA Fleet & Vehicle]
+    C -->|Choose ₱15 / ₱25 / ₱50 Preset| D[4. ⚡ Instant Payment<br/>Stellar XLM Transfer]
+    D -->|3-5s Ledger Settlement| E[5. 🧾 Digital Receipt<br/>StellarExpert Explorer Link]
+```
+
+### 3. 🛺 Driver Operations & Fuel Micro-Credit Journey
+```mermaid
+flowchart TD
+    D1[1. 🛺 Driver Registration] -->|Verify TODA Affiliation| D2[2. 🏛️ Request Fuel Advance]
+    D2 -->|Soroban Vault Disburses 10-25 XLM| D3[3. ⛽ Purchase Morning Fuel]
+    D3 -->|Toggle 'Go On Transit'| D4[4. 📡 Broadcast Live GPS Coordinates]
+    D4 -->|Commuter Pays Direct Fare| D5[5. 🔊 Web Audio Chime Alert<br/>Zero Network Overhead]
+    D5 -->|Track Daily Net Revenue| D6[6. 📊 Real-Time Shift Tracker]
+    D6 -->|Evening Shift Completion| D7[7. 💳 Settle Loan on Soroban]
+    D7 -->|Single Atomic Transaction| D8[8. ✅ Debt Cleared & Net Income Retained]
+```
+
+### 4. 🏢 Cooperative Admin Governance & Treasury Journey
+```mermaid
+flowchart TD
+    A1[1. 🏢 Register TODA Coop] -->|Deposit Reserve Capital| A2[2. 🏛️ Capitalize Soroban Vault]
+    A2 -->|Review License & Plate No.| A3[3. 👥 Approve Member Drivers]
+    A3 -->|Real-Time Debt Monitoring| A4[4. 📊 Supervise Fleet Liquidity]
+    A4 -->|Driver Settles Loan| A5[5. 💰 Receive 0.3% Protocol Yield]
+    A5 -->|Weather / Route Advisories| A6[6. 📢 Broadcast Priority Notices]
+```
+
+### 5. 📜 Soroban Smart Contract & Atomic Fee Routing State Machine
+```mermaid
+flowchart TD
+    subgraph "Driver Repayment Input (e.g. 100.5 XLM)"
+        IN[Driver Repayment: Principal + 0.5% Total Fee]
+    end
+
+    subgraph "Soroban Treasury Contract (CAVFL...)"
+        SC{MobilisTreasury::settle_loan}
+    end
+
+    subgraph "Atomic Ledger Settlement Output"
+        PR[🏛️ 100.0 XLM: Cooperative Treasury Pool (Principal Replenished)]
+        CA[🏢 0.30 XLM: Coop Admin Personal Wallet (0.3% Risk Margin)]
+        PW[⚙️ 0.20 XLM: Mobilis Platform Treasury (0.2% Maintenance)]
+    end
+
+    IN --> SC
+    SC -->|1. Transfer Principal| PR
+    SC -->|2. Transfer Coop Share| CA
+    SC -->|3. Transfer Platform Share| PW
 ```
 
 ---
