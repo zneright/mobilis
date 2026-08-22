@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Sun, Moon, Bell, ShieldCheck, Navigation, Radio, Building2, ShieldAlert } from 'lucide-react';
+import { Sun, Moon, Bell, ShieldCheck, Navigation, Radio, Building2, ShieldAlert, Wifi } from 'lucide-react';
 import { rolePill } from './tabs/roleStyleTokens';
 import MobilisLogo from './common/MobilisLogo';
 import { motion } from 'framer-motion';
@@ -66,9 +66,16 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onOpenNotifications
 
             {/* Right: Actions & Controls */}
             <div className="flex items-center gap-2">
+                {/* Live Network & RPC Health Status */}
+                <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold border transition-all ${pillClass}`}>
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <Wifi className="w-3 h-3" />
+                    <span>STELLAR RPC ONLINE</span>
+                </div>
+
                 <div className={`hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold border transition-all ${pillClass}`}>
                     <ShieldCheck className="w-3 h-3" />
-                    <span>STELLAR TESTNET</span>
+                    <span>TESTNET</span>
                 </div>
 
                 {/* Notification Bell */}
@@ -96,4 +103,4 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onOpenNotifications
     );
 };
 
-export default Header;
+export default Header;

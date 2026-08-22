@@ -265,6 +265,42 @@ export const HubTab: React.FC<HubTabProps> = ({
                         </div>
                     </div>
 
+                    {/* Shift Economics & Net Earnings Card (Feedback Feature) */}
+                    <div className="p-6 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-3xl space-y-4">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400">
+                                📊 Today's Shift Economics & Take-Home
+                            </span>
+                            <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20">
+                                Live In-Memory Simulation
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="p-4 bg-white dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.06] rounded-2xl">
+                                <span className="text-[10px] font-mono text-slate-400 dark:text-gray-500 block uppercase font-bold">Gross Fares Collected</span>
+                                <span className="text-lg font-black text-slate-900 dark:text-white font-mono block mt-1">{formatCurrency(safeDebt > 0 ? (safeDebt * 2.8).toFixed(1) : '45.0')}</span>
+                                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold font-mono">{'\u2248'} {'\u20B1'}{((safeDebt > 0 ? safeDebt * 2.8 : 45) * 60.69).toFixed(0)} PHP</span>
+                            </div>
+
+                            <div className="p-4 bg-white dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.06] rounded-2xl">
+                                <span className="text-[10px] font-mono text-slate-400 dark:text-gray-500 block uppercase font-bold">Soroban Fuel Advance</span>
+                                <span className="text-lg font-black text-amber-600 dark:text-amber-400 font-mono block mt-1">-{formatCurrency(safeDebt)}</span>
+                                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold font-mono">{'\u2248'} -{'\u20B1'}{(safeDebt * 60.69).toFixed(0)} PHP</span>
+                            </div>
+
+                            <div className="p-4 bg-white dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.06] rounded-2xl">
+                                <span className="text-[10px] font-mono text-slate-400 dark:text-gray-500 block uppercase font-bold">Net Daily Take-Home</span>
+                                <span className="text-lg font-black text-emerald-500 font-mono block mt-1">
+                                    +{formatCurrency(Math.max(0, (safeDebt > 0 ? safeDebt * 1.8 : 45)).toFixed(1))}
+                                </span>
+                                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold font-mono">
+                                    {'\u2248'} +{'\u20B1'}{(Math.max(0, (safeDebt > 0 ? safeDebt * 1.8 : 45)) * 60.69).toFixed(0)} PHP
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Action Buttons */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <button

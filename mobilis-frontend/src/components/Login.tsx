@@ -3,12 +3,13 @@ import { auth } from '../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Key, Mail, Lock, ShieldCheck, Zap } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, ShieldCheck, Zap, Eye, EyeOff, UserCheck, Navigation, Building2 } from 'lucide-react';
 import MobilisLogo from './common/MobilisLogo';
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
@@ -28,6 +29,20 @@ const Login: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const fillDemoRole = (role: 'driver' | 'commuter' | 'admin') => {
+        if (role === 'driver') {
+            setEmail('driver.demo@mobilis.ph');
+            setPassword('Password123!');
+        } else if (role === 'commuter') {
+            setEmail('commuter.demo@mobilis.ph');
+            setPassword('Password123!');
+        } else {
+            setEmail('admin.demo@mobilis.ph');
+            setPassword('Password123!');
+        }
+        setError('');
     };
 
     return (
@@ -71,19 +86,34 @@ const Login: React.FC = () => {
                     </div>
                 )}
 
-                {/* Primary Passkey CTA */}
-                <button
-                    type="button"
-                    onClick={() => setError("Passkey authentication requires registered device hardware. Please sign in using your account email.")}
-                    className="w-full py-4 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white font-bold rounded-2xl border border-slate-200 dark:border-white/10 text-xs flex items-center justify-center gap-2.5 transition-all shadow-sm active:scale-98"
-                >
-                    <Key className="w-4 h-4 text-cyan-600 dark:text-cyan-400" /> Sign In with Passkey / Biometrics
-                </button>
-
-                <div className="flex items-center gap-4 text-xs text-slate-400 dark:text-gray-500 font-mono">
-                    <div className="h-px bg-slate-200 dark:bg-white/10 flex-1" />
-                    <span>OR EMAIL</span>
-                    <div className="h-px bg-slate-200 dark:bg-white/10 flex-1" />
+                {/* Evaluator Demo Switcher */}
+                <div className="p-3 bg-slate-50 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 rounded-2xl space-y-2">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400 block text-center">
+                        ⚡ Quick Demo Autofill
+                    </span>
+                    <div className="grid grid-cols-3 gap-1.5">
+                        <button
+                            type="button"
+                            onClick={() => fillDemoRole('commuter')}
+                            className="p-2 rounded-xl bg-white dark:bg-white/5 hover:bg-cyan-500/10 border border-slate-200 dark:border-white/10 text-[10px] font-bold text-slate-700 dark:text-gray-300 flex items-center justify-center gap-1 transition-all"
+                        >
+                            <UserCheck className="w-3 h-3 text-emerald-500" /> Commuter
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => fillDemoRole('driver')}
+                            className="p-2 rounded-xl bg-white dark:bg-white/5 hover:bg-cyan-500/10 border border-slate-200 dark:border-white/10 text-[10px] font-bold text-slate-700 dark:text-gray-300 flex items-center justify-center gap-1 transition-all"
+                        >
+                            <Navigation className="w-3 h-3 text-cyan-500" /> Driver
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => fillDemoRole('admin')}
+                            className="p-2 rounded-xl bg-white dark:bg-white/5 hover:bg-cyan-500/10 border border-slate-200 dark:border-white/10 text-[10px] font-bold text-slate-700 dark:text-gray-300 flex items-center justify-center gap-1 transition-all"
+                        >
+                            <Building2 className="w-3 h-3 text-violet-500" /> Coop Admin
+                        </button>
+                    </div>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-4">
@@ -97,21 +127,28 @@ const Login: React.FC = () => {
                             placeholder="Email Address"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 outline-none focus:border-cyan-500 transition-colors"
+                            className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 outline-none focus:border-cyan-500 transition-colors font-sans"
                         />
                     </div>
 
-                    {/* Floating Label Password Input */}
+                    {/* Floating Label Password Input with Show/Hide */}
                     <div className="relative">
                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-gray-500" />
                         <input
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             required
                             placeholder="Password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 outline-none focus:border-cyan-500 transition-colors"
+                            className="w-full pl-12 pr-12 py-4 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 outline-none focus:border-cyan-500 transition-colors font-sans"
                         />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-gray-500 hover:text-slate-700 dark:hover:text-white transition-colors"
+                        >
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
                     </div>
 
                     <button
@@ -123,7 +160,7 @@ const Login: React.FC = () => {
                             <span className="animate-pulse">Authenticating...</span>
                         ) : (
                             <>
-                                <Zap className="w-4 h-4" /> Sign In
+                                <Zap className="w-4 h-4" /> Sign In to Mobilis
                             </>
                         )}
                     </button>
@@ -147,4 +184,4 @@ const Login: React.FC = () => {
     );
 };
 
-export default Login;
+export default Login;

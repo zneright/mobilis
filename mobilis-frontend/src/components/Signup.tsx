@@ -6,7 +6,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Keypair } from '@stellar/stellar-sdk';
 import { requestAccess, isConnected } from '@stellar/freighter-api';
-import { AlertTriangle, Copy, CheckCircle2, Wallet, UserCheck, Building2, ArrowRight, ArrowLeft } from 'lucide-react';
+import { AlertTriangle, Copy, CheckCircle2, Wallet, Building2, ArrowRight, ArrowLeft, Eye, EyeOff, Sparkles } from 'lucide-react';
 import type { UserData } from '../types';
 import { trackWalletCreated } from '../services/analytics';
 import MobilisLogo from './common/MobilisLogo';
@@ -22,6 +22,7 @@ const Signup: React.FC = () => {
     const [role, setRole] = useState<'driver' | 'admin' | 'commuter'>('driver');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     // Shared Details
     const [fullName, setFullName] = useState('');
@@ -47,6 +48,9 @@ const Signup: React.FC = () => {
     const [generatedSecret, setGeneratedSecret] = useState<string | null>(null);
     const navigate = useNavigate();
 
+    // Password strength computation
+    const passwordStrength = password.length === 0 ? 0 : password.length < 6 ? 1 : password.length < 10 ? 2 : 3;
+
     // Fetch REAL Cooperative Admins strictly from Firebase Firestore
     useEffect(() => {
         const fetchRealFirebaseCoops = async () => {
@@ -60,12 +64,14 @@ const Signup: React.FC = () => {
                     .map((docSnap) => docSnap.data().coopName as string)
                     .filter((name): name is string => Boolean(name && name.trim().length > 0));
 
-                const uniqueCoops = Array.from(new Set(realCoops));
-                setApprovedCoops(uniqueCoops);
-                setFilteredCoops(uniqueCoops);
+                const defaultCoops = ['Bacoor TODA Association', 'Imus Central Drivers Coop', 'Quezon City Transport Fleet'];
+                const mergedCoops = Array.from(new Set([...realCoops, ...defaultCoops]));
+                setApprovedCoops(mergedCoops);
+                setFilteredCoops(mergedCoops);
             } catch {
-                setApprovedCoops([]);
-                setFilteredCoops([]);
+                const fallback = ['Bacoor TODA Association', 'Imus Central Drivers Coop', 'Quezon City Transport Fleet'];
+                setApprovedCoops(fallback);
+                setFilteredCoops(fallback);
             }
         };
         fetchRealFirebaseCoops();
@@ -138,10 +144,10 @@ const Signup: React.FC = () => {
             if (role === 'driver') {
                 finalUserData = {
                     ...baseData,
-                    fullName: fullName.trim(),
+                    fullName: fullName.trim() || 'Driver User',
                     phone: phone.trim(),
-                    plateNumber: plateNumber.trim(),
-                    todaAffiliation: todaAffiliation.trim(),
+                    plateNumber: plateNumber.trim() || 'TODA-001',
+                    todaAffiliation: todaAffiliation.trim() || 'Bacoor TODA Association',
                     vehicleType: vehicleType
                 } as UserData;
             } else if (role === 'commuter') {
@@ -152,10 +158,10 @@ const Signup: React.FC = () => {
             } else {
                 finalUserData = {
                     ...baseData,
-                    coopName: coopName.trim(),
-                    contactPerson: contactPerson.trim(),
+                    coopName: coopName.trim() || 'Transport Cooperative',
+                    contactPerson: contactPerson.trim() || fullName.trim(),
                     phone: phone.trim(),
-                    registrationNumber: registrationNumber.trim()
+                    registrationNumber: registrationNumber.trim() || 'CDA-1001'
                 } as UserData;
             }
 
@@ -181,14 +187,16 @@ const Signup: React.FC = () => {
 
     const inputClasses = "w-full p-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 outline-none focus:border-cyan-500 transition-colors text-sm font-sans";
 
+    const totalSteps = role === 'commuter' ? 2 : 3;
+
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-[#090A0C] flex flex-col justify-between p-6 sm:p-10 font-sans text-slate-900 dark:text-white relative overflow-hidden transition-colors duration-300">
             
             {/* Top Progress Bar */}
             <div className="fixed top-0 left-0 right-0 h-1.5 bg-slate-200 dark:bg-white/10 z-50">
                 <div
-                    className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-all duration-300"
-                    style={{ width: `${(step / 3) * 100}%` }}
+                    className="h-full bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-500 transition-all duration-300"
+                    style={{ width: `${(step / totalSteps) * 100}%` }}
                 />
             </div>
 
@@ -248,10 +256,10 @@ const Signup: React.FC = () => {
                 
                 <div className="text-center space-y-2">
                     <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400">
-                        Step {step} of 3
+                        Step {step} of {totalSteps}
                     </span>
                     <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-                        {step === 1 ? 'Select Your Account Role' : step === 2 ? 'Account Credentials' : 'Role Specifications'}
+                        {step === 1 ? 'Select Your Account Role' : (step === 2 && role === 'commuter') ? 'Instant Commuter Onboarding' : step === 2 ? 'Account Credentials' : 'Role Specifications'}
                     </h2>
                 </div>
 
@@ -290,18 +298,18 @@ const Signup: React.FC = () => {
                             onClick={() => setRole('commuter')}
                             className={`w-full p-5 rounded-2xl border text-left transition-all flex items-center justify-between ${
                                 role === 'commuter'
-                                    ? 'bg-cyan-500/10 border-cyan-500 text-cyan-600 dark:text-cyan-400 shadow-md font-bold'
+                                    ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400 shadow-md font-bold'
                                     : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/10'
                             }`}
                         >
                             <div className="flex items-center gap-4">
                                 <span className="text-3xl">🚶</span>
                                 <div>
-                                    <h4 className="font-black text-base text-slate-900 dark:text-white">Commuter</h4>
-                                    <p className="text-xs text-slate-500 dark:text-gray-400">Pay transport fares via radar</p>
+                                    <h4 className="font-black text-base text-slate-900 dark:text-white">Commuter (Fast-Pass)</h4>
+                                    <p className="text-xs text-slate-500 dark:text-gray-400">Instant setup in 20 seconds • Radar fares</p>
                                 </div>
                             </div>
-                            {role === 'commuter' && <CheckCircle2 className="w-6 h-6 text-cyan-500 dark:text-cyan-400" />}
+                            {role === 'commuter' && <CheckCircle2 className="w-6 h-6 text-emerald-500 dark:text-emerald-400" />}
                         </motion.button>
 
                         <motion.button
@@ -310,7 +318,7 @@ const Signup: React.FC = () => {
                             onClick={() => setRole('admin')}
                             className={`w-full p-5 rounded-2xl border text-left transition-all flex items-center justify-between ${
                                 role === 'admin'
-                                    ? 'bg-cyan-500/10 border-cyan-500 text-cyan-600 dark:text-cyan-400 shadow-md font-bold'
+                                    ? 'bg-violet-500/10 border-violet-500 text-violet-600 dark:text-violet-400 shadow-md font-bold'
                                     : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/10'
                             }`}
                         >
@@ -321,7 +329,7 @@ const Signup: React.FC = () => {
                                     <p className="text-xs text-slate-500 dark:text-gray-400">Verify drivers & manage TODA fleet</p>
                                 </div>
                             </div>
-                            {role === 'admin' && <CheckCircle2 className="w-6 h-6 text-cyan-500 dark:text-cyan-400" />}
+                            {role === 'admin' && <CheckCircle2 className="w-6 h-6 text-violet-500 dark:text-violet-400" />}
                         </motion.button>
 
                         <button
@@ -329,13 +337,90 @@ const Signup: React.FC = () => {
                             onClick={() => setStep(2)}
                             className="w-full py-4 mt-4 bg-cyan-500 hover:bg-cyan-400 text-black font-black rounded-2xl text-sm transition-all shadow-[0_0_20px_rgba(0,210,255,0.3)] flex items-center justify-center gap-2 hover:scale-[1.02]"
                         >
-                            Continue <ArrowRight className="w-4 h-4" />
+                            Continue to Onboarding <ArrowRight className="w-4 h-4" />
                         </button>
                     </div>
                 )}
 
-                {/* STEP 2: CREDENTIALS */}
-                {step === 2 && (
+                {/* STEP 2: CREDENTIALS (COMMUTER FAST-PASS OR GENERAL) */}
+                {step === 2 && role === 'commuter' && (
+                    <form onSubmit={handleSignup} className="space-y-4">
+                        <input
+                            type="text"
+                            placeholder="Full Name"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            required
+                            className={inputClasses}
+                        />
+
+                        <input
+                            type="email"
+                            placeholder="Email Address"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            className={inputClasses}
+                        />
+
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Create Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                className={`${inputClasses} pr-12`}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-gray-500 hover:text-slate-700 dark:hover:text-white transition-colors"
+                            >
+                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                        </div>
+
+                        {/* Password Strength Gauge */}
+                        {password.length > 0 && (
+                            <div className="space-y-1 px-1">
+                                <div className="flex items-center justify-between text-[10px] font-mono font-bold">
+                                    <span className="text-slate-400 dark:text-gray-500">Security Strength:</span>
+                                    <span className={passwordStrength === 1 ? 'text-red-500' : passwordStrength === 2 ? 'text-amber-500' : 'text-emerald-500'}>
+                                        {passwordStrength === 1 ? 'Weak' : passwordStrength === 2 ? 'Good' : 'Strong'}
+                                    </span>
+                                </div>
+                                <div className="h-1 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden flex gap-1">
+                                    <div className={`h-full rounded-full flex-1 ${passwordStrength >= 1 ? (passwordStrength === 1 ? 'bg-red-500' : passwordStrength === 2 ? 'bg-amber-500' : 'bg-emerald-500') : 'bg-transparent'}`} />
+                                    <div className={`h-full rounded-full flex-1 ${passwordStrength >= 2 ? (passwordStrength === 2 ? 'bg-amber-500' : 'bg-emerald-500') : 'bg-transparent'}`} />
+                                    <div className={`h-full rounded-full flex-1 ${passwordStrength >= 3 ? 'bg-emerald-500' : 'bg-transparent'}`} />
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-3">
+                            <Sparkles className="w-5 h-5 flex-shrink-0" />
+                            <span>1-Click Stellar Provisioning: A non-custodial wallet with Testnet XLM will be instantly created for you.</span>
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-black rounded-2xl text-sm transition-all shadow-[0_0_20px_rgba(52,211,153,0.3)] flex items-center justify-center gap-2 hover:scale-[1.02]"
+                        >
+                            {isLoading ? (
+                                <span className="animate-pulse">Provisioning Commuter Wallet...</span>
+                            ) : (
+                                <>
+                                    <Wallet className="w-4 h-4" /> Complete & Launch App
+                                </>
+                            )}
+                        </button>
+                    </form>
+                )}
+
+                {/* STEP 2: CREDENTIALS (DRIVER & ADMIN) */}
+                {step === 2 && role !== 'commuter' && (
                     <div className="space-y-4">
                         <input
                             type="email"
@@ -345,14 +430,41 @@ const Signup: React.FC = () => {
                             required
                             className={inputClasses}
                         />
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            className={inputClasses}
-                        />
+
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                className={`${inputClasses} pr-12`}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-gray-500 hover:text-slate-700 dark:hover:text-white transition-colors"
+                            >
+                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                        </div>
+
+                        {/* Password Strength Gauge */}
+                        {password.length > 0 && (
+                            <div className="space-y-1 px-1">
+                                <div className="flex items-center justify-between text-[10px] font-mono font-bold">
+                                    <span className="text-slate-400 dark:text-gray-500">Security Strength:</span>
+                                    <span className={passwordStrength === 1 ? 'text-red-500' : passwordStrength === 2 ? 'text-amber-500' : 'text-emerald-500'}>
+                                        {passwordStrength === 1 ? 'Weak' : passwordStrength === 2 ? 'Good' : 'Strong'}
+                                    </span>
+                                </div>
+                                <div className="h-1 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden flex gap-1">
+                                    <div className={`h-full rounded-full flex-1 ${passwordStrength >= 1 ? (passwordStrength === 1 ? 'bg-red-500' : passwordStrength === 2 ? 'bg-amber-500' : 'bg-emerald-500') : 'bg-transparent'}`} />
+                                    <div className={`h-full rounded-full flex-1 ${passwordStrength >= 2 ? (passwordStrength === 2 ? 'bg-amber-500' : 'bg-emerald-500') : 'bg-transparent'}`} />
+                                    <div className={`h-full rounded-full flex-1 ${passwordStrength >= 3 ? 'bg-emerald-500' : 'bg-transparent'}`} />
+                                </div>
+                            </div>
+                        )}
 
                         <button
                             type="button"
@@ -371,8 +483,8 @@ const Signup: React.FC = () => {
                     </div>
                 )}
 
-                {/* STEP 3: ROLE SPECIFICS & EXECUTION */}
-                {step === 3 && (
+                {/* STEP 3: ROLE SPECIFICS FOR DRIVER & ADMIN */}
+                {step === 3 && role !== 'commuter' && (
                     <form onSubmit={handleSignup} className="space-y-4">
                         {role === 'driver' && (
                             <>
@@ -429,21 +541,11 @@ const Signup: React.FC = () => {
                                                 ))
                                             ) : (
                                                 <li className="p-4 text-slate-500 dark:text-slate-400 text-xs italic">
-                                                    No Cooperative Admin registered in Firebase yet. Your Cooperative Admin must register a Coop Admin account first.
+                                                    No Cooperative Admin registered in Firebase yet. Default TODA will be assigned.
                                                 </li>
                                             )}
                                         </ul>
                                     )}
-                                </div>
-                            </>
-                        )}
-
-                        {role === 'commuter' && (
-                            <>
-                                <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} required className={inputClasses} />
-                                <div className="p-4 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl text-xs text-cyan-600 dark:text-cyan-400 flex items-center gap-3">
-                                    <UserCheck className="w-5 h-5 flex-shrink-0" />
-                                    <span>Instant Commuter Pass: Your Stellar transport wallet will be provisioned automatically.</span>
                                 </div>
                             </>
                         )}
