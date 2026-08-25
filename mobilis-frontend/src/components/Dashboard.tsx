@@ -34,6 +34,8 @@ import MobilisLoader from './common/MobilisLoader';
 import { playDoubleChime } from '../utils/webAudio';
 import { setupFcmNotifications } from '../services/fcm';
 import { getDriverDebt } from '../services/stellar';
+import { offlineSyncService } from '../services/offlineSync';
+import { CloudUpload, WifiOff } from 'lucide-react';
 
 declare global {
     interface Window {
@@ -113,6 +115,28 @@ const Dashboard: React.FC = () => {
     const [showNotificationModal, setShowNotificationModal] = useState(false);
     const [sendDest, setSendDest] = useState('');
     const [sendAmt, setSendAmt] = useState('');
+
+    // Offline / Zero-Connectivity Sync State
+    const [isOnline, setIsOnline] = useState<boolean>(typeof navigator !== 'undefined' ? navigator.onLine : true);
+    const [pendingOfflineCount, setPendingOfflineCount] = useState<number>(0);
+
+    useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        setPendingOfflineCount(offlineSyncService.getPendingCount());
+        const unsub = offlineSyncService.subscribe((_synced, pending) => {
+            setPendingOfflineCount(pending);
+        });
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+            unsub();
+        };
+    }, []);
 
     const [paymentToast, setPaymentToast] = useState<{
         title: string;
@@ -1121,6 +1145,28 @@ const Dashboard: React.FC = () => {
                 />
 
                 <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-8 flex flex-col items-center">
+
+                    {/* OFFLINE / ZERO-CONNECTIVITY NOTIFICATION BANNER */}
+                    {(!isOnline || pendingOfflineCount > 0) && (
+                        <div className="w-full max-w-4xl mx-auto mb-3 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-xs font-mono text-amber-300">
+                            <div className="flex items-center gap-2">
+                                {!isOnline ? <WifiOff className="w-4 h-4 text-amber-400" /> : <CloudUpload className="w-4 h-4 text-cyan-400" />}
+                                <span>
+                                    {!isOnline
+                                        ? 'Offline Mode Active: Cryptographic vouchers will be stored and verified locally.'
+                                        : `${pendingOfflineCount} offline voucher(s) queued for Stellar ledger synchronization.`}
+                                </span>
+                            </div>
+                            {isOnline && pendingOfflineCount > 0 && (
+                                <button
+                                    onClick={() => offlineSyncService.syncPendingVouchers(stellarData?.secret)}
+                                    className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition-all"
+                                >
+                                    Sync Now
+                                </button>
+                            )}
+                        </div>
+                    )}
 
                     {activeTab === 'hub' && (
                         <div className="w-full max-w-4xl mx-auto space-y-6 py-2">

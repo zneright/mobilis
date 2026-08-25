@@ -25,6 +25,24 @@ export interface TransactionResult {
     errorResult?: unknown;
 }
 
+export interface DriverReputationData {
+    successfulRepayments: number;
+    totalVolumeRepaid: number;
+    creditTier: 1 | 2 | 3;
+    consecutiveOnTime: number;
+    tierName: string;
+    maxBorrowLimit: number;
+    coopFeeBps: number;
+    platformFeeBps: number;
+    totalFeePercentage: number;
+}
+
+export const TIER_CONFIG: Record<1 | 2 | 3, { name: string; limit: number; coopBps: number; platBps: number }> = {
+    1: { name: 'Bronze Explorer', limit: 15, coopBps: 30, platBps: 20 },
+    2: { name: 'Silver Operator', limit: 35, coopBps: 25, platBps: 15 },
+    3: { name: 'Gold TODA Master', limit: 75, coopBps: 20, platBps: 10 },
+};
+
 /**
  * Signs and submits a Stellar / Soroban transaction via secretKey or Freighter wallet.
  */
@@ -55,9 +73,11 @@ export async function signAndSubmitTransaction(
  */
 export async function pollTransactionStatus(server: rpc.Server, hash: string): Promise<boolean> {
     let txResult = await server.getTransaction(hash);
-    while (txResult.status === "NOT_FOUND" || txResult.status === ("PENDING" as string)) {
+    let attempts = 0;
+    while ((txResult.status === "NOT_FOUND" || txResult.status === ("PENDING" as string)) && attempts < 15) {
         await new Promise(resolve => setTimeout(resolve, 2000));
         txResult = await server.getTransaction(hash);
+        attempts++;
     }
     if (txResult.status === "SUCCESS") return true;
     throw new Error(`On-chain contract execution failed with status: ${txResult.status}`);
@@ -99,53 +119,61 @@ export async function initContract(
     adminAddress: string,
     tokenAddress: string,
     platformAddress: string,
-    signerPublicKey: string,
     secretKey?: string
 ): Promise<boolean> {
-    const args = [
-        nativeToScVal(adminAddress, { type: 'address' }),
-        nativeToScVal(tokenAddress, { type: 'address' }),
-        nativeToScVal(platformAddress, { type: 'address' }),
-    ];
-    return await executeContractCall(signerPublicKey, 'init', args, secretKey);
+    return executeContractCall(
+        adminAddress,
+        "init",
+        [
+            nativeToScVal(adminAddress, { type: 'address' }),
+            nativeToScVal(tokenAddress, { type: 'address' }),
+            nativeToScVal(platformAddress, { type: 'address' }),
+        ],
+        secretKey
+    );
 }
 
 /**
  * SMART CONTRACT METHOD: request_advance(driver, amount)
- * Driver requests a fuel advance loan from the cooperative treasury contract.
  */
-export async function requestAdvanceLoan(
+export async function requestAdvance(
     driverAddress: string,
     amountXlm: number,
     secretKey?: string
 ): Promise<boolean> {
-    const stroopAmount = BigInt(Math.floor(amountXlm * 10_000_000));
-    const args = [
-        nativeToScVal(driverAddress, { type: 'address' }),
-        nativeToScVal(stroopAmount, { type: 'i128' }),
-    ];
-    return await executeContractCall(driverAddress, 'request_advance', args, secretKey);
+    const amountInStroops = Math.round(amountXlm * 10_000_000);
+    return executeContractCall(
+        driverAddress,
+        "request_advance",
+        [
+            nativeToScVal(driverAddress, { type: 'address' }),
+            nativeToScVal(amountInStroops, { type: 'i128' }),
+        ],
+        secretKey
+    );
 }
 
 /**
  * SMART CONTRACT METHOD: settle_loan(driver)
- * Driver settles active fuel loan. Distributes principal + 0.3% to Coop and 0.2% to Mobilis Platform.
  */
 export async function settleLoan(
     driverAddress: string,
     secretKey?: string
 ): Promise<boolean> {
-    const args = [
-        nativeToScVal(driverAddress, { type: 'address' }),
-    ];
-    return await executeContractCall(driverAddress, 'settle_loan', args, secretKey);
+    return executeContractCall(
+        driverAddress,
+        "settle_loan",
+        [
+            nativeToScVal(driverAddress, { type: 'address' }),
+        ],
+        secretKey
+    );
 }
 
 /**
  * SMART CONTRACT METHOD: get_debt(driver)
- * Queries active debt balance of driver from the smart contract state.
  */
-export async function getDriverDebt(driverAddress: string): Promise<number> {
+export async function getDebt(driverAddress: string): Promise<number> {
     try {
         const server = new rpc.Server(RPC_SERVER);
         const contract = new Contract(CONTRACT_ID);
@@ -166,6 +194,56 @@ export async function getDriverDebt(driverAddress: string): Promise<number> {
         console.error('[Soroban Integration] Error getting driver debt:', error);
         return 0;
     }
+}
+
+/**
+ * SMART CONTRACT METHOD: get_driver_reputation(driver)
+ */
+export async function getDriverReputation(driverAddress: string): Promise<DriverReputationData> {
+    try {
+        const server = new rpc.Server(RPC_SERVER);
+        const contract = new Contract(CONTRACT_ID);
+        const account = await server.getAccount(driverAddress);
+
+        const tx = new TransactionBuilder(account, { fee: "10000", networkPassphrase: NETWORK_PASSPHRASE })
+            .addOperation(contract.call("get_driver_reputation", nativeToScVal(driverAddress, { type: 'address' })))
+            .setTimeout(30)
+            .build();
+
+        const simulation = await server.simulateTransaction(tx);
+        if (rpc.Api.isSimulationSuccess(simulation) && simulation.result && simulation.result.retval) {
+            const raw = scValToNative(simulation.result.retval);
+            const tier = (raw.credit_tier || 1) as 1 | 2 | 3;
+            const config = TIER_CONFIG[tier] || TIER_CONFIG[1];
+            return {
+                successfulRepayments: Number(raw.successful_repayments || 0),
+                totalVolumeRepaid: Number(raw.total_volume_repaid || 0) / 10_000_000,
+                creditTier: tier,
+                consecutiveOnTime: Number(raw.consecutive_on_time || 0),
+                tierName: config.name,
+                maxBorrowLimit: config.limit,
+                coopFeeBps: config.coopBps,
+                platformFeeBps: config.platBps,
+                totalFeePercentage: (config.coopBps + config.platBps) / 100,
+            };
+        }
+    } catch (error) {
+        console.warn('[Soroban Integration] Error querying on-chain reputation, defaulting to local cache:', error);
+    }
+
+    // Default Tier 1 fallback
+    const config = TIER_CONFIG[1];
+    return {
+        successfulRepayments: 0,
+        totalVolumeRepaid: 0,
+        creditTier: 1,
+        consecutiveOnTime: 0,
+        tierName: config.name,
+        maxBorrowLimit: config.limit,
+        coopFeeBps: config.coopBps,
+        platformFeeBps: config.platBps,
+        totalFeePercentage: (config.coopBps + config.platBps) / 100,
+    };
 }
 
 /**

@@ -4,10 +4,11 @@ import { collection, addDoc, setDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Keypair, Horizon, TransactionBuilder, Operation, Asset, StrKey, Transaction } from '@stellar/stellar-sdk';
 import { requestAccess, signTransaction, isConnected } from '@stellar/freighter-api';
-import { X, Check, Copy, Printer, ExternalLink, Receipt, ShieldCheck } from 'lucide-react';
+import { X, Check, Copy, Printer, ExternalLink, Receipt, ShieldCheck, QrCode, Sparkles } from 'lucide-react';
 import { roleCtaBg, rolePill, roleAccentText } from '../tabs/roleStyleTokens';
 import { playDoubleChime } from '../../utils/webAudio';
 import { HORIZON_SERVER as STELLAR_HORIZON_SERVER } from '../../services/stellar';
+import { OfflineVoucherModal } from './OfflineVoucherModal';
 
 interface DriverLocation {
     uid: string;
@@ -41,6 +42,7 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
     const [payMethod, setPayMethod] = useState<'instant' | 'freighter'>('instant');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showOfflineModal, setShowOfflineModal] = useState<boolean>(false);
 
     // Completed receipt state
     const [completedTxHash, setCompletedTxHash] = useState<string | null>(null);
@@ -389,7 +391,16 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
 
                         {/* Payment Wallet Method Selector */}
                         <div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 font-mono">Payment Wallet Method</p>
+                            <div className="flex items-center justify-between mb-2">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-mono">Payment Wallet Method</p>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowOfflineModal(true)}
+                                    className="text-[10px] font-bold font-mono text-emerald-500 hover:text-emerald-400 flex items-center gap-1 hover:underline"
+                                >
+                                    <QrCode className="w-3 h-3" /> Offline Pass (Zero-Data)
+                                </button>
+                            </div>
                             <div className="grid grid-cols-2 gap-2 font-mono">
                                 <button
                                     type="button"
@@ -587,6 +598,12 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
                     </div>
                 )}
             </div>
+            {showOfflineModal && (
+                <OfflineVoucherModal
+                    commuterData={commuterData}
+                    onClose={() => setShowOfflineModal(false)}
+                />
+            )}
         </div>
     );
 

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Fuel, Building2, UserCheck, ArrowUpRight, ShieldCheck, CheckCircle2, Megaphone, Send, BellRing, X, Truck } from 'lucide-react';
+import { Fuel, Building2, UserCheck, ArrowUpRight, ShieldCheck, CheckCircle2, Megaphone, Send, BellRing, X, Truck, Award, Sparkles, QrCode, TrendingUp } from 'lucide-react';
 import { roleCtaBg, roleCardBorder } from './roleStyleTokens';
+import { getDriverReputation, DriverReputationData } from '../../services/stellarContract';
+import { OfflineDriverScanner } from '../driver/OfflineDriverScanner';
 
 interface HubTabProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -55,6 +57,10 @@ export const HubTab: React.FC<HubTabProps> = ({
     const [showAdvanceModal, setShowAdvanceModal] = useState<boolean>(false);
     const [customAdvanceInput, setCustomAdvanceInput] = useState<string>('15');
     const [advanceError, setAdvanceError] = useState<string>('');
+
+    // Driver On-Chain Reputation & Offline Scanner State
+    const [reputation, setReputation] = useState<DriverReputationData | null>(null);
+    const [showScannerModal, setShowScannerModal] = useState<boolean>(false);
 
     const isSuperAdmin = stellarData?.role === 'superadmin';
 
@@ -195,7 +201,14 @@ export const HubTab: React.FC<HubTabProps> = ({
     const ctaStyle = roleCtaBg(role);
     const cardBorder = roleCardBorder(role);
 
-    const safeBorrowLimit = typeof borrowLimit === 'number' && !isNaN(borrowLimit) && borrowLimit > 0 ? borrowLimit : 100;
+    // Fetch on-chain driver reputation data
+    React.useEffect(() => {
+        if (isDriver && stellarData?.publicKey) {
+            getDriverReputation(stellarData.publicKey).then(setReputation);
+        }
+    }, [isDriver, stellarData?.publicKey, debtState]);
+
+    const safeBorrowLimit = reputation?.maxBorrowLimit ?? (typeof borrowLimit === 'number' && !isNaN(borrowLimit) && borrowLimit > 0 ? borrowLimit : 15);
     const safeDebt = typeof debtState === 'number' ? debtState : (debtState && typeof debtState.debt === 'number' ? debtState.debt : 0);
     const availableXlm = Math.max(0, safeBorrowLimit - safeDebt);
     const usedDebtPercentage = Math.min((safeDebt / safeBorrowLimit) * 100, 100);
@@ -301,8 +314,64 @@ export const HubTab: React.FC<HubTabProps> = ({
                         </div>
                     </div>
 
+                    {/* ON-CHAIN CREDIT REPUTATION & TIER BADGE CARD */}
+                    <div className="p-6 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-3xl space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div className="flex items-center gap-2.5">
+                                <div className={`p-2.5 rounded-xl border ${
+                                    reputation?.creditTier === 3
+                                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                                        : reputation?.creditTier === 2
+                                        ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
+                                        : 'bg-orange-500/10 border-orange-500/30 text-orange-400'
+                                }`}>
+                                    <Award className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-black font-mono text-slate-900 dark:text-white">
+                                            {reputation?.tierName || 'Bronze Explorer'}
+                                        </span>
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                                            Tier {reputation?.creditTier || 1}
+                                        </span>
+                                    </div>
+                                    <span className="text-[11px] font-mono text-slate-500 dark:text-gray-400">
+                                        On-Chain Repayments: <strong>{reputation?.successfulRepayments || 0}</strong> • Discounted Protocol Fee: <strong>{reputation?.totalFeePercentage || 0.5}%</strong>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <span className="text-xs font-mono font-bold text-emerald-500 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20 self-start sm:self-auto">
+                                Max Limit: {safeBorrowLimit} XLM
+                            </span>
+                        </div>
+
+                        {/* Tier Progression Progress Bar */}
+                        <div className="space-y-1.5 pt-1">
+                            <div className="flex justify-between text-[10px] font-mono text-slate-400">
+                                <span>Tier 1 (Bronze - 15 XLM)</span>
+                                <span>Tier 2 (Silver - 35 XLM)</span>
+                                <span>Tier 3 (Gold - 75 XLM)</span>
+                            </div>
+                            <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
+                                <div
+                                    className="h-full bg-gradient-to-r from-orange-400 via-cyan-400 to-amber-400 rounded-full transition-all duration-700"
+                                    style={{
+                                        width: `${Math.min(100, Math.max(15, ((reputation?.successfulRepayments || 0) / 8) * 100))}%`,
+                                    }}
+                                />
+                            </div>
+                            <div className="text-right text-[10px] font-mono text-cyan-400 font-semibold">
+                                {reputation?.creditTier === 3
+                                    ? '🏆 Maximum Gold TODA Master Unlocked!'
+                                    : `${Math.max(0, (reputation?.creditTier === 1 ? 3 : 8) - (reputation?.successfulRepayments || 0))} more on-time repayment(s) to unlock next tier`}
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Action Buttons */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <button
                             onClick={() => {
                                 setCustomAdvanceInput('15');
@@ -310,19 +379,34 @@ export const HubTab: React.FC<HubTabProps> = ({
                                 setShowAdvanceModal(true);
                             }}
                             disabled={isProcessing || (debtState?.isLocked ?? false) || availableXlm <= 0}
-                            className={`py-4 disabled:opacity-50 font-black text-xs rounded-2xl transition-all flex items-center justify-center gap-2 ${ctaStyle}`}
+                            className={`py-3.5 disabled:opacity-50 font-black text-xs rounded-2xl transition-all flex items-center justify-center gap-2 ${ctaStyle}`}
                         >
-                            <ArrowUpRight className="w-4 h-4" /> Request Credit Advance
+                            <ArrowUpRight className="w-4 h-4" /> Request Advance
                         </button>
                         <button
                             onClick={handleSettleLoan}
                             disabled={isProcessing || safeDebt <= 0}
-                            className={`py-4 disabled:opacity-50 font-black text-xs rounded-2xl transition-all flex items-center justify-center gap-2 ${ctaStyle}`}
+                            className={`py-3.5 disabled:opacity-50 font-black text-xs rounded-2xl transition-all flex items-center justify-center gap-2 ${ctaStyle}`}
                         >
-                            <ShieldCheck className="w-4 h-4" /> Repay Soroban Credit Loan
+                            <ShieldCheck className="w-4 h-4" /> Repay Loan
+                        </button>
+                        <button
+                            onClick={() => setShowScannerModal(true)}
+                            className="py-3.5 bg-slate-900 hover:bg-slate-800 border border-cyan-500/40 text-cyan-400 hover:text-cyan-300 font-mono font-bold text-xs rounded-2xl transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95"
+                        >
+                            <QrCode className="w-4 h-4" /> Offline Scanner
                         </button>
                     </div>
                 </div>
+            )}
+
+            {/* OFFLINE DRIVER SCANNER MODAL */}
+            {showScannerModal && (
+                <OfflineDriverScanner
+                    driverData={stellarData}
+                    onClose={() => setShowScannerModal(false)}
+                    onSuccess={() => {}}
+                />
             )}
 
 
