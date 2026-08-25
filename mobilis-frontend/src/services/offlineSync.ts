@@ -1,11 +1,10 @@
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Horizon, Keypair, TransactionBuilder, Operation, Asset } from '@stellar/stellar-sdk';
+import { Horizon, Keypair, TransactionBuilder, Operation, Asset, Memo } from '@stellar/stellar-sdk';
 import { HORIZON_SERVER } from './stellar';
 import {
     getDriverVoucherQueue,
     updateDriverVoucherRecord,
-    VerifiedVoucherRecord,
 } from './offlineVoucher';
 
 type SyncCallback = (syncedCount: number, pendingCount: number) => void;
@@ -91,7 +90,7 @@ class OfflineSyncManager {
                                         amount: (parseFloat(voucher.fareXlm) > 0 ? voucher.fareXlm : '0.0001'),
                                     })
                                 )
-                                .addMemo(Horizon.Memo.text(`VCH:${voucher.voucherId.substring(0, 20)}`))
+                                .addMemo(Memo.text(`VCH:${voucher.voucherId.substring(0, 20)}`))
                                 .setTimeout(30)
                                 .build();
 

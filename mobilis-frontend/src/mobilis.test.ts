@@ -1,11 +1,9 @@
 // Mobilis Core Business Logic Unit Tests: Credit Tiers & Offline Cryptography
 import { Keypair } from '@stellar/stellar-sdk';
 import {
-    serializeVoucherData,
     createOfflineVoucher,
     verifyOfflineVoucher,
     queueDriverVoucher,
-    getDriverVoucherQueue,
 } from './services/offlineVoucher';
 import { TIER_CONFIG } from './services/stellarContract';
 

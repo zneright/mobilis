@@ -153,6 +153,8 @@ export async function requestAdvance(
     );
 }
 
+export const requestAdvanceLoan = requestAdvance;
+
 /**
  * SMART CONTRACT METHOD: settle_loan(driver)
  */
@@ -195,6 +197,8 @@ export async function getDebt(driverAddress: string): Promise<number> {
         return 0;
     }
 }
+
+export const getDriverDebt = getDebt;
 
 /**
  * SMART CONTRACT METHOD: get_driver_reputation(driver)

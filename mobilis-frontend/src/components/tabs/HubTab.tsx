@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Fuel, Building2, UserCheck, ArrowUpRight, ShieldCheck, CheckCircle2, Megaphone, Send, BellRing, X, Truck, Award, Sparkles, QrCode, TrendingUp } from 'lucide-react';
+import { Fuel, Building2, UserCheck, ArrowUpRight, ShieldCheck, CheckCircle2, Megaphone, Send, BellRing, X, Truck, Award, QrCode } from 'lucide-react';
 import { roleCtaBg, roleCardBorder } from './roleStyleTokens';
-import { getDriverReputation, DriverReputationData } from '../../services/stellarContract';
+import { getDriverReputation, type DriverReputationData } from '../../services/stellarContract';
 import { OfflineDriverScanner } from '../driver/OfflineDriverScanner';
 
 interface HubTabProps {

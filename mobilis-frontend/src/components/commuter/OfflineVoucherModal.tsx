@@ -4,9 +4,9 @@ import { X, QrCode, ShieldCheck, Clock, Check, Copy, AlertCircle, Sparkles, Refr
 import {
     createOfflineVoucher,
     getCommuterVouchers,
-    OfflineVoucherPayload,
+    type OfflineVoucherPayload,
 } from '../../services/offlineVoucher';
-import { roleCtaBg, rolePill, roleAccentText } from '../tabs/roleStyleTokens';
+import { roleCtaBg } from '../tabs/roleStyleTokens';
 
 interface OfflineVoucherModalProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,8 +29,6 @@ export const OfflineVoucherModal: React.FC<OfflineVoucherModalProps> = ({
 
     const role = commuterData?.role ?? 'commuter';
     const ctaStyle = roleCtaBg(role);
-    const pillStyle = rolePill(role);
-    const accentStyle = roleAccentText(role);
 
     const fareXlm = (parseFloat(farePhp || '0') / PHP_RATE).toFixed(4);
 

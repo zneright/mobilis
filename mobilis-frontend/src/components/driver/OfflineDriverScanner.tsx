@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, QrCode, ShieldCheck, CheckCircle2, AlertCircle, RefreshCw, Smartphone, Volume2, CloudUpload, ArrowRight } from 'lucide-react';
+import { X, QrCode, ShieldCheck, CheckCircle2, AlertCircle, RefreshCw, Smartphone, Volume2, CloudUpload } from 'lucide-react';
 import {
     queueDriverVoucher,
     getDriverVoucherQueue,
-    VerifiedVoucherRecord,
-    OfflineVoucherPayload,
+    type VerifiedVoucherRecord,
+    type OfflineVoucherPayload,
 } from '../../services/offlineVoucher';
 import { offlineSyncService } from '../../services/offlineSync';
 import { playDoubleChime } from '../../utils/webAudio';

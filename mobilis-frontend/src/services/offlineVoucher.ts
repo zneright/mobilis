@@ -25,6 +25,31 @@ const COMMUTER_VOUCHERS_KEY = 'mobilis_offline_commuter_vouchers';
 const DRIVER_QUEUE_KEY = 'mobilis_offline_driver_queue';
 
 /**
+ * Helper to convert Uint8Array to base64 in browser
+ */
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+    let binary = '';
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+}
+
+/**
+ * Helper to convert base64 to Uint8Array in browser
+ */
+function base64ToUint8Array(base64: string): Uint8Array {
+    const binary = atob(base64);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+}
+
+/**
  * Creates a deterministic payload string to sign and verify.
  */
 export function serializeVoucherData(voucher: Omit<OfflineVoucherPayload, 'signature'>): string {
@@ -60,8 +85,10 @@ export function createOfflineVoucher(
     };
 
     const serialized = serializeVoucherData(unsignedData);
-    const signatureBuffer = keypair.sign(Buffer.from(serialized, 'utf-8'));
-    const signature = signatureBuffer.toString('base64');
+    const encoder = new TextEncoder();
+    const encodedData = encoder.encode(serialized);
+    const signatureBytes = keypair.sign(encodedData);
+    const signature = uint8ArrayToBase64(signatureBytes);
 
     const fullVoucher: OfflineVoucherPayload = {
         ...unsignedData,
@@ -130,9 +157,11 @@ export function verifyOfflineVoucher(
 
         const serialized = serializeVoucherData(unsignedData);
         const keypair = Keypair.fromPublicKey(voucher.commuterPubKey);
-        const sigBuffer = Buffer.from(voucher.signature, 'base64');
+        const sigBytes = base64ToUint8Array(voucher.signature);
+        const encoder = new TextEncoder();
+        const encodedData = encoder.encode(serialized);
 
-        const isSignatureValid = keypair.verify(Buffer.from(serialized, 'utf-8'), sigBuffer);
+        const isSignatureValid = keypair.verify(encodedData, sigBytes);
 
         if (!isSignatureValid) {
             return { valid: false, reason: 'Cryptographic signature mismatch. Potential forged voucher.' };

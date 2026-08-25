@@ -4,7 +4,7 @@ import { collection, addDoc, setDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Keypair, Horizon, TransactionBuilder, Operation, Asset, StrKey, Transaction } from '@stellar/stellar-sdk';
 import { requestAccess, signTransaction, isConnected } from '@stellar/freighter-api';
-import { X, Check, Copy, Printer, ExternalLink, Receipt, ShieldCheck, QrCode, Sparkles } from 'lucide-react';
+import { X, Check, Copy, Printer, ExternalLink, Receipt, ShieldCheck, QrCode } from 'lucide-react';
 import { roleCtaBg, rolePill, roleAccentText } from '../tabs/roleStyleTokens';
 import { playDoubleChime } from '../../utils/webAudio';
 import { HORIZON_SERVER as STELLAR_HORIZON_SERVER } from '../../services/stellar';
