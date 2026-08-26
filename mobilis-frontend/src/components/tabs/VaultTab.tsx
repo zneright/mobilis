@@ -250,6 +250,26 @@ export const VaultTab: React.FC<VaultTabProps> = ({
                         ))}
                     </div>
 
+                    {/* ── WEBAUTHN PASSKEY ENCLAVE CARD ───────────────────── */}
+                    <div className={`p-6 rounded-3xl space-y-3 transition-all duration-300 ${cardStyle}`}>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                                <h3 className="font-black text-sm text-slate-900 dark:text-white tracking-tight">Passkey Biometric Security</h3>
+                            </div>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                                stellarData?.isPasskeySecured ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                            }`}>
+                                {stellarData?.isPasskeySecured ? 'Active' : 'Hardware Bound'}
+                            </span>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-gray-400 leading-relaxed font-sans">
+                            {stellarData?.isPasskeySecured
+                                ? 'Your Stellar private key is cryptographically encrypted and unlocked via FaceID / TouchID / Windows Hello.'
+                                : 'Hardware-backed biometric passkeys protect your non-custodial wallet without raw secret keys.'}
+                        </p>
+                    </div>
+
                     {/* ── PUBLIC KEY FOOTER ──────────────────────────────── */}
                     <div className={`px-5 py-4 rounded-2xl flex flex-col gap-2 text-left text-xs font-mono transition-all duration-300 ${cardStyle}`}>
                         <div className="flex items-center justify-between">

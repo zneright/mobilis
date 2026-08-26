@@ -3,8 +3,9 @@ import { auth } from '../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Mail, Lock, ShieldCheck, Zap, Eye, EyeOff, UserCheck, Navigation, Building2 } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, ShieldCheck, Zap, Eye, EyeOff, UserCheck, Navigation, Building2, Fingerprint, Sparkles } from 'lucide-react';
 import MobilisLogo from './common/MobilisLogo';
+import { useAuth } from '../context/AuthContext';
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -12,7 +13,10 @@ const Login: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
+    
     const navigate = useNavigate();
+    const { isPasskeySupported, loginWithPasskey } = useAuth();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -28,6 +32,20 @@ const Login: React.FC = () => {
             setError(msg);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handlePasskeyLogin = async () => {
+        setIsPasskeyLoading(true);
+        setError('');
+        try {
+            await loginWithPasskey();
+            navigate('/dashboard');
+        } catch (err: unknown) {
+            console.error("Passkey login failed:", err);
+            setError(err instanceof Error ? err.message : "Passkey authentication failed. Please try password login.");
+        } finally {
+            setIsPasskeyLoading(false);
         }
     };
 
@@ -77,7 +95,7 @@ const Login: React.FC = () => {
                         <ShieldCheck className="w-7 h-7" />
                     </div>
                     <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Welcome Back</h2>
-                    <p className="text-xs text-slate-500 dark:text-gray-400">Sign in to your Mobilis transport wallet</p>
+                    <p className="text-xs text-slate-500 dark:text-gray-400">Sign in to your Mobilis smart wallet</p>
                 </div>
 
                 {error && (
@@ -86,10 +104,31 @@ const Login: React.FC = () => {
                     </div>
                 )}
 
+                {/* 1-TAP WEBAUTHN PASSKEY BIOMETRIC LOGIN */}
+                {isPasskeySupported && (
+                    <div className="space-y-3">
+                        <button
+                            type="button"
+                            onClick={handlePasskeyLogin}
+                            disabled={isPasskeyLoading}
+                            className="w-full py-4 bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-500 hover:opacity-95 text-slate-950 font-black rounded-2xl text-xs transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2.5 active:scale-98 font-mono"
+                        >
+                            <Fingerprint className="w-5 h-5" />
+                            <span>{isPasskeyLoading ? 'Authenticating Biometrics...' : '1-Tap Passkey Sign-In (FaceID / TouchID)'}</span>
+                        </button>
+                        
+                        <div className="relative flex py-1 items-center">
+                            <div className="flex-grow border-t border-slate-200 dark:border-white/10" />
+                            <span className="flex-shrink mx-3 text-[10px] uppercase font-mono tracking-widest text-slate-400">or sign in with password</span>
+                            <div className="flex-grow border-t border-slate-200 dark:border-white/10" />
+                        </div>
+                    </div>
+                )}
+
                 {/* Evaluator Demo Switcher */}
                 <div className="p-3 bg-slate-50 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 rounded-2xl space-y-2">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400 block text-center">
-                        ⚡ Quick Demo Autofill
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400 block text-center flex items-center justify-center gap-1">
+                        <Sparkles className="w-3 h-3" /> Quick Demo Autofill
                     </span>
                     <div className="grid grid-cols-3 gap-1.5">
                         <button
@@ -160,7 +199,7 @@ const Login: React.FC = () => {
                             <span className="animate-pulse">Authenticating...</span>
                         ) : (
                             <>
-                                <Zap className="w-4 h-4" /> Sign In to Mobilis
+                                <Zap className="w-4 h-4" /> Sign In with Email
                             </>
                         )}
                     </button>
@@ -170,7 +209,7 @@ const Login: React.FC = () => {
                     <p className="text-xs text-slate-500 dark:text-gray-400">
                         New to Mobilis?{' '}
                         <Link to="/signup" className="text-cyan-600 dark:text-cyan-400 font-bold hover:underline">
-                            Create Account
+                            Create Smart Wallet
                         </Link>
                     </p>
                 </div>
@@ -178,10 +217,10 @@ const Login: React.FC = () => {
 
             {/* Bottom Footer */}
             <div className="w-full text-center text-xs text-slate-400 dark:text-gray-600 font-mono z-10">
-                Mobilis Transport Fintech • Sub-Second Stellar Settlement
+                Mobilis Transport Fintech • Sub-Second Stellar Settlement & WebAuthn Security
             </div>
         </div>
     );
 };
 
-export default Login;
+export default Login;

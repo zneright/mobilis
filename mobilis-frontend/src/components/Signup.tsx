@@ -6,10 +6,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Keypair } from '@stellar/stellar-sdk';
 import { requestAccess, isConnected } from '@stellar/freighter-api';
-import { AlertTriangle, Copy, CheckCircle2, Wallet, Building2, ArrowRight, ArrowLeft, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { AlertTriangle, Copy, CheckCircle2, Wallet, Building2, ArrowRight, ArrowLeft, Eye, EyeOff, Sparkles, Fingerprint } from 'lucide-react';
 import type { UserData } from '../types';
 import { trackWalletCreated } from '../services/analytics';
 import MobilisLogo from './common/MobilisLogo';
+import { useAuth } from '../context/AuthContext';
 
 declare global {
     interface Window {
@@ -42,11 +43,12 @@ const Signup: React.FC = () => {
     const [registrationNumber, setRegistrationNumber] = useState('');
     const [adminWalletMethod, setAdminWalletMethod] = useState<'freighter' | 'lobstr' | 'generate'>('generate');
 
-    // UI State
     const [isLoading, setIsLoading] = useState(false);
+    const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
     const [error, setError] = useState('');
     const [generatedSecret, setGeneratedSecret] = useState<string | null>(null);
     const navigate = useNavigate();
+    const { isPasskeySupported, registerWithPasskey } = useAuth();
 
     // Password strength computation
     const passwordStrength = password.length === 0 ? 0 : password.length < 6 ? 1 : password.length < 10 ? 2 : 3;
@@ -332,12 +334,43 @@ const Signup: React.FC = () => {
                             {role === 'admin' && <CheckCircle2 className="w-6 h-6 text-violet-500 dark:text-violet-400" />}
                         </motion.button>
 
+                        {/* Passkey 1-Click Biometric Smart Wallet Option */}
+                        {isPasskeySupported && (
+                            <div className="pt-2">
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        setIsPasskeyLoading(true);
+                                        setError('');
+                                        try {
+                                            const demoEmail = `${role}.${Date.now().toString(36)}@mobilis.app`;
+                                            const demoName = `${role.toUpperCase()} User`;
+                                            await registerWithPasskey(demoEmail, demoName, role, {
+                                                todaAffiliation: 'Bacoor TODA Association',
+                                                vehicleType: 'Tricycle',
+                                            });
+                                            navigate('/dashboard');
+                                        } catch (pErr: unknown) {
+                                            setError(pErr instanceof Error ? pErr.message : 'Passkey registration cancelled');
+                                        } finally {
+                                            setIsPasskeyLoading(false);
+                                        }
+                                    }}
+                                    disabled={isPasskeyLoading}
+                                    className="w-full py-4 bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-500 hover:opacity-95 text-slate-950 font-black rounded-2xl text-xs transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2.5 active:scale-98 font-mono"
+                                >
+                                    <Fingerprint className="w-5 h-5" />
+                                    <span>{isPasskeyLoading ? 'Creating Passkey Smart Wallet...' : '1-Click Create Smart Wallet with Passkey (FaceID / Fingerprint)'}</span>
+                                </button>
+                            </div>
+                        )}
+
                         <button
                             type="button"
                             onClick={() => setStep(2)}
-                            className="w-full py-4 mt-4 bg-cyan-500 hover:bg-cyan-400 text-black font-black rounded-2xl text-sm transition-all shadow-[0_0_20px_rgba(0,210,255,0.3)] flex items-center justify-center gap-2 hover:scale-[1.02]"
+                            className="w-full py-4 mt-2 bg-slate-900 hover:bg-slate-800 border border-white/10 text-white font-black rounded-2xl text-sm transition-all flex items-center justify-center gap-2 hover:scale-[1.01]"
                         >
-                            Continue to Onboarding <ArrowRight className="w-4 h-4" />
+                            Or Continue with Email & Password <ArrowRight className="w-4 h-4" />
                         </button>
                     </div>
                 )}

@@ -1,10 +1,15 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { auth, db } from '../firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
+import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { Keypair } from '@stellar/stellar-sdk';
 import type { AuthContextType, UserData as StellarData } from '../types';
+import {
+    isPasskeySupported,
+    registerPasskeySmartWallet,
+    loginWithPasskeyVault,
+} from '../services/passkey';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -16,6 +21,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [currentUser, setCurrentUser] = useState<AuthContextType['currentUser']>(null);
     const [stellarData, setStellarData] = useState<StellarData | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
+    const [passkeySupported, setPasskeySupported] = useState<boolean>(false);
+
+    useEffect(() => {
+        isPasskeySupported().then(setPasskeySupported);
+    }, []);
 
     useEffect(() => {
         let userDocUnsubscribe: (() => void) | null = null;
@@ -80,8 +90,108 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
     }, []);
 
+    /**
+     * Registers a new account and Smart Wallet with device Biometrics / Passkey.
+     */
+    const registerWithPasskey = async (
+        email: string,
+        displayName: string,
+        role: 'commuter' | 'driver' | 'admin',
+        extra?: Record<string, unknown>
+    ): Promise<void> => {
+        setLoading(true);
+        try {
+            // 1. Create WebAuthn Passkey and derive encrypted smart wallet
+            const { keypair, record } = await registerPasskeySmartWallet(email, displayName, role);
+
+            // 2. Ensure Firebase auth session exists (anonymous fallback or email)
+            let user = auth.currentUser;
+            if (!user) {
+                const cred = await signInAnonymously(auth);
+                user = cred.user;
+            }
+
+            const uid = user.uid;
+            const newStellarData: StellarData = {
+                uid,
+                email: email || `${role}-passkey@mobilis.app`,
+                fullName: displayName,
+                publicKey: keypair.publicKey(),
+                secret: keypair.secret(),
+                role,
+                status: 'approved',
+                isPasskeySecured: true,
+                passkeyCredentialId: record.credentialId,
+                ...extra,
+            } as StellarData;
+
+            // Save to Firestore
+            await setDoc(doc(db, 'users', uid), newStellarData, { merge: true });
+            setStellarData(newStellarData);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    /**
+     * Logs in with Passkey Biometric Auth (Face ID / Fingerprint / Windows Hello).
+     */
+    const loginWithPasskey = async (): Promise<void> => {
+        setLoading(true);
+        try {
+            // 1. Biometric verification prompt & keypair decryption
+            const { keypair, record } = await loginWithPasskeyVault();
+
+            // 2. Ensure Firebase session
+            let user = auth.currentUser;
+            if (!user) {
+                const cred = await signInAnonymously(auth);
+                user = cred.user;
+            }
+
+            const uid = user.uid;
+            const userDocRef = doc(db, 'users', uid);
+            const docSnap = await getDoc(userDocRef);
+
+            let activeData: StellarData;
+            if (docSnap.exists()) {
+                activeData = {
+                    ...(docSnap.data() as StellarData),
+                    secret: keypair.secret(),
+                    publicKey: keypair.publicKey(),
+                    isPasskeySecured: true,
+                };
+            } else {
+                activeData = {
+                    uid,
+                    email: record.userEmail,
+                    fullName: record.displayName,
+                    publicKey: keypair.publicKey(),
+                    secret: keypair.secret(),
+                    role: record.role as 'driver' | 'commuter' | 'admin',
+                    status: 'approved',
+                    isPasskeySecured: true,
+                    passkeyCredentialId: record.credentialId,
+                };
+                await setDoc(userDocRef, activeData);
+            }
+
+            setStellarData(activeData);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ currentUser, stellarData }}>
+        <AuthContext.Provider
+            value={{
+                currentUser,
+                stellarData,
+                isPasskeySupported: passkeySupported,
+                loginWithPasskey,
+                registerWithPasskey,
+            }}
+        >
             {!loading && children}
         </AuthContext.Provider>
     );

@@ -9,7 +9,11 @@ export interface UserData {
 
     // Blockchain Data
     publicKey: string;
-    secret: string; // NOTE: MVP only.
+    secret: string; // Non-custodial or Passkey Enclave unlocked
+
+    // Passkey / WebAuthn Account Abstraction
+    isPasskeySecured?: boolean;
+    passkeyCredentialId?: string;
 
     // Specific Fields for Drivers
     fullName?: string;
@@ -96,5 +100,13 @@ export interface FareTransaction {
 
 export interface AuthContextType {
     currentUser: FirebaseUser | null;
-    stellarData: UserData | null; // Renamed locally but keeps the same logic
+    stellarData: UserData | null;
+    isPasskeySupported: boolean;
+    loginWithPasskey: () => Promise<void>;
+    registerWithPasskey: (
+        email: string,
+        displayName: string,
+        role: 'commuter' | 'driver' | 'admin',
+        extra?: Record<string, unknown>
+    ) => Promise<void>;
 }
