@@ -1,6 +1,6 @@
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Horizon, Keypair, TransactionBuilder, Operation, Asset, Memo } from '@stellar/stellar-sdk';
+import { Horizon, Keypair, TransactionBuilder, Memo } from '@stellar/stellar-sdk';
 import { HORIZON_SERVER } from './stellar';
 import {
     getDriverVoucherQueue,
