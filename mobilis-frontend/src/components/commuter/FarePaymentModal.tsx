@@ -151,13 +151,11 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
 
                 const signedXdrStr = typeof signedXdr === 'string' ? signedXdr : (signedXdr as { signedTxXdr: string }).signedTxXdr;
                 const signedTx = TransactionBuilder.fromXDR(signedXdrStr, "Test Stellar Network ; September 2015");
-                try {
-                    const submitRes = await server.submitTransaction(signedTx as Transaction);
-                    txHash = submitRes.hash;
-                } catch (submitErr) {
-                    console.warn("Horizon submission note, using signed tx hash:", submitErr);
-                    txHash = (signedTx as Transaction).hash().toString('hex');
+                const submitRes = await server.submitTransaction(signedTx as Transaction);
+                if (!submitRes.hash) {
+                    throw new Error("Transaction was rejected by Stellar network without confirmation.");
                 }
+                txHash = submitRes.hash;
             } else {
                 // METHOD B: INSTANT STELLAR KEYPAIR (STORED OR AUTO-CREATED)
                 let commuterSecret = commuterData?.secret;
@@ -217,13 +215,11 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
 
                 tx.sign(commuterPair);
 
-                try {
-                    const txResult = await server.submitTransaction(tx);
-                    txHash = txResult.hash;
-                } catch (primaryErr) {
-                    console.warn("Horizon submitTransaction primary note, extracting signed tx hash:", primaryErr);
-                    txHash = tx.hash().toString('hex');
+                const txResult = await server.submitTransaction(tx);
+                if (!txResult.hash) {
+                    throw new Error("Transaction was rejected by Stellar network without confirmation.");
                 }
+                txHash = txResult.hash;
             }
 
             const timestamp = new Date().toISOString();
