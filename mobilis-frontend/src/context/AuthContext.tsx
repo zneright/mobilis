@@ -46,7 +46,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     userDocRef,
                     async (docSnap) => {
                         if (docSnap.exists()) {
-                            setStellarData(docSnap.data() as StellarData);
+                            const dbData = docSnap.data() as StellarData;
+                            setStellarData(prev => {
+                                return {
+                                    ...dbData,
+                                    // Preserve local in-memory secret key if available
+                                    secret: prev?.secret || dbData.secret || '',
+                                    isPasskeySecured: prev?.isPasskeySecured ?? dbData.isPasskeySecured,
+                                };
+                            });
                         } else {
                             // Generate Stellar Keypair for new user
                             const pair = Keypair.random();
