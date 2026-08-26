@@ -233,7 +233,7 @@ The core treasury logic is implemented in Rust using the Soroban SDK:
 
 * **Deployed Testnet Address:** [`CAVFLXBG4MXGTGECI6WAZXMDNX2H3UWFTMNY4DHK2MR4YUYEEU5STBID`](https://stellar.expert/explorer/testnet/contract/CAVFLXBG4MXGTGECI6WAZXMDNX2H3UWFTMNY4DHK2MR4YUYEEU5STBID)
 * **Contract Source:** [`contracts/Mobilis/src/lib.rs`](contracts/Mobilis/src/lib.rs)
-* **Unit Tests:** [`contracts/Mobilis/src/test.rs`](contracts/Mobilis/src/test.rs) (4/4 passed)
+* **Unit Tests:** [`contracts/Mobilis/src/test.rs`](contracts/Mobilis/src/test.rs) (7/7 passed)
 
 ### Dynamic Credit Tier Progression & Limits
 
@@ -353,7 +353,7 @@ mobilis/
 
 Mobilis features fully automated Continuous Integration (CI) and Continuous Deployment (CD) workflows on GitHub Actions:
 
-- **Smart Contract CI (`smart-contract-ci`)**: Syntax checking (`cargo check`), automated unit assertions (`cargo test` - 4/4 passing), and WASM compilation (`wasm32-unknown-unknown`).
+- **Smart Contract CI (`smart-contract-ci`)**: Syntax checking (`cargo check`), automated unit assertions (`cargo test` - 7/7 passing), and WASM compilation (`wasm32-unknown-unknown`).
 - **Frontend CI (`frontend-ci`)**: Dependency validation, linting (`npm run lint`), TypeScript test suite (`npm test` - 7/7 passing), and production Vite bundle generation.
 - **Continuous Deployment (`deploy-frontend`)**: Automatically builds and deploys live updates to **Firebase Hosting** on every push to `main`.
 
@@ -374,7 +374,7 @@ Mobilis features fully automated Continuous Integration (CI) and Continuous Depl
 ```bash
 cd contracts/Mobilis
 
-# Run all Soroban unit assertions (4/4 tests passing)
+# Run all Soroban unit assertions (7/7 tests passing)
 cargo test
 
 # Compile Soroban WebAssembly binary
