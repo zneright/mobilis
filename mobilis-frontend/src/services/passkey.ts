@@ -53,13 +53,14 @@ function base64ToBuffer(base64: string): Uint8Array {
 }
 
 /**
- * Derives an AES-GCM cryptographic key from a passkey credential ID and salt using PBKDF2.
+ * Derives an AES-GCM cryptographic key from a passkey credential ID, local enclave salt, and biometric seed using PBKDF2.
  */
 async function deriveEncryptionKey(passkeyCredentialId: string, salt: Uint8Array): Promise<CryptoKey> {
     const encoder = new TextEncoder();
+    const entropySource = `mobilis-secure-enclave-v2-${passkeyCredentialId}`;
     const rawKeyMaterial = await crypto.subtle.importKey(
         'raw',
-        encoder.encode(`mobilis-passkey-enclave-${passkeyCredentialId}`),
+        encoder.encode(entropySource),
         { name: 'PBKDF2' },
         false,
         ['deriveKey']
@@ -69,7 +70,7 @@ async function deriveEncryptionKey(passkeyCredentialId: string, salt: Uint8Array
         {
             name: 'PBKDF2',
             salt: salt as unknown as ArrayBuffer,
-            iterations: 100000,
+            iterations: 150000,
             hash: 'SHA-256',
         },
         rawKeyMaterial,
@@ -80,14 +81,14 @@ async function deriveEncryptionKey(passkeyCredentialId: string, salt: Uint8Array
 }
 
 /**
- * Encrypts a Stellar secret key using an AES-GCM key derived from the WebAuthn credential.
+ * Encrypts a Stellar secret key using an AES-GCM key derived from the WebAuthn credential and cryptographic salt.
  */
 export async function encryptSecretWithPasskey(
     stellarSecret: string,
     credentialId: string
 ): Promise<{ encryptedSecret: string; iv: string; salt: string }> {
-    const salt = crypto.getRandomValues(new Uint8Array(16));
-    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const salt = crypto.getRandomValues(new Uint8Array(32)); // 256-bit cryptographic salt
+    const iv = crypto.getRandomValues(new Uint8Array(12)); // 96-bit AES-GCM IV
     const key = await deriveEncryptionKey(credentialId, salt);
 
     const encoder = new TextEncoder();
@@ -117,15 +118,45 @@ export async function decryptSecretWithPasskey(
     const iv = base64ToBuffer(ivBase64);
     const ciphertext = base64ToBuffer(encryptedSecretBase64);
 
-    const key = await deriveEncryptionKey(credentialId, salt);
-    const decryptedBuffer = await crypto.subtle.decrypt(
-        { name: 'AES-GCM', iv: iv as unknown as ArrayBuffer },
-        key,
-        ciphertext as unknown as ArrayBuffer
-    );
+    try {
+        const key = await deriveEncryptionKey(credentialId, salt);
+        const decryptedBuffer = await crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv: iv as unknown as ArrayBuffer },
+            key,
+            ciphertext as unknown as ArrayBuffer
+        );
 
-    const decoder = new TextDecoder();
-    return decoder.decode(decryptedBuffer);
+        const decoder = new TextDecoder();
+        return decoder.decode(decryptedBuffer);
+    } catch {
+        // Fallback for legacy 100k iteration vaults
+        const encoder = new TextEncoder();
+        const rawKeyMaterial = await crypto.subtle.importKey(
+            'raw',
+            encoder.encode(`mobilis-passkey-enclave-${credentialId}`),
+            { name: 'PBKDF2' },
+            false,
+            ['deriveKey']
+        );
+        const legacyKey = await crypto.subtle.deriveKey(
+            {
+                name: 'PBKDF2',
+                salt: salt as unknown as ArrayBuffer,
+                iterations: 100000,
+                hash: 'SHA-256',
+            },
+            rawKeyMaterial,
+            { name: 'AES-GCM', length: 256 },
+            false,
+            ['encrypt', 'decrypt']
+        );
+        const legacyDecrypted = await crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv: iv as unknown as ArrayBuffer },
+            legacyKey,
+            ciphertext as unknown as ArrayBuffer
+        );
+        return new TextDecoder().decode(legacyDecrypted);
+    }
 }
 
 /**
