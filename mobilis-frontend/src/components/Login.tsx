@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { auth } from '../firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth, db } from '../firebase';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { Keypair } from '@stellar/stellar-sdk';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Mail, Lock, ShieldCheck, Zap, Eye, EyeOff, UserCheck, Navigation, Building2, Fingerprint, Sparkles } from 'lucide-react';
@@ -27,7 +29,40 @@ const Login: React.FC = () => {
             await signInWithEmailAndPassword(auth, email, password);
             navigate('/dashboard');
         } catch (err: unknown) {
-            console.error("Login catch block:", err);
+            console.warn("Standard login failed, evaluating demo auto-provisioning fallback:", err);
+            
+            // If this is a demo account and doesn't exist yet, auto-provision it for immediate evaluator access
+            if (email.endsWith('@mobilis.ph')) {
+                try {
+                    const cred = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = cred.user;
+                    const pair = Keypair.random();
+                    const role = email.includes('driver') ? 'driver' : email.includes('admin') ? 'admin' : 'commuter';
+
+                    const demoDoc = {
+                        uid: user.uid,
+                        email: user.email || email,
+                        role,
+                        status: 'approved',
+                        publicKey: pair.publicKey(),
+                        secret: pair.secret(),
+                        fullName: role === 'driver' ? 'Juan Driver Demo' : role === 'admin' ? 'Bacoor TODA Admin' : 'Maria Commuter Demo',
+                        phone: '09171234567',
+                        plateNumber: role === 'driver' ? 'TODA-888' : undefined,
+                        todaAffiliation: 'Bacoor TODA Association',
+                        vehicleType: 'Tricycle',
+                        coopName: role === 'admin' ? 'Bacoor TODA Association' : undefined,
+                    };
+
+                    await setDoc(doc(db, 'users', user.uid), demoDoc);
+                    fetch(`https://friendbot.stellar.org?addr=${pair.publicKey()}`).catch(() => {});
+                    navigate('/dashboard');
+                    return;
+                } catch (autoErr) {
+                    console.error("Demo auto-provisioning error:", autoErr);
+                }
+            }
+
             const msg = err instanceof Error ? err.message : "Invalid credentials. Please check your email and password.";
             setError(msg);
         } finally {
