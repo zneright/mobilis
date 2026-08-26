@@ -102,8 +102,8 @@ flowchart TB
     end
 
     subgraph "2. Live Transit Discovery & Micropayments"
-        D["🛺 Driver 'Goes On Transit'"] -->|Broadcasts Real-Time GPS (10m/30s)| FS[("🔥 Firestore DB")]
-        C["🚶 Commuter Radar"] -->|Haversine Radial Discovery (1-10km)| FS
+        D["🛺 Driver 'Goes On Transit'"] -->|Broadcasts Real-Time GPS| FS[("🔥 Firestore DB")]
+        C["🚶 Commuter Radar"] -->|Haversine Radial Discovery| FS
         C -->|1-Tap Preset: ₱15 / ₱25 / ₱50| S["⚡ Direct Stellar XLM Payment"]
         S -->|Sub-Second Ledger Settlement| DW["👛 Driver Wallet"]
         DW -->|Zero-Network Synthesizer| CH["🔊 Web Audio Dual-Chime Alert"]
@@ -111,11 +111,11 @@ flowchart TB
 
     subgraph "3. Soroban Dynamic Micro-Credit Treasury"
         DW -->|Request Tier-Validated Fuel Advance| SC["🏛️ Soroban Treasury Contract"]
-        SC -->|Disburse Principal (15 - 75 XLM)| DW
+        SC -->|Disburse Principal: 15-75 XLM| DW
         DW -->|Shift Completion: Settle Loan| SC
-        SC -->|Principal + Dynamic Risk Yield (0.3% - 0.2%)| AW["🏢 Coop Admin Wallet"]
-        SC -->|Dynamic Protocol Maintenance (0.2% - 0.1%)| PW["⚙️ Platform Treasury"]
-        SC -->|Update On-Chain Credit Reputation| REP["⭐ Driver Reputation (Bronze ➔ Silver ➔ Gold)"]
+        SC -->|Principal + Dynamic Risk Yield| AW["🏢 Coop Admin Wallet"]
+        SC -->|Dynamic Protocol Maintenance| PW["⚙️ Platform Treasury"]
+        SC -->|Update On-Chain Credit Reputation| REP["⭐ Driver Reputation: Bronze ➔ Silver ➔ Gold"]
     end
 
     W --> D
@@ -147,10 +147,10 @@ flowchart TD
 ### 3. 🚨 Commuter Waiting Beacon & Driver Dispatch Lifecycle
 ```mermaid
 flowchart LR
-    B1["1. 🚶 Commuter Broadcasts Beacon (GPS + Vehicle Preference)"] -->|Real-Time Geo Stream| B2["2. 📡 Nearby On-Duty Drivers Notified"]
-    B2 -->|Driver Accepts Dispatch| B3["3. 🛺 Pickup Session Initiated ('accepted')"]
-    B3 -->|Live Haversine Distance Tracking| B4["4. 📍 Driver Approaching ('approaching' ➔ 'arrived')"]
-    B4 -->|1-Tap Preset Payment| B5["5. ⚡ Fare Settled & Session 'completed'"]
+    B1["1. 🚶 Commuter Broadcasts Beacon"] -->|Real-Time Geo Stream| B2["2. 📡 Nearby On-Duty Drivers Notified"]
+    B2 -->|Driver Accepts Dispatch| B3["3. 🛺 Pickup Session Initiated: Accepted"]
+    B3 -->|Live Haversine Distance Tracking| B4["4. 📍 Driver Approaching ➔ Arrived"]
+    B4 -->|1-Tap Preset Payment| B5["5. ⚡ Fare Settled: Session Completed"]
 ```
 
 ### 4. 📜 Soroban Smart Contract Dynamic Credit & Fee Routing State Machine
@@ -161,18 +161,18 @@ flowchart TD
     end
 
     subgraph "Soroban Treasury Contract: settle_loan"
-        SC["MobilisTreasury: settle_loan(driver)"]
+        SC["MobilisTreasury: settle_loan"]
         TIER{"Evaluate Credit Tier"}
         SC --> TIER
-        TIER -->|Tier 1: Bronze (0-2 Loans)| T1["Coop: 0.30% | Platform: 0.20% (0.50% total)"]
-        TIER -->|Tier 2: Silver (3-7 Loans)| T2["Coop: 0.25% | Platform: 0.15% (0.40% total)"]
-        TIER -->|Tier 3: Gold (8+ Loans)| T3["Coop: 0.20% | Platform: 0.10% (0.30% total)"]
+        TIER -->|Tier 1 Bronze: 0-2 Loans| T1["Coop: 0.30% | Platform: 0.20% (0.50% total)"]
+        TIER -->|Tier 2 Silver: 3-7 Loans| T2["Coop: 0.25% | Platform: 0.15% (0.40% total)"]
+        TIER -->|Tier 3 Gold: 8+ Loans| T3["Coop: 0.20% | Platform: 0.10% (0.30% total)"]
     end
 
     subgraph "Atomic Ledger Settlement Output"
         PR["🏛️ Principal + Coop Yield: Coop Admin Wallet"]
         PW["⚙️ Platform Maintenance: Platform Treasury"]
-        REP["⭐ Reputation State: +1 Repayment, Update Consecutive Score & Upgrade Tier"]
+        REP["⭐ Reputation State: +1 Repayment & Upgrade Tier"]
     end
 
     T1 & T2 & T3 -->|Atomic Transfer| PR
