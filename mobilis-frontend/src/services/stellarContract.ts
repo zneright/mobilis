@@ -2,7 +2,6 @@ import {
     rpc,
     Contract,
     TransactionBuilder,
-    Networks,
     Transaction,
     Keypair,
     Operation,
@@ -13,11 +12,24 @@ import {
     xdr
 } from '@stellar/stellar-sdk';
 import { isFreighterConnected, requestFreighterSign } from './freighter';
+import {
+    getNetworkConfig,
+    getHorizonServer,
+    getRpcServer,
+    getNetworkPassphrase,
+    getContractId,
+} from './networkConfig';
 
-export const CONTRACT_ID = "CAVFLXBG4MXGTGECI6WAZXMDNX2H3UWFTMNY4DHK2MR4YUYEEU5STBID";
-export const RPC_SERVER = "https://soroban-testnet.stellar.org";
-export const HORIZON_SERVER = "https://horizon-testnet.stellar.org";
-export const NETWORK_PASSPHRASE = Networks.TESTNET;
+// Dynamic accessors — these read from the centralized network config at call time.
+// Legacy named exports preserved for backward compatibility across the codebase.
+export const get_CONTRACT_ID = getContractId;
+export const get_RPC_SERVER = getRpcServer;
+export const get_HORIZON_SERVER = getHorizonServer;
+export const get_NETWORK_PASSPHRASE = getNetworkPassphrase;
+
+// Static re-exports for consumers that still import these names.
+// These will resolve to the active network at import time.
+export { getNetworkConfig };
 
 export interface TransactionResult {
     hash: string;
@@ -59,8 +71,8 @@ export async function signAndSubmitTransaction(
     }
 
     if (await isFreighterConnected()) {
-        const signedXdr = await requestFreighterSign(tx.toXDR());
-        const signedTx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE) as Transaction;
+        const signedXdr = await requestFreighterSign(tx.toXDR(), getNetworkPassphrase());
+        const signedTx = TransactionBuilder.fromXDR(signedXdr, getNetworkPassphrase()) as Transaction;
         const result = await server.sendTransaction(signedTx);
         return { hash: result.hash, status: result.status, errorResult: result.errorResult };
     }
@@ -92,11 +104,15 @@ export async function executeContractCall(
     args: xdr.ScVal[],
     secretKey?: string
 ): Promise<boolean> {
-    const server = new rpc.Server(RPC_SERVER);
+    const contractId = getContractId();
+    if (!contractId) {
+        throw new Error(`Soroban smart contract is not deployed on ${getNetworkConfig().label}. Please switch to Testnet.`);
+    }
+    const server = new rpc.Server(getRpcServer());
     const account = await server.getAccount(activePubKey);
-    const contract = new Contract(CONTRACT_ID);
+    const contract = new Contract(contractId);
 
-    const tx = new TransactionBuilder(account, { fee: "10000", networkPassphrase: NETWORK_PASSPHRASE })
+    const tx = new TransactionBuilder(account, { fee: "10000", networkPassphrase: getNetworkPassphrase() })
         .addOperation(contract.call(functionName, ...args))
         .setTimeout(30)
         .build();
@@ -177,11 +193,13 @@ export async function settleLoan(
  */
 export async function getDebt(driverAddress: string): Promise<number> {
     try {
-        const server = new rpc.Server(RPC_SERVER);
-        const contract = new Contract(CONTRACT_ID);
+        const contractId = getContractId();
+        if (!contractId) return 0;
+        const server = new rpc.Server(getRpcServer());
+        const contract = new Contract(contractId);
         const account = await server.getAccount(driverAddress);
 
-        const tx = new TransactionBuilder(account, { fee: "10000", networkPassphrase: NETWORK_PASSPHRASE })
+        const tx = new TransactionBuilder(account, { fee: "10000", networkPassphrase: getNetworkPassphrase() })
             .addOperation(contract.call("get_debt", nativeToScVal(driverAddress, { type: 'address' })))
             .setTimeout(30)
             .build();
@@ -205,11 +223,13 @@ export const getDriverDebt = getDebt;
  */
 export async function getDriverReputation(driverAddress: string): Promise<DriverReputationData> {
     try {
-        const server = new rpc.Server(RPC_SERVER);
-        const contract = new Contract(CONTRACT_ID);
+        const contractId = getContractId();
+        if (!contractId) throw new Error('Contract not deployed on active network');
+        const server = new rpc.Server(getRpcServer());
+        const contract = new Contract(contractId);
         const account = await server.getAccount(driverAddress);
 
-        const tx = new TransactionBuilder(account, { fee: "10000", networkPassphrase: NETWORK_PASSPHRASE })
+        const tx = new TransactionBuilder(account, { fee: "10000", networkPassphrase: getNetworkPassphrase() })
             .addOperation(contract.call("get_driver_reputation", nativeToScVal(driverAddress, { type: 'address' })))
             .setTimeout(30)
             .build();
@@ -255,8 +275,10 @@ export async function getDriverReputation(driverAddress: string): Promise<Driver
  */
 export async function getTreasuryBalance(): Promise<string> {
     try {
-        const horizon = new Horizon.Server(HORIZON_SERVER);
-        const account = await horizon.loadAccount(CONTRACT_ID);
+        const contractId = getContractId();
+        if (!contractId) return '0.00';
+        const horizon = new Horizon.Server(getHorizonServer());
+        const account = await horizon.loadAccount(contractId);
         const nativeBalance = account.balances.find(b => b.asset_type === 'native');
         return nativeBalance ? parseFloat(nativeBalance.balance).toFixed(2) : '0.00';
     } catch {
@@ -269,7 +291,7 @@ export async function getTreasuryBalance(): Promise<string> {
  */
 export async function getAccountXlmBalance(publicKey: string): Promise<string> {
     try {
-        const horizon = new Horizon.Server(HORIZON_SERVER);
+        const horizon = new Horizon.Server(getHorizonServer());
         const account = await horizon.loadAccount(publicKey);
         const nativeBalance = account.balances.find(b => b.asset_type === 'native');
         return nativeBalance ? parseFloat(nativeBalance.balance).toFixed(2) : '0.00';
@@ -287,10 +309,10 @@ export async function sendNativePayment(
     amountXlm: string,
     secretKey?: string
 ): Promise<{ hash: string; status: string }> {
-    const server = new rpc.Server(RPC_SERVER);
+    const server = new rpc.Server(getRpcServer());
     const account = await server.getAccount(senderPublicKey);
 
-    const tx = new TransactionBuilder(account, { fee: "1000", networkPassphrase: NETWORK_PASSPHRASE })
+    const tx = new TransactionBuilder(account, { fee: "1000", networkPassphrase: getNetworkPassphrase() })
         .addOperation(Operation.payment({
             destination: destPublicKey,
             asset: Asset.native(),
