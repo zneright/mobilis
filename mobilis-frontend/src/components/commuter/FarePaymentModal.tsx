@@ -94,7 +94,7 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
             // Destination Key (Driver Public Key or Fallback Receiver)
             let destinationKey = resolvedDriverKey;
 
-            // Step 1: Ensure Destination Account exists (Testnet Friendbot Faucet)
+            // Step 1: Ensure Destination Account exists
             if (isTestnet() && getFriendbotUrl()) {
                 try {
                     await server.loadAccount(destinationKey);
@@ -107,6 +107,12 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
                     } catch {
                         // Ignore friendbot error if already initialized
                     }
+                }
+            } else {
+                try {
+                    await server.loadAccount(destinationKey);
+                } catch {
+                    throw new Error("Driver wallet address is not activated on Stellar Mainnet (requires at least 1 XLM base reserve).");
                 }
             }
 
@@ -135,8 +141,10 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
                     if (isTestnet() && getFriendbotUrl()) {
                         await fetch(`${getFriendbotUrl()}/?addr=${freighterPubKey}`);
                         await new Promise((r) => setTimeout(r, 1200));
+                        freighterAccount = await server.loadAccount(freighterPubKey);
+                    } else {
+                        throw new Error("Your connected Freighter wallet is not activated on Stellar Mainnet. Please deposit XLM.");
                     }
-                    freighterAccount = await server.loadAccount(freighterPubKey);
                 }
 
                 const tx = new TransactionBuilder(freighterAccount, {
@@ -198,17 +206,24 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
                     commuterAccount = await server.loadAccount(commuterPubKey);
                     const nativeBal = commuterAccount.balances.find((b: { asset_type: string }) => b.asset_type === 'native');
                     const xlmAmt = parseFloat(nativeBal?.balance || '0');
-                    if (xlmAmt < amountNum + 1.5 && isTestnet() && getFriendbotUrl()) {
-                        await fetch(`${getFriendbotUrl()}/?addr=${commuterPubKey}`);
-                        await new Promise((r) => setTimeout(r, 1200));
-                        commuterAccount = await server.loadAccount(commuterPubKey);
+                    if (xlmAmt < amountNum + 1.5) {
+                        if (isTestnet() && getFriendbotUrl()) {
+                            await fetch(`${getFriendbotUrl()}/?addr=${commuterPubKey}`);
+                            await new Promise((r) => setTimeout(r, 1200));
+                            commuterAccount = await server.loadAccount(commuterPubKey);
+                        } else if (xlmAmt < amountNum) {
+                            throw new Error(`Insufficient funds on Mainnet. Required: ${amountNum.toFixed(4)} XLM, Available: ${xlmAmt.toFixed(4)} XLM.`);
+                        }
                     }
-                } catch {
+                } catch (loadErr: unknown) {
                     if (isTestnet() && getFriendbotUrl()) {
                         await fetch(`${getFriendbotUrl()}/?addr=${commuterPubKey}`);
                         await new Promise((r) => setTimeout(r, 1500));
+                        commuterAccount = await server.loadAccount(commuterPubKey);
+                    } else {
+                        const msg = loadErr instanceof Error ? loadErr.message : "Your wallet is not activated on Stellar Mainnet. Please deposit XLM first.";
+                        throw new Error(msg);
                     }
-                    commuterAccount = await server.loadAccount(commuterPubKey);
                 }
 
                 const tx = new TransactionBuilder(commuterAccount, {

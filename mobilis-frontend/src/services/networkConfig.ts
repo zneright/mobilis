@@ -38,7 +38,7 @@ const TESTNET_CONFIG: NetworkConfig = {
 const MAINNET_CONFIG: NetworkConfig = {
     network: 'mainnet',
     horizonServer: 'https://horizon.stellar.org',
-    rpcServer: 'https://soroban.stellar.org',
+    rpcServer: 'https://mainnet.sorobanrpc.com',
     networkPassphrase: Networks.PUBLIC,
     contractId: null, // Not yet deployed to mainnet
     friendbotUrl: null, // No faucet on mainnet
