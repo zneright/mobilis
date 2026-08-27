@@ -222,7 +222,7 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
                         commuterAccount = await server.loadAccount(commuterPubKey);
                     } else {
                         const msg = loadErr instanceof Error ? loadErr.message : "Your wallet is not activated on Stellar Mainnet. Please deposit XLM first.";
-                        throw new Error(msg);
+                        throw new Error(msg, { cause: loadErr });
                     }
                 }
 
