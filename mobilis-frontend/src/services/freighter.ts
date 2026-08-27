@@ -1,5 +1,5 @@
 import { requestAccess, signTransaction, isConnected, isAllowed } from '@stellar/freighter-api';
-import { Networks } from '@stellar/stellar-sdk';
+import { getNetworkPassphrase } from './networkConfig';
 
 export async function isFreighterConnected(): Promise<boolean> {
     try {
@@ -26,7 +26,7 @@ export async function checkFreighterAccess(): Promise<string | null> {
     }
 }
 
-export async function requestFreighterSign(xdr: string, networkPassphrase = Networks.TESTNET): Promise<string> {
+export async function requestFreighterSign(xdr: string, networkPassphrase = getNetworkPassphrase()): Promise<string> {
     const signedResult = await signTransaction(xdr, { networkPassphrase });
     if (typeof signedResult === 'string') return signedResult;
     if (signedResult && typeof signedResult === 'object' && 'signedTxXdr' in signedResult) {

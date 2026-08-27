@@ -1,46 +1,41 @@
 import React, { useState } from 'react';
 import { Wallet, ArrowUpRight, ArrowDownLeft, QrCode, ShieldCheck, RefreshCw, Zap, Copy, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cardRoleStyle, rolePill, roleAccentText, roleCtaBg } from './roleStyleTokens';
+import { isTestnet, getFriendbotUrl } from '../../services/networkConfig';
 
 interface VaultTabProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     stellarData: any;
-    externalWallet: string | null;
-    activePubKey: string | null;
+    appNetwork: 'TESTNET' | 'PUBLIC';
+    refreshData: () => void;
+    activePubKey?: string;
+    currencyMode: 'XLM' | 'PHP';
+    setCurrencyMode: (m: 'XLM' | 'PHP') => void;
     xlmBalance: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     assetBalances: any[];
-    currencyMode: 'XLM' | 'PHP';
-    setCurrencyMode: React.Dispatch<React.SetStateAction<'XLM' | 'PHP'>>;
-    formatCurrency: (amountXlm: number | string) => string;
-    setShowWalletModal: (show: boolean) => void;
-    handleDisconnectWallet: () => void;
-    setShowReceiveModal: (show: boolean) => void;
-    setShowSendModal: (show: boolean) => void;
-    appNetwork: string;
-    refreshData: () => void;
+    treasuryBalance: string;
+    onSignOut?: () => void;
 }
-
-const PHP_RATE = 60.69;
 
 export const VaultTab: React.FC<VaultTabProps> = ({
     stellarData,
-    activePubKey,
-    xlmBalance,
-    assetBalances,
-    currencyMode,
-    setCurrencyMode,
-    setShowReceiveModal,
-    setShowSendModal,
     appNetwork,
     refreshData,
+    activePubKey,
+    currencyMode,
+    setCurrencyMode,
+    xlmBalance,
+    assetBalances,
 }) => {
     const xlmNum = parseFloat(xlmBalance || '0');
-    const phpEquivalent = (xlmNum * PHP_RATE).toFixed(2);
+    const phpEquivalent = (xlmNum * 60.69).toFixed(2);
 
     const [isFunding, setIsFunding] = useState(false);
     const [fundMessage, setFundMessage] = useState<string | null>(null);
     const [copiedKey, setCopiedKey] = useState(false);
+    const [showSendModal, setShowSendModal] = useState(false);
+    const [showReceiveModal, setShowReceiveModal] = useState(false);
 
     const role = stellarData?.role ?? 'commuter';
     const cardStyle = cardRoleStyle(role);
@@ -62,7 +57,13 @@ export const VaultTab: React.FC<VaultTabProps> = ({
         setIsFunding(true);
         setFundMessage(null);
         try {
-            const res = await fetch(`https://friendbot.stellar.org?addr=${targetKey}`);
+            const friendbotUrl = getFriendbotUrl();
+            if (!friendbotUrl) {
+                setFundMessage('Faucet is only available on Testnet.');
+                setIsFunding(false);
+                return;
+            }
+            const res = await fetch(`${friendbotUrl}?addr=${targetKey}`);
             if (res.ok) {
                 setFundMessage('Testnet XLM funded successfully! Refreshing balance...');
                 setTimeout(() => {
@@ -163,34 +164,55 @@ export const VaultTab: React.FC<VaultTabProps> = ({
                         </div>
                     </div>
 
-                    {/* Faucet Top-Up Card (Feedback Feature) */}
-                    <div className={`p-6 rounded-3xl border transition-all duration-300 flex flex-col sm:flex-row items-center justify-between gap-4 ${cardStyle}`}>
-                        <div className="flex items-center gap-3.5 text-left">
-                            <div className="w-11 h-11 rounded-2xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center flex-shrink-0 border border-cyan-500/20">
-                                <Zap className="w-5 h-5" />
+                    {/* Faucet Top-Up Card (Testnet) vs Mainnet Deposit Card */}
+                    {isTestnet() ? (
+                        <div className={`p-6 rounded-3xl border transition-all duration-300 flex flex-col sm:flex-row items-center justify-between gap-4 ${cardStyle}`}>
+                            <div className="flex items-center gap-3.5 text-left">
+                                <div className="w-11 h-11 rounded-2xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center flex-shrink-0 border border-cyan-500/20">
+                                    <Zap className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h4 className="font-black text-sm text-slate-900 dark:text-white">Stellar Testnet Top-Up</h4>
+                                    <p className="text-xs text-slate-500 dark:text-gray-400">Request free Testnet XLM to test fare payments & fuel loans</p>
+                                </div>
                             </div>
-                            <div>
-                                <h4 className="font-black text-sm text-slate-900 dark:text-white">Stellar Testnet Top-Up</h4>
-                                <p className="text-xs text-slate-500 dark:text-gray-400">Request free Testnet XLM to test fare payments & fuel loans</p>
-                            </div>
-                        </div>
 
-                        <button
-                            onClick={handleRequestFriendbot}
-                            disabled={isFunding}
-                            className="px-5 py-3 rounded-2xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-black font-black text-xs transition-all shadow-[0_0_15px_rgba(0,210,255,0.3)] flex items-center gap-2 flex-shrink-0 active:scale-95"
-                        >
-                            {isFunding ? (
-                                <>
-                                    <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Funding Wallet...
-                                </>
-                            ) : (
-                                <>
-                                    <Zap className="w-3.5 h-3.5" /> Faucet +100 XLM
-                                </>
-                            )}
-                        </button>
-                    </div>
+                            <button
+                                onClick={handleRequestFriendbot}
+                                disabled={isFunding}
+                                className="px-5 py-3 rounded-2xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-black font-black text-xs transition-all shadow-[0_0_15px_rgba(0,210,255,0.3)] flex items-center gap-2 flex-shrink-0 active:scale-95"
+                            >
+                                {isFunding ? (
+                                    <>
+                                        <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Funding Wallet...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Zap className="w-3.5 h-3.5" /> Faucet +100 XLM
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    ) : (
+                        <div className={`p-6 rounded-3xl border transition-all duration-300 flex flex-col sm:flex-row items-center justify-between gap-4 bg-amber-500/5 border-amber-500/20`}>
+                            <div className="flex items-center gap-3.5 text-left">
+                                <div className="w-11 h-11 rounded-2xl bg-amber-500/15 text-amber-500 flex items-center justify-center flex-shrink-0 border border-amber-500/30">
+                                    <ShieldCheck className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h4 className="font-black text-sm text-slate-900 dark:text-white">Stellar Mainnet Active</h4>
+                                    <p className="text-xs text-slate-500 dark:text-gray-400">Real XLM required for transactions. Deposit XLM to your public address.</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleCopy}
+                                className="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs transition-all shadow-md flex items-center gap-2 flex-shrink-0 active:scale-95"
+                            >
+                                <Copy className="w-3.5 h-3.5" />
+                                <span>{copiedKey ? 'Address Copied!' : 'Copy Wallet Address'}</span>
+                            </button>
+                        </div>
+                    )}
 
                     {fundMessage && (
                         <div className="p-4 bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 rounded-2xl text-xs font-bold flex items-center gap-2">

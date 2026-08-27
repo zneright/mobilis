@@ -125,7 +125,10 @@ const Signup: React.FC = () => {
                 const pair = Keypair.random();
                 publicKey = pair.publicKey();
                 secret = pair.secret();
-                fetch(`https://friendbot.stellar.org?addr=${publicKey}`).catch(console.error);
+                const friendbot = getFriendbotUrl();
+                if (friendbot) {
+                    fetch(`${friendbot}?addr=${publicKey}`).catch(console.error);
+                }
             }
 
             // Create Firebase Auth User

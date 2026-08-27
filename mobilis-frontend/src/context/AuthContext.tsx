@@ -10,6 +10,7 @@ import {
     registerPasskeySmartWallet,
     loginWithPasskeyVault,
 } from '../services/passkey';
+import { getFriendbotUrl } from '../services/networkConfig';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -46,15 +47,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     userDocRef,
                     async (docSnap) => {
                         if (docSnap.exists()) {
-                            const dbData = docSnap.data() as StellarData;
-                            setStellarData(prev => {
-                                return {
-                                    ...dbData,
-                                    // Preserve local in-memory secret key if available
-                                    secret: prev?.secret || dbData.secret || '',
-                                    isPasskeySecured: prev?.isPasskeySecured ?? dbData.isPasskeySecured,
-                                };
-                            });
+                            setStellarData(docSnap.data() as StellarData);
                         } else {
                             // Generate Stellar Keypair for new user
                             const pair = Keypair.random();
@@ -71,7 +64,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                             } as StellarData;
 
                             try {
-                                fetch(`https://friendbot.stellar.org?addr=${publicKey}`).catch(() => {});
+                                const friendbot = getFriendbotUrl();
+                                if (friendbot) {
+                                    fetch(`${friendbot}?addr=${publicKey}`).catch(() => { });
+                                }
                                 await setDoc(userDocRef, newStellarData);
                             } catch {
                                 // Firestore write fallback
