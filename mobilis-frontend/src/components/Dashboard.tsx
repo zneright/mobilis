@@ -647,7 +647,7 @@ const Dashboard: React.FC = () => {
         if (!activePubKey) return;
 
         try {
-            const res = await fetch(`${HORIZON_SERVER}/accounts/${activePubKey}`);
+            const res = await fetch(`${getHorizonServer()}/accounts/${activePubKey}`);
             if (res.ok) {
                 const data = await res.json();
                 if (data.balances) {
@@ -783,15 +783,15 @@ const Dashboard: React.FC = () => {
         const walletType = localStorage.getItem('externalWalletConnected');
         if (externalWallet && walletType === 'Freighter') {
             // @ts-expect-error network does not exist in type
-            const { signedTxXdr, error } = await signTransaction(preparedTx.toXDR(), { network: appNetwork });
+            const { signedTxXdr, error } = await signTransaction(preparedTx.toXDR(), { network: isTestnet() ? 'TESTNET' : 'PUBLIC' });
             if (error) throw new Error(`Freighter Signing Error: ${error}`);
-            const txToSubmit = TransactionBuilder.fromXDR(signedTxXdr, NETWORK_PASSPHRASE);
+            const txToSubmit = TransactionBuilder.fromXDR(signedTxXdr, getNetworkPassphrase());
             return await server.sendTransaction(txToSubmit as Transaction);
         } else if (externalWallet && walletType === 'LOBSTR') {
             if (!window.lobstr) throw new Error("LOBSTR extension not found.");
             const lobstrExt = window.lobstr as LobstrExtension;
-            const signedXdr = await lobstrExt.signTransaction(preparedTx.toXDR(), appNetwork);
-            const txToSubmit = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
+            const signedXdr = await lobstrExt.signTransaction(preparedTx.toXDR(), isTestnet() ? 'TESTNET' : 'PUBLIC');
+            const txToSubmit = TransactionBuilder.fromXDR(signedXdr, getNetworkPassphrase());
             return await server.sendTransaction(txToSubmit as Transaction);
         } else {
             const sourceKeypair = Keypair.fromSecret((stellarData as unknown as AppUserData).secret!);
@@ -802,11 +802,15 @@ const Dashboard: React.FC = () => {
 
     const executeContractCall = async (functionName: string, args: xdr.ScVal[]) => {
         if (!activePubKey) return;
-        const server = new rpc.Server(RPC_SERVER);
+        const contractId = getContractId();
+        if (!contractId) {
+            throw new Error("Soroban smart contract is not deployed on this network. Please switch to Testnet.");
+        }
+        const server = new rpc.Server(getRpcServer());
         const account = await server.getAccount(activePubKey);
-        const contract = new Contract(CONTRACT_ID);
+        const contract = new Contract(contractId);
 
-        const tx = new TransactionBuilder(account, { fee: "10000", networkPassphrase: NETWORK_PASSPHRASE })
+        const tx = new TransactionBuilder(account, { fee: "10000", networkPassphrase: getNetworkPassphrase() })
             .addOperation(contract.call(functionName, ...args))
             .setTimeout(30).build();
 
@@ -834,9 +838,9 @@ const Dashboard: React.FC = () => {
         }
         setIsProcessing(true);
         try {
-            const server = new rpc.Server(RPC_SERVER);
+            const server = new rpc.Server(getRpcServer());
             const account = await server.getAccount(activePubKey);
-            const tx = new TransactionBuilder(account, { fee: "1000", networkPassphrase: NETWORK_PASSPHRASE })
+            const tx = new TransactionBuilder(account, { fee: "1000", networkPassphrase: getNetworkPassphrase() })
                 .addOperation(Operation.payment({ destination: sendDest, asset: Asset.native(), amount: sendAmt }))
                 .setTimeout(30).build();
 
@@ -890,7 +894,7 @@ const Dashboard: React.FC = () => {
         setIsProcessing(true);
 
         try {
-            const server = new rpc.Server(RPC_SERVER);
+            const server = new rpc.Server(getRpcServer());
 
             console.log("Fetching Cooperative Secret Key from Database...");
             const coopName = (stellarData as unknown as AppUserData).todaAffiliation;
@@ -909,7 +913,7 @@ const Dashboard: React.FC = () => {
             const coopKeypair = Keypair.fromSecret(coopSecret);
             const coopAccount = await server.getAccount(coopKeypair.publicKey());
 
-            const fundTxBuilder = new TransactionBuilder(coopAccount, { fee: "1000", networkPassphrase: NETWORK_PASSPHRASE })
+            const fundTxBuilder = new TransactionBuilder(coopAccount, { fee: "1000", networkPassphrase: getNetworkPassphrase() })
                 .addOperation(Operation.payment({
                     destination: activePubKey,
                     asset: Asset.native(),
@@ -971,7 +975,7 @@ const Dashboard: React.FC = () => {
         setIsProcessing(true);
 
         try {
-            const server = new rpc.Server(RPC_SERVER);
+            const server = new rpc.Server(getRpcServer());
 
             // 1. Fetch Dynamic Keys for Routing
             const superadminQuery = query(collection(db, 'users'), where('role', '==', 'superadmin'));
@@ -994,7 +998,7 @@ const Dashboard: React.FC = () => {
 
             // 3. Physically send the XLM back to the Admin and Superadmin (NATIVE TRANSACTION)
             const account = await server.getAccount(activePubKey);
-            const paymentTxBuilder = new TransactionBuilder(account, { fee: "1000", networkPassphrase: NETWORK_PASSPHRASE })
+            const paymentTxBuilder = new TransactionBuilder(account, { fee: "1000", networkPassphrase: getNetworkPassphrase() })
                 .addOperation(Operation.payment({ destination: coopPubKey, asset: Asset.native(), amount: totalToCoopAmount }))
                 .addOperation(Operation.payment({ destination: superadminPubKey, asset: Asset.native(), amount: superadminFeeAmount }))
                 .setTimeout(30).build();
@@ -1354,8 +1358,8 @@ const Dashboard: React.FC = () => {
                                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     onClick={() => setNotifCategory(tab.id as any)}
                                     className={`px-3.5 py-2 rounded-2xl font-bold transition-all border whitespace-nowrap ${notifCategory === tab.id
-                                            ? `${roleCtaBg(stellarData.role)} border-transparent shadow-md scale-102 text-white`
-                                            : 'bg-slate-100 dark:bg-white/[0.05] border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-gray-300 hover:scale-102'
+                                        ? `${roleCtaBg(stellarData.role)} border-transparent shadow-md scale-102 text-white`
+                                        : 'bg-slate-100 dark:bg-white/[0.05] border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-gray-300 hover:scale-102'
                                         }`}
                                 >
                                     {tab.label}
@@ -1380,8 +1384,8 @@ const Dashboard: React.FC = () => {
                                             <div
                                                 key={notifId}
                                                 className={`p-4.5 rounded-2xl border transition-all duration-200 relative ${isUnread
-                                                        ? 'bg-white dark:bg-[#0f1420] border-cyan-500/50 shadow-md'
-                                                        : 'bg-slate-50/80 dark:bg-white/[0.03] border-slate-200/60 dark:border-white/[0.06] opacity-90'
+                                                    ? 'bg-white dark:bg-[#0f1420] border-cyan-500/50 shadow-md'
+                                                    : 'bg-slate-50/80 dark:bg-white/[0.03] border-slate-200/60 dark:border-white/[0.06] opacity-90'
                                                     }`}
                                             >
                                                 {isUnread && (

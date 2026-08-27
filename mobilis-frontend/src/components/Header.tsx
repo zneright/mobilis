@@ -5,6 +5,8 @@ import MobilisLogo from './common/MobilisLogo';
 import { motion } from 'framer-motion';
 import { playCommuterChime, playDriverAlertChime, playStartupChime } from '../utils/webAudio';
 
+import { NetworkSwitcher } from './common/NetworkSwitcher';
+
 interface HeaderProps {
     theme: 'dark' | 'light';
     toggleTheme: () => void;
@@ -73,10 +75,8 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onOpenNotifications
                     <span>STELLAR RPC ONLINE</span>
                 </div>
 
-                <div className={`hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold border transition-all ${pillClass}`}>
-                    <ShieldCheck className="w-3 h-3" />
-                    <span>TESTNET</span>
-                </div>
+                {/* Dynamic Network Switcher Toggle */}
+                <NetworkSwitcher compact />
 
                 {/* Notification Bell */}
                 <button 
