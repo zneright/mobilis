@@ -267,7 +267,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ txHistory, appNetwork, s
         async function fetchHorizonLedger() {
             setLoadingHorizon(true);
             try {
-                const res = await fetch(`https://horizon-testnet.stellar.org/accounts/${activePubKey}/payments?limit=30&order=desc`);
+                const res = await fetch(`${getHorizonServer()}/accounts/${activePubKey}/payments?limit=30&order=desc`);
                 if (res.ok && isMounted) {
                     const data = await res.json();
                     const records = data._embedded?.records || [];
