@@ -5,6 +5,7 @@ import { Keypair } from '@stellar/stellar-sdk';
 import { ExternalLink, Fuel, Zap, CheckCircle2, Receipt, X, Printer, Copy, Check, Globe, ShieldCheck, Landmark, Coins, ArrowUpRight, ArrowDownLeft, Sparkles } from 'lucide-react';
 import { cardRoleStyle, rolePill, roleAccentText, roleCtaBg } from './roleStyleTokens';
 import { MobilisLogo } from '../common/MobilisLogo';
+import { getHorizonServer } from '../../services/networkConfig';
 
 interface HistoryTabProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

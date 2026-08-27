@@ -5,7 +5,6 @@ import { signOut } from 'firebase/auth';
 import { collection, query, where, getDocs, doc, addDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import {
     Keypair,
-    Networks,
     TransactionBuilder,
     Contract,
     rpc,
@@ -35,6 +34,14 @@ import { playDoubleChime } from '../utils/webAudio';
 import { setupFcmNotifications } from '../services/fcm';
 import { getDriverDebt } from '../services/stellar';
 import { offlineSyncService } from '../services/offlineSync';
+import {
+    getHorizonServer,
+    getRpcServer,
+    getNetworkPassphrase,
+    getContractId,
+    isTestnet,
+    onNetworkChange,
+} from '../services/networkConfig';
 import { CloudUpload, WifiOff } from 'lucide-react';
 
 declare global {
@@ -72,8 +79,6 @@ type AppUserData = {
     [key: string]: unknown;
 };
 
-// PUT YOUR CONTRACT ID HERE
-const CONTRACT_ID = "CAVFLXBG4MXGTGECI6WAZXMDNX2H3UWFTMNY4DHK2MR4YUYEEU5STBID";
 const PHP_EXCHANGE_RATE = 60.69;
 
 const Dashboard: React.FC = () => {
@@ -93,10 +98,15 @@ const Dashboard: React.FC = () => {
     }, [theme]);
     const [currencyMode, setCurrencyMode] = useState<'XLM' | 'PHP'>('XLM');
 
-    const appNetwork = 'TESTNET';
-    const HORIZON_SERVER = "https://horizon-testnet.stellar.org";
-    const RPC_SERVER = "https://soroban-testnet.stellar.org";
-    const NETWORK_PASSPHRASE = Networks.TESTNET;
+    const appNetwork = isTestnet() ? 'TESTNET' : 'PUBLIC';
+
+    // Re-fetch balances when user toggles network
+    useEffect(() => {
+        const unsub = onNetworkChange(() => {
+            fetchLedgerData();
+        });
+        return unsub;
+    }, []);
 
     const [externalWallet, setExternalWallet] = useState<string | null>(null);
     const activePubKey = externalWallet || stellarData?.publicKey;
@@ -1217,13 +1227,13 @@ const Dashboard: React.FC = () => {
 
                     {activeTab === 'vault' && (
                         <div className="w-full max-w-4xl mx-auto py-2">
-                            <VaultTab stellarData={stellarData} externalWallet={externalWallet} activePubKey={activePubKey || null} xlmBalance={xlmBalance} assetBalances={assetBalances} currencyMode={currencyMode} setCurrencyMode={setCurrencyMode} formatCurrency={formatCurrency} setShowWalletModal={setShowWalletModal} handleDisconnectWallet={handleDisconnectWallet} setShowReceiveModal={setShowReceiveModal} setShowSendModal={setShowSendModal} appNetwork={appNetwork} refreshData={fetchLedgerData} />
+                            <VaultTab stellarData={stellarData} externalWallet={externalWallet} activePubKey={activePubKey || undefined} xlmBalance={xlmBalance} assetBalances={assetBalances} currencyMode={currencyMode} setCurrencyMode={setCurrencyMode} formatCurrency={formatCurrency} setShowWalletModal={setShowWalletModal} handleDisconnectWallet={handleDisconnectWallet} setShowReceiveModal={setShowReceiveModal} setShowSendModal={setShowSendModal} appNetwork={isTestnet() ? 'TESTNET' : 'PUBLIC'} refreshData={fetchLedgerData} treasuryBalance={treasuryBalance} />
                         </div>
                     )}
 
                     {activeTab === 'history' && (
                         <div className="w-full max-w-4xl mx-auto py-2">
-                            <HistoryTab txHistory={firebaseHistory} appNetwork={appNetwork} stellarData={stellarData} />
+                            <HistoryTab txHistory={firebaseHistory} appNetwork={isTestnet() ? 'TESTNET' : 'TESTNET'} stellarData={stellarData} />
                         </div>
                     )}
 

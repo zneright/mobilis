@@ -90,25 +90,28 @@ class OfflineSyncManager {
                             tx.sign(driverKeypair);
                             const res = await server.submitTransaction(tx);
                             if (res.hash) {
-                                txHash = res.hash;
+                                onChainHash = res.hash;
                             }
                         } catch (subErr) {
-                            console.warn('[OfflineSync] Horizon submission fallback to simulated receipt:', subErr);
+                            console.warn('[OfflineSync] Horizon memo broadcast deferred:', subErr);
                         }
                     }
 
+                    const syncHash = onChainHash || `VOUCHER-${voucher.voucherId}`;
+
                     // Record to Firestore transaction receipts
                     try {
-                        await addDoc(collection(db, 'transactions'), {
+                        await addDoc(collection(db, 'fare_transactions'), {
                             senderPubKey: voucher.commuterPubKey,
                             receiverPubKey: driverPubKey,
                             amountPhp: parseFloat(voucher.farePhp),
-                            amountXlm: parseFloat(voucher.fareXlm),
-                            txHash,
+                            amount: parseFloat(voucher.fareXlm).toFixed(4),
+                            txHash: syncHash,
                             timestamp: new Date().toISOString(),
                             offlineVoucherId: voucher.voucherId,
                             paymentType: 'offline_cryptographic_voucher',
-                            status: 'confirmed_on_chain',
+                            status: onChainHash ? 'completed' : 'reconciled_offline',
+                            type: 'fare_payment',
                         });
                     } catch (dbErr) {
                         console.warn('[OfflineSync] Firestore sync warning:', dbErr);
@@ -117,7 +120,7 @@ class OfflineSyncManager {
                     // Mark as synced
                     updateDriverVoucherRecord(voucher.voucherId, {
                         status: 'synced',
-                        syncTxHash: txHash,
+                        syncTxHash: syncHash,
                     });
 
                     syncedCount++;

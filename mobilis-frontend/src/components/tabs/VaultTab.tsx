@@ -6,15 +6,21 @@ import { isTestnet, getFriendbotUrl } from '../../services/networkConfig';
 interface VaultTabProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     stellarData: any;
-    appNetwork: 'TESTNET' | 'PUBLIC';
-    refreshData: () => void;
+    externalWallet?: string | null;
     activePubKey?: string;
-    currencyMode: 'XLM' | 'PHP';
-    setCurrencyMode: (m: 'XLM' | 'PHP') => void;
     xlmBalance: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     assetBalances: any[];
-    treasuryBalance: string;
+    currencyMode: 'XLM' | 'PHP';
+    setCurrencyMode: (m: 'XLM' | 'PHP') => void;
+    formatCurrency?: (amountXlm: number | string) => string;
+    setShowWalletModal?: (show: boolean) => void;
+    handleDisconnectWallet?: () => void;
+    setShowReceiveModal?: (show: boolean) => void;
+    setShowSendModal?: (show: boolean) => void;
+    appNetwork: 'TESTNET' | 'PUBLIC';
+    refreshData: () => void;
+    treasuryBalance?: string;
     onSignOut?: () => void;
 }
 
@@ -26,7 +32,9 @@ export const VaultTab: React.FC<VaultTabProps> = ({
     currencyMode,
     setCurrencyMode,
     xlmBalance,
-    assetBalances,
+    assetBalances = [],
+    setShowSendModal,
+    setShowReceiveModal,
 }) => {
     const xlmNum = parseFloat(xlmBalance || '0');
     const phpEquivalent = (xlmNum * 60.69).toFixed(2);
@@ -34,8 +42,6 @@ export const VaultTab: React.FC<VaultTabProps> = ({
     const [isFunding, setIsFunding] = useState(false);
     const [fundMessage, setFundMessage] = useState<string | null>(null);
     const [copiedKey, setCopiedKey] = useState(false);
-    const [showSendModal, setShowSendModal] = useState(false);
-    const [showReceiveModal, setShowReceiveModal] = useState(false);
 
     const role = stellarData?.role ?? 'commuter';
     const cardStyle = cardRoleStyle(role);
@@ -141,21 +147,21 @@ export const VaultTab: React.FC<VaultTabProps> = ({
 
                         {/* Quick Action Buttons */}
                         <div className="flex items-center justify-center gap-8 pt-2">
-                            <button onClick={() => setShowSendModal(true)} className="flex flex-col items-center gap-2 group">
+                            <button onClick={() => setShowSendModal?.(true)} className="flex flex-col items-center gap-2 group">
                                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-105 ${ctaStyle}`}>
                                     <ArrowUpRight className="w-5 h-5" />
                                 </div>
                                 <span className="text-[11px] font-bold text-slate-600 dark:text-gray-400">Send</span>
                             </button>
 
-                            <button onClick={() => setShowReceiveModal(true)} className="flex flex-col items-center gap-2 group">
+                            <button onClick={() => setShowReceiveModal?.(true)} className="flex flex-col items-center gap-2 group">
                                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-105 ${ctaStyle}`}>
                                     <ArrowDownLeft className="w-5 h-5" />
                                 </div>
                                 <span className="text-[11px] font-bold text-slate-600 dark:text-gray-400">Receive</span>
                             </button>
 
-                            <button onClick={() => setShowReceiveModal(true)} className="flex flex-col items-center gap-2 group">
+                            <button onClick={() => setShowReceiveModal?.(true)} className="flex flex-col items-center gap-2 group">
                                 <div className="w-14 h-14 rounded-2xl bg-white/70 dark:bg-white/[0.06] text-slate-700 dark:text-gray-300 border border-slate-200/80 dark:border-white/[0.08] flex items-center justify-center transition-all group-hover:scale-105 shadow-sm">
                                     <QrCode className="w-5 h-5" />
                                 </div>
@@ -205,7 +211,7 @@ export const VaultTab: React.FC<VaultTabProps> = ({
                                 </div>
                             </div>
                             <button
-                                onClick={handleCopy}
+                                onClick={handleCopyKey}
                                 className="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs transition-all shadow-md flex items-center gap-2 flex-shrink-0 active:scale-95"
                             >
                                 <Copy className="w-3.5 h-3.5" />
@@ -256,7 +262,7 @@ export const VaultTab: React.FC<VaultTabProps> = ({
                         )}
 
                         {/* Other Assets */}
-                        {assetBalances && assetBalances.length > 0 && assetBalances.map((asset, idx) => (
+                        {assetBalances && assetBalances.length > 0 && assetBalances.map((asset: { asset_code?: string; asset_issuer?: string; balance: string }, idx: number) => (
                             <div key={idx} className="p-4 bg-white/60 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/[0.06] rounded-2xl flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-[10px] border ${pillStyle}`}>

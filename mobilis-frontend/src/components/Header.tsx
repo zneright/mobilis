@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Sun, Moon, Bell, ShieldCheck, Navigation, Radio, Building2, ShieldAlert, Wifi } from 'lucide-react';
+import { Sun, Moon, Bell, Navigation, Radio, Building2, ShieldAlert, Wifi } from 'lucide-react';
 import { rolePill } from './tabs/roleStyleTokens';
 import MobilisLogo from './common/MobilisLogo';
 import { motion } from 'framer-motion';

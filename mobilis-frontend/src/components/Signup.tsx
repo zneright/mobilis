@@ -9,6 +9,7 @@ import { requestAccess, isConnected } from '@stellar/freighter-api';
 import { AlertTriangle, Copy, CheckCircle2, Wallet, Building2, ArrowRight, ArrowLeft, Eye, EyeOff, Sparkles, Fingerprint } from 'lucide-react';
 import type { UserData } from '../types';
 import { trackWalletCreated } from '../services/analytics';
+import { getFriendbotUrl } from '../services/networkConfig';
 import MobilisLogo from './common/MobilisLogo';
 import { useAuth } from '../context/AuthContext';
 
