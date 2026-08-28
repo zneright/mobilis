@@ -100,12 +100,12 @@ export const VaultTab: React.FC<VaultTabProps> = ({
                         <div className="flex items-center justify-between">
                             <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-mono font-bold ${pillStyle}`}>
                                 <Wallet className="w-4 h-4" />
-                                <span>Mobilis Soroban Vault</span>
+                                <span>Mobilis Digital Wallet</span>
                             </div>
                             <button
                                 onClick={refreshData}
                                 className="p-2.5 rounded-xl bg-white/70 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/[0.08] text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm hover:shadow-md active:scale-95"
-                                title="Sync Stellar Ledger"
+                                title="Refresh Balance"
                             >
                                 <RefreshCw className="w-4 h-4" />
                             </button>

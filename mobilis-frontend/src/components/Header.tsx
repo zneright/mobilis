@@ -72,7 +72,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onOpenNotifications
                 <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold border transition-all ${pillClass}`}>
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                     <Wifi className="w-3 h-3" />
-                    <span>STELLAR RPC ONLINE</span>
+                    <span>NETWORK CONNECTED</span>
                 </div>
 
                 {/* Dynamic Network Switcher Toggle */}

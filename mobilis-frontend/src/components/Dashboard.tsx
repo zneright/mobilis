@@ -1075,7 +1075,7 @@ const Dashboard: React.FC = () => {
         return `${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} XLM`;
     };
 
-    if (!stellarData) return <MobilisLoader message="Loading Node Profile..." />;
+    if (!stellarData) return <MobilisLoader message="Loading Profile..." />;
 
     if (stellarData.status === 'pending') {
         return (
@@ -1084,10 +1084,9 @@ const Dashboard: React.FC = () => {
                     <div className="w-16 h-16 bg-yellow-500/10 text-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6">
                         <span className="text-3xl">⏳</span>
                     </div>
-                    <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Node Pending Approval</h2>
+                    <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Account Pending Approval</h2>
                     <p className="text-gray-500 dark:text-gray-400 text-sm mb-8 leading-relaxed">
-                        Your cryptographic keys have been generated, but your network access requires verification.
-                        Please wait for {stellarData.role === 'admin' ? 'a Super Admin' : 'your Cooperative Admin'} to approve your registration.
+                        Your registration is complete. Please wait for {stellarData.role === 'admin' ? 'a Super Admin' : 'your Cooperative Admin'} to approve your account.
                     </p>
                     <button
                         onClick={handleFullSignOut}
@@ -1297,7 +1296,7 @@ const Dashboard: React.FC = () => {
                         <h3 className="text-xl font-black mb-6 text-slate-900 dark:text-white">Send XLM</h3>
                         <form onSubmit={handleSendXLM} className="space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">Destination Public Key</label>
+                                <label className="block text-xs font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">Recipient Wallet Address</label>
                                 <input required type="text" value={sendDest} onChange={(e) => setSendDest(e.target.value)} placeholder="G..." className="w-full p-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none font-mono text-slate-900 dark:text-white focus:border-cyan-500" />
                             </div>
                             <div>
