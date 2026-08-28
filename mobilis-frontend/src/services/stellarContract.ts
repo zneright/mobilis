@@ -318,7 +318,7 @@ export async function getAccountXlmBalance(publicKey: string): Promise<string> {
 }
 
 /**
- * Performs direct native Stellar XLM fare payment.
+ * Performs direct native Stellar XLM fare payment via Horizon.
  */
 export async function sendNativePayment(
     senderPublicKey: string,
@@ -326,8 +326,8 @@ export async function sendNativePayment(
     amountXlm: string,
     secretKey?: string
 ): Promise<{ hash: string; status: string }> {
-    const server = new rpc.Server(getRpcServer());
-    const account = await server.getAccount(senderPublicKey);
+    const horizon = new Horizon.Server(getHorizonServer());
+    const account = await horizon.loadAccount(senderPublicKey);
 
     const tx = new TransactionBuilder(account, { fee: "1000", networkPassphrase: getNetworkPassphrase() })
         .addOperation(Operation.payment({
@@ -338,11 +338,29 @@ export async function sendNativePayment(
         .setTimeout(30)
         .build();
 
-    const response = await signAndSubmitTransaction(server, tx as Transaction, secretKey);
-    if (response.status === "ERROR") {
-        throw new Error(`Submission failed: ${JSON.stringify(response.errorResult)}`);
+    const walletType = typeof window !== 'undefined' ? localStorage.getItem('externalWalletConnected') : null;
+
+    if (walletType === 'LOBSTR' && typeof window !== 'undefined' && (window as unknown as { lobstr?: LobstrExtension }).lobstr) {
+        const lobstrExt = (window as unknown as { lobstr: LobstrExtension }).lobstr;
+        const signedXdr = await lobstrExt.signTransaction(tx.toXDR(), getNetworkPassphrase());
+        const signedTx = TransactionBuilder.fromXDR(signedXdr, getNetworkPassphrase()) as Transaction;
+        const res = await horizon.submitTransaction(signedTx);
+        return { hash: res.hash, status: 'SUCCESS' };
     }
 
-    await pollTransactionStatus(server, response.hash);
-    return { hash: response.hash, status: 'SUCCESS' };
+    if (walletType === 'Freighter' || (!secretKey && await isFreighterConnected())) {
+        const signedXdr = await requestFreighterSign(tx.toXDR(), getNetworkPassphrase());
+        const signedTx = TransactionBuilder.fromXDR(signedXdr, getNetworkPassphrase()) as Transaction;
+        const res = await horizon.submitTransaction(signedTx);
+        return { hash: res.hash, status: 'SUCCESS' };
+    }
+
+    if (secretKey) {
+        const kp = Keypair.fromSecret(secretKey);
+        tx.sign(kp);
+        const res = await horizon.submitTransaction(tx);
+        return { hash: res.hash, status: 'SUCCESS' };
+    }
+
+    throw new Error('No signing mechanism available for native payment.');
 }

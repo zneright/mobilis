@@ -6,7 +6,6 @@ import { collection, query, where, getDocs, doc, addDoc, updateDoc, onSnapshot }
 import {
     Keypair,
     TransactionBuilder,
-    Contract,
     rpc,
     Horizon,
     nativeToScVal,
@@ -14,7 +13,7 @@ import {
     Asset,
     Transaction
 } from '@stellar/stellar-sdk';
-import { isFreighterConnected, checkFreighterAccess } from '../services/freighter';
+import { isFreighterConnected, checkFreighterAccess, requestFreighterSign } from '../services/freighter';
 import { Copy, ArrowUpRight, X, Wallet, Zap, Bell, ShieldCheck, Megaphone, Navigation, CheckCircle2 } from 'lucide-react';
 import { cardRoleStyle, roleCtaBg, rolePill, roleAccentText, roleShellBg } from './tabs/roleStyleTokens';
 import Header from './Header';
@@ -44,7 +43,6 @@ import {
     getHorizonServer,
     getRpcServer,
     getNetworkPassphrase,
-    getContractId,
     isTestnet,
     onNetworkChange,
     PHP_EXCHANGE_RATE,
@@ -980,8 +978,7 @@ const Dashboard: React.FC = () => {
             let paymentTxHash = '';
             const walletType = localStorage.getItem('externalWalletConnected');
             if (externalWallet && walletType === 'Freighter') {
-                const { signedTxXdr, error } = await signTransaction(paymentTxBuilder.toXDR(), { networkPassphrase: getNetworkPassphrase() });
-                if (error) throw new Error(`Freighter Signing Error: ${error}`);
+                const signedTxXdr = await requestFreighterSign(paymentTxBuilder.toXDR(), getNetworkPassphrase());
                 const signedTx = TransactionBuilder.fromXDR(signedTxXdr, getNetworkPassphrase());
                 const res = await horizonServer.submitTransaction(signedTx as Transaction);
                 paymentTxHash = res.hash;
@@ -1388,7 +1385,7 @@ const Dashboard: React.FC = () => {
                         </div>
 
                         {/* Notifications Feed */}
-                        <div className="space-y-3 max-h-84 overflow-y-auto custom-scrollbar font-mono">
+                        <div className="space-y-3 max-h-[70vh] overflow-y-auto custom-scrollbar font-mono">
                             {filteredNotifications.length > 0 ? (
                                 filteredNotifications.map((notif) => {
                                     if (!notif) return null;
