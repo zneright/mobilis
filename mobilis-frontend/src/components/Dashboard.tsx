@@ -33,7 +33,7 @@ import { DriverOperationsMap } from './driver/DriverOperationsMap';
 import MobilisLoader from './common/MobilisLoader';
 import { playDoubleChime } from '../utils/webAudio';
 import { setupFcmNotifications } from '../services/fcm';
-import { getDriverDebt } from '../services/stellar';
+import { getDriverDebt, getDriverReputation } from '../services/stellar';
 import { offlineSyncService } from '../services/offlineSync';
 import {
     getHorizonServer,
@@ -189,7 +189,7 @@ const Dashboard: React.FC = () => {
                 if (change.type === 'added') {
                     const data = change.doc.data();
                     const numXlm = parseFloat(data.amount || '0').toFixed(4);
-                    const numPhp = data.amountPhp || (parseFloat(data.amount || '0') * 60.69).toFixed(2);
+                    const numPhp = data.amountPhp || (parseFloat(data.amount || '0') * PHP_EXCHANGE_RATE).toFixed(2);
                     const isIncoming = role === 'driver' || data.driverId === stellarData.uid;
 
                     // 1. Play Web Audio API double chime (GCash sound ping)
@@ -553,7 +553,7 @@ const Dashboard: React.FC = () => {
             const id = f.id || String(f.txHash || '') || `tx-${f.timestamp}`;
             if (!notifMap.has(id)) {
                 const numXlm = parseFloat(String(f.amount || f.amountSettled || '0')).toFixed(4);
-                const numPhp = String(f.amountPhp || (parseFloat(String(f.amount || f.amountSettled || '0')) * 60.69).toFixed(2));
+                const numPhp = String(f.amountPhp || (parseFloat(String(f.amount || f.amountSettled || '0')) * PHP_EXCHANGE_RATE).toFixed(2));
                 const isIncoming = stellarData?.role === 'driver' || f.driverId === stellarData?.uid;
 
                 notifMap.set(id, {
@@ -872,7 +872,7 @@ const Dashboard: React.FC = () => {
                 await addDoc(collection(db, 'transactions'), {
                     txHash: response.hash,
                     senderUid: stellarData?.uid,
-                    senderName: (stellarData as unknown as AppUserData)?.fullName || 'Node Operator',
+                    senderName: (stellarData as unknown as AppUserData)?.fullName || 'User',
                     plateNumber: (stellarData as unknown as AppUserData)?.plateNumber || 'N/A',
                     coopName: (stellarData as unknown as AppUserData)?.coopName || (stellarData as unknown as AppUserData)?.todaAffiliation || 'SuperAdmin HQ',
                     amount: sendAmt,
@@ -997,10 +997,14 @@ const Dashboard: React.FC = () => {
             if (coopSnap.empty) throw new Error(`Cooperative account not found.`);
             const coopPubKey = coopSnap.docs[0].data().publicKey;
 
-            // 2. Calculate Fees
-            const totalToCoopAmount = (debtState * 1.003).toFixed(7).toString();
-            const superadminFeeAmount = (debtState * 0.002).toFixed(7).toString();
-            const totalFee = debtState * 0.005;
+            // 2. Calculate Fees dynamically based on driver credit tier
+            const reputation = await getDriverReputation(activePubKey);
+            const coopFeeRate = (reputation.coopFeeBps || 30) / 10000;
+            const platformFeeRate = (reputation.platformFeeBps || 20) / 10000;
+
+            const totalToCoopAmount = (debtState * (1 + coopFeeRate)).toFixed(7).toString();
+            const superadminFeeAmount = (debtState * platformFeeRate).toFixed(7).toString();
+            const totalFee = debtState * (coopFeeRate + platformFeeRate);
 
             console.log("Routing Principal & Fees back to Cooperative via Horizon...");
 
@@ -1046,7 +1050,7 @@ const Dashboard: React.FC = () => {
             await addDoc(collection(db, 'transactions'), {
                 txHash: paymentTxHash,
                 senderUid: stellarData?.uid,
-                senderName: (stellarData as unknown as AppUserData)?.fullName || 'Node Operator',
+                senderName: (stellarData as unknown as AppUserData)?.fullName || 'User',
                 amountSettled: debtState.toString(),
                 feePaid: totalFee.toString(),
                 asset: 'XLM',
@@ -1242,7 +1246,6 @@ const Dashboard: React.FC = () => {
                                         debtState={debtState}
                                         isProcessing={isProcessing}
                                         handleRequestAdvance={handleRequestAdvance}
-                                        handleInjectLiquidity={async () => { }}
                                         handleSettleLoan={handleSettleLoan}
                                         appNetwork={appNetwork}
                                         treasuryBalance={treasuryBalance}

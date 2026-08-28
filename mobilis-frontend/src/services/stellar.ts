@@ -48,6 +48,7 @@ export {
     requestAdvanceLoan,
     settleLoan,
     getDriverDebt,
+    getDriverReputation,
     getTreasuryBalance,
     getAccountXlmBalance,
     sendNativePayment,

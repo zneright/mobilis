@@ -18,7 +18,6 @@ interface HubTabProps {
     isProcessing: boolean;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     handleRequestAdvance: (amount?: any) => void;
-    handleInjectLiquidity: () => void;
     handleSettleLoan: () => void;
     appNetwork: string;
     treasuryBalance: string;

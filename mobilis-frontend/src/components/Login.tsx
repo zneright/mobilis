@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Mail, Lock, ShieldCheck, Zap, Eye, EyeOff, UserCheck, Navigation, Building2, Fingerprint, Sparkles } from 'lucide-react';
 import MobilisLogo from './common/MobilisLogo';
 import { useAuth } from '../context/AuthContext';
+import { getFriendbotUrl } from '../services/networkConfig';
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -31,8 +32,8 @@ const Login: React.FC = () => {
         } catch (err: unknown) {
             console.warn("Standard login failed, evaluating demo auto-provisioning fallback:", err);
             
-            // If this is a demo account and doesn't exist yet, auto-provision it for immediate evaluator access
-            if (email.endsWith('@mobilis.ph')) {
+            // If this is a demo environment and account doesn't exist yet, auto-provision it for immediate evaluator access
+            if (import.meta.env.VITE_DEMO_MODE === 'true' && email.endsWith('@mobilis.ph')) {
                 try {
                     const cred = await createUserWithEmailAndPassword(auth, email, password);
                     const user = cred.user;
@@ -55,7 +56,10 @@ const Login: React.FC = () => {
                     };
 
                     await setDoc(doc(db, 'users', user.uid), demoDoc);
-                    fetch(`https://friendbot.stellar.org?addr=${pair.publicKey()}`).catch(() => {});
+                    const friendbot = getFriendbotUrl();
+                    if (friendbot) {
+                        fetch(`${friendbot}?addr=${pair.publicKey()}`).catch(() => {});
+                    }
                     navigate('/dashboard');
                     return;
                 } catch (autoErr) {
