@@ -67,14 +67,12 @@ const Signup: React.FC = () => {
                     .map((docSnap) => docSnap.data().coopName as string)
                     .filter((name): name is string => Boolean(name && name.trim().length > 0));
 
-                const defaultCoops = ['Bacoor TODA Association', 'Imus Central Drivers Coop', 'Quezon City Transport Fleet'];
-                const mergedCoops = Array.from(new Set([...realCoops, ...defaultCoops]));
-                setApprovedCoops(mergedCoops);
-                setFilteredCoops(mergedCoops);
+                const uniqueCoops = Array.from(new Set(realCoops));
+                setApprovedCoops(uniqueCoops);
+                setFilteredCoops(uniqueCoops);
             } catch {
-                const fallback = ['Bacoor TODA Association', 'Imus Central Drivers Coop', 'Quezon City Transport Fleet'];
-                setApprovedCoops(fallback);
-                setFilteredCoops(fallback);
+                setApprovedCoops([]);
+                setFilteredCoops([]);
             }
         };
         fetchRealFirebaseCoops();
@@ -148,26 +146,35 @@ const Signup: React.FC = () => {
             let finalUserData: UserData;
 
             if (role === 'driver') {
+                if (!fullName.trim() || !plateNumber.trim() || !todaAffiliation.trim()) {
+                    throw new Error("Please complete all driver details (Full Name, Plate Number, and TODA Affiliation).");
+                }
                 finalUserData = {
                     ...baseData,
-                    fullName: fullName.trim() || 'Driver User',
+                    fullName: fullName.trim(),
                     phone: phone.trim(),
-                    plateNumber: plateNumber.trim() || 'TODA-001',
-                    todaAffiliation: todaAffiliation.trim() || 'Bacoor TODA Association',
+                    plateNumber: plateNumber.trim(),
+                    todaAffiliation: todaAffiliation.trim(),
                     vehicleType: vehicleType
                 } as UserData;
             } else if (role === 'commuter') {
+                if (!fullName.trim()) {
+                    throw new Error("Please enter your Full Name.");
+                }
                 finalUserData = {
                     ...baseData,
-                    fullName: fullName.trim() || 'Commuter User'
+                    fullName: fullName.trim()
                 } as UserData;
             } else {
+                if (!coopName.trim()) {
+                    throw new Error("Please enter your Cooperative Name.");
+                }
                 finalUserData = {
                     ...baseData,
-                    coopName: coopName.trim() || 'Transport Cooperative',
+                    coopName: coopName.trim(),
                     contactPerson: contactPerson.trim() || fullName.trim(),
                     phone: phone.trim(),
-                    registrationNumber: registrationNumber.trim() || 'CDA-1001'
+                    registrationNumber: registrationNumber.trim()
                 } as UserData;
             }
 

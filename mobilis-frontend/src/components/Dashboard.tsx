@@ -1211,8 +1211,8 @@ const Dashboard: React.FC = () => {
                                 {!isOnline ? <WifiOff className="w-4 h-4 text-amber-400" /> : <CloudUpload className="w-4 h-4 text-cyan-400" />}
                                 <span>
                                     {!isOnline
-                                        ? 'Offline Mode Active: Cryptographic vouchers will be stored and verified locally.'
-                                        : `${pendingOfflineCount} offline voucher(s) queued for Stellar ledger synchronization.`}
+                                        ? 'Offline Mode Active: Payments will be saved offline and synced later.'
+                                        : `${pendingOfflineCount} offline payment(s) waiting to sync.`}
                                 </span>
                             </div>
                             {isOnline && pendingOfflineCount > 0 && (
@@ -1307,7 +1307,7 @@ const Dashboard: React.FC = () => {
                                 <input required type="number" step="0.0000001" value={sendAmt} onChange={(e) => setSendAmt(e.target.value)} placeholder="0.00" className="w-full p-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none text-slate-900 dark:text-white focus:border-cyan-500" />
                             </div>
                             <button type="submit" disabled={isProcessing} className={`w-full py-4 mt-2 font-black text-sm rounded-xl transition-all disabled:opacity-50 ${roleCtaBg(stellarData.role)}`}>
-                                {isProcessing ? "Signing Transaction..." : `Confirm & Send on ${appNetwork}`}
+                                {isProcessing ? "Processing..." : `Confirm & Send on ${appNetwork}`}
                             </button>
                         </form>
                     </div>
@@ -1342,7 +1342,7 @@ const Dashboard: React.FC = () => {
                         <button onClick={() => setShowWalletModal(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 dark:hover:text-white"><X className="w-5 h-5" /></button>
                         <Wallet className="w-12 h-12 text-cyan-500 mx-auto mb-4" />
                         <h3 className="text-xl font-black mb-2 text-slate-900 dark:text-white">Connect Wallet</h3>
-                        <p className="text-sm text-slate-500 dark:text-gray-400 mb-6">Select your preferred Stellar Network provider to continue.</p>
+                        <p className="text-sm text-slate-500 dark:text-gray-400 mb-6">Connect your wallet to continue.</p>
 
                         <div className="flex flex-col gap-3">
                             <button onClick={() => executeWalletConnection('LOBSTR')} className="w-full py-4 px-6 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 rounded-xl font-bold text-sm text-slate-900 dark:text-white flex items-center justify-between transition-colors">
@@ -1378,7 +1378,7 @@ const Dashboard: React.FC = () => {
                                     </div>
                                     <p className="text-xs text-slate-500 dark:text-gray-400 font-mono flex items-center gap-1.5 pt-0.5">
                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                                        Verified Mobilis Network Feed
+                                        Live Updates
                                     </p>
                                 </div>
                             </div>
