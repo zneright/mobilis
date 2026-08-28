@@ -571,13 +571,15 @@ const Dashboard: React.FC = () => {
             }
         });
 
-        // 5. System Default Badges
+        // 5. System Network Status Badge
         if (!notifMap.has('sys-stellar-conn')) {
             notifMap.set('sys-stellar-conn', {
                 id: 'sys-stellar-conn',
                 type: 'system',
-                title: '⚡ Stellar Testnet Synchronized',
-                message: 'Web3 Keypair connected to Stellar Horizon RPC.',
+                title: isTestnet() ? '⚡ Stellar Testnet Synchronized' : '⚡ Stellar Mainnet Synchronized',
+                message: isTestnet()
+                    ? 'Connected to Stellar Testnet Horizon RPC.'
+                    : 'Connected to Stellar Public Mainnet Horizon RPC.',
                 timestamp: new Date().toISOString(),
             });
         }
@@ -1233,7 +1235,7 @@ const Dashboard: React.FC = () => {
 
                     {activeTab === 'history' && (
                         <div className="w-full max-w-4xl mx-auto py-2">
-                            <HistoryTab txHistory={firebaseHistory} appNetwork={isTestnet() ? 'TESTNET' : 'TESTNET'} stellarData={stellarData} />
+                            <HistoryTab txHistory={firebaseHistory} appNetwork={isTestnet() ? 'TESTNET' : 'PUBLIC'} stellarData={stellarData} />
                         </div>
                     )}
 

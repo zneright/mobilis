@@ -10,7 +10,7 @@ import { getHorizonServer } from '../../services/networkConfig';
 interface HistoryTabProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     txHistory: any[];
-    appNetwork: 'TESTNET';
+    appNetwork: 'TESTNET' | 'PUBLIC';
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     stellarData?: any;
 }
@@ -566,7 +566,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ txHistory, appNetwork, s
                                     </button>
                                     {tx.txHash && (
                                         <a
-                                            href={`https://stellar.expert/explorer/${appNetwork.toLowerCase()}/tx/${tx.txHash}`}
+                                            href={`https://stellar.expert/explorer/${appNetwork === 'PUBLIC' ? 'public' : 'testnet'}/tx/${tx.txHash}`}
                                             target="_blank"
                                             rel="noreferrer"
                                             className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white rounded-xl text-xs font-bold transition-colors border border-slate-200/60 dark:border-white/[0.06]"
@@ -646,7 +646,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ txHistory, appNetwork, s
                                     <div className="text-center font-mono font-black border-4 border-slate-900 p-4 rounded-3xl flex flex-col items-center gap-1">
                                         <MobilisLogo size={42} showText={false} />
                                         <p className="text-3xl tracking-widest text-slate-900">MOBILIS VERIFIED</p>
-                                        <p className="text-[10px] tracking-widest text-slate-800">STELLAR TESTNET LEDGER</p>
+                                        <p className="text-[10px] tracking-widest text-slate-800">STELLAR {appNetwork} LEDGER</p>
                                     </div>
                                 </div>
 
@@ -679,7 +679,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ txHistory, appNetwork, s
                                         <div className="text-right">
                                             <span className="font-bold text-slate-900 block">{selectedReceipt.senderName}</span>
                                             {selectedReceipt.senderKey && (
-                                                <span className="font-mono text-[9px] text-cyan-600 font-bold block truncate max-w-[180px]">
+                                                 <span className="font-mono text-[9px] text-cyan-600 font-bold block truncate max-w-[180px]">
                                                     🔑 {selectedReceipt.senderKey}
                                                 </span>
                                             )}
@@ -726,7 +726,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ txHistory, appNetwork, s
 
                                 <div className="pt-3 border-t border-dashed border-slate-300 text-center z-10 relative">
                                     <span className="text-[9px] font-mono text-slate-400 uppercase tracking-widest block font-bold">
-                                        VERIFIED ON STELLAR TESTNET BLOCKCHAIN
+                                        VERIFIED ON STELLAR {appNetwork} BLOCKCHAIN
                                     </span>
                                 </div>
                             </div>

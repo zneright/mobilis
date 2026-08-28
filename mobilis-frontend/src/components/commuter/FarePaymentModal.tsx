@@ -56,13 +56,13 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
         return (num / PHP_RATE).toFixed(4);
     }, [farePhp]);
 
-    const resolvedDriverKey = useMemo(() => {
+    const resolvedDriverKey = useMemo<string | null>(() => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const driverRaw = driver as any;
         if (driverRaw?.publicKey && StrKey.isValidEd25519PublicKey(driverRaw.publicKey)) {
             return driverRaw.publicKey;
         }
-        return "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN";
+        return null;
     }, [driver]);
 
     const presetPhpAmounts = [
@@ -89,10 +89,14 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
                 throw new Error("Invalid fare amount.");
             }
 
+            if (!resolvedDriverKey) {
+                throw new Error("This driver has not registered an active Stellar wallet yet. Please request an offline voucher or ask the driver to activate their wallet.");
+            }
+
             const server = new Horizon.Server(getHorizonServer());
 
-            // Destination Key (Driver Public Key or Fallback Receiver)
-            let destinationKey = resolvedDriverKey;
+            // Destination Key (Driver Public Key)
+            const destinationKey = resolvedDriverKey;
 
             // Step 1: Ensure Destination Account exists
             if (isTestnet() && getFriendbotUrl()) {
@@ -131,7 +135,7 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
                 }
 
                 if (destinationKey === freighterPubKey) {
-                    destinationKey = "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN";
+                    throw new Error("Payment destination cannot be your own connected Freighter wallet address.");
                 }
 
                 let freighterAccount;
@@ -198,7 +202,7 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
                 const commuterPubKey = commuterPair.publicKey();
 
                 if (destinationKey === commuterPubKey) {
-                    destinationKey = "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN";
+                    throw new Error("Payment destination cannot be your own wallet address.");
                 }
 
                 let commuterAccount;
@@ -371,16 +375,24 @@ export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
                     <div className="pt-2 border-t border-gray-200/60 dark:border-white/10 flex items-center justify-between gap-2">
                         <div className="truncate flex-1">
                             <span className="text-[10px] text-gray-400 block font-bold">Stellar Public Key:</span>
-                            <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400 font-mono truncate block">
-                                {resolvedDriverKey.substring(0, 10)}...{resolvedDriverKey.substring(resolvedDriverKey.length - 8)}
-                            </span>
+                            {resolvedDriverKey ? (
+                                <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400 font-mono truncate block">
+                                    {resolvedDriverKey.substring(0, 10)}...{resolvedDriverKey.substring(resolvedDriverKey.length - 8)}
+                                </span>
+                            ) : (
+                                <span className="text-xs font-bold text-amber-500 font-mono block">
+                                    Offline / Unregistered Wallet
+                                </span>
+                            )}
                         </div>
-                        <button
-                            onClick={() => handleCopyPublicKey(resolvedDriverKey)}
-                            className="px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30 text-xs font-bold flex items-center gap-1.5 transition-all flex-shrink-0 active:scale-95"
-                        >
-                            <Copy className="w-3.5 h-3.5" /> {copiedPubKey ? 'Copied!' : 'Copy Address'}
-                        </button>
+                        {resolvedDriverKey && (
+                            <button
+                                onClick={() => handleCopyPublicKey(resolvedDriverKey)}
+                                className="px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30 text-xs font-bold flex items-center gap-1.5 transition-all flex-shrink-0 active:scale-95"
+                            >
+                                <Copy className="w-3.5 h-3.5" /> {copiedPubKey ? 'Copied!' : 'Copy Address'}
+                            </button>
+                        )}
                     </div>
                 </div>
 
