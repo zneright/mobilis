@@ -12,10 +12,9 @@ import {
     nativeToScVal,
     Operation,
     Asset,
-    xdr,
     Transaction
 } from '@stellar/stellar-sdk';
-import { requestAccess, signTransaction, isConnected, isAllowed } from '@stellar/freighter-api';
+import { isFreighterConnected, checkFreighterAccess } from '../services/freighter';
 import { Copy, ArrowUpRight, X, Wallet, Zap, Bell, ShieldCheck, Megaphone, Navigation, CheckCircle2 } from 'lucide-react';
 import { cardRoleStyle, roleCtaBg, rolePill, roleAccentText, roleShellBg } from './tabs/roleStyleTokens';
 import Header from './Header';
@@ -33,7 +32,13 @@ import { DriverOperationsMap } from './driver/DriverOperationsMap';
 import MobilisLoader from './common/MobilisLoader';
 import { playDoubleChime } from '../utils/webAudio';
 import { setupFcmNotifications } from '../services/fcm';
-import { getDriverDebt, getDriverReputation } from '../services/stellar';
+import {
+    getDriverDebt,
+    getDriverReputation,
+    executeContractCall,
+    signAndSubmitTransaction,
+    pollTransactionStatus,
+} from '../services/stellar';
 import { offlineSyncService } from '../services/offlineSync';
 import {
     getHorizonServer,
@@ -642,9 +647,9 @@ const Dashboard: React.FC = () => {
         const checkAutoConnect = async () => {
             const connectedWallet = localStorage.getItem('externalWalletConnected');
             try {
-                if (connectedWallet === 'Freighter' && await isConnected() && await isAllowed()) {
-                    const pubKey = await requestAccess();
-                    setExternalWallet(typeof pubKey === 'string' ? pubKey : (pubKey as { address: string }).address);
+                if (connectedWallet === 'Freighter' && await isFreighterConnected()) {
+                    const pubKey = await checkFreighterAccess();
+                    if (pubKey) setExternalWallet(pubKey);
                 } else if (connectedWallet === 'LOBSTR' && window.lobstr) {
                     const lobstrExt = window.lobstr as LobstrExtension;
                     const pubKey = await lobstrExt.requestAccess();
@@ -770,11 +775,17 @@ const Dashboard: React.FC = () => {
         setShowWalletModal(false);
         try {
             if (walletName === 'Freighter') {
-                if (await isConnected()) {
-                    const pubKey = await requestAccess();
-                    setExternalWallet(typeof pubKey === 'string' ? pubKey : (pubKey as { address: string }).address);
-                    localStorage.setItem('externalWalletConnected', 'Freighter');
-                } else showToast("Wallet Extension Missing", "Freighter extension is not installed or enabled.", "error");
+                if (await isFreighterConnected()) {
+                    const pubKey = await checkFreighterAccess();
+                    if (pubKey) {
+                        setExternalWallet(pubKey);
+                        localStorage.setItem('externalWalletConnected', 'Freighter');
+                    } else {
+                        showToast("Access Denied", "Freighter connection was not approved.", "error");
+                    }
+                } else {
+                    showToast("Wallet Extension Missing", "Freighter extension is not installed or enabled.", "error");
+                }
             } else if (walletName === 'LOBSTR') {
                 if (window.lobstr) {
                     const lobstrExt = window.lobstr as LobstrExtension;
@@ -793,56 +804,6 @@ const Dashboard: React.FC = () => {
         localStorage.removeItem('externalWalletConnected');
     };
 
-    const signAndSubmitTx = async (server: rpc.Server, preparedTx: Transaction) => {
-        const walletType = localStorage.getItem('externalWalletConnected');
-        if (externalWallet && walletType === 'Freighter') {
-            // @ts-expect-error network does not exist in type
-            const { signedTxXdr, error } = await signTransaction(preparedTx.toXDR(), { network: isTestnet() ? 'TESTNET' : 'PUBLIC' });
-            if (error) throw new Error(`Freighter Signing Error: ${error}`);
-            const txToSubmit = TransactionBuilder.fromXDR(signedTxXdr, getNetworkPassphrase());
-            return await server.sendTransaction(txToSubmit as Transaction);
-        } else if (externalWallet && walletType === 'LOBSTR') {
-            if (!window.lobstr) throw new Error("LOBSTR extension not found.");
-            const lobstrExt = window.lobstr as LobstrExtension;
-            const signedXdr = await lobstrExt.signTransaction(preparedTx.toXDR(), isTestnet() ? 'TESTNET' : 'PUBLIC');
-            const txToSubmit = TransactionBuilder.fromXDR(signedXdr, getNetworkPassphrase());
-            return await server.sendTransaction(txToSubmit as Transaction);
-        } else {
-            const sourceKeypair = Keypair.fromSecret((stellarData as unknown as AppUserData).secret!);
-            preparedTx.sign(sourceKeypair);
-            return await server.sendTransaction(preparedTx);
-        }
-    };
-
-    const executeContractCall = async (functionName: string, args: xdr.ScVal[]) => {
-        if (!activePubKey) return;
-        const contractId = getContractId();
-        if (!contractId) {
-            throw new Error("Soroban smart contract is not deployed on this network. Please switch to Testnet.");
-        }
-        const server = new rpc.Server(getRpcServer());
-        const account = await server.getAccount(activePubKey);
-        const contract = new Contract(contractId);
-
-        const tx = new TransactionBuilder(account, { fee: "10000", networkPassphrase: getNetworkPassphrase() })
-            .addOperation(contract.call(functionName, ...args))
-            .setTimeout(30).build();
-
-        const preparedTx = await server.prepareTransaction(tx);
-        const response = await signAndSubmitTx(server, preparedTx as Transaction);
-
-        if (response.status === "ERROR") throw new Error(`Transaction submission failed: ${JSON.stringify(response.errorResult)}`);
-
-        let txResult = await server.getTransaction(response.hash);
-        while (txResult.status === "NOT_FOUND" || txResult.status === ("PENDING" as string)) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            txResult = await server.getTransaction(response.hash);
-        }
-
-        if (txResult.status === "SUCCESS") return true;
-        throw new Error(`On-chain execution reverted: ${txResult.status}`);
-    };
-
     const handleSendXLM = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!activePubKey) return;
@@ -859,16 +820,12 @@ const Dashboard: React.FC = () => {
                 .setTimeout(30).build();
 
             // Native payments do not need prepareTransaction
-            const response = await signAndSubmitTx(server, tx as Transaction);
+            const response = await signAndSubmitTransaction(server, tx as Transaction, (stellarData as unknown as AppUserData).secret);
             if (response.status === "ERROR") throw new Error(`Submission failed: ${JSON.stringify(response.errorResult)}`);
 
-            let txResult = await server.getTransaction(response.hash);
-            while (txResult.status === "NOT_FOUND" || txResult.status === ("PENDING" as string)) {
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                txResult = await server.getTransaction(response.hash);
-            }
+            const isSuccess = await pollTransactionStatus(server, response.hash);
 
-            if (txResult.status === "SUCCESS") {
+            if (isSuccess) {
                 await addDoc(collection(db, 'transactions'), {
                     txHash: response.hash,
                     senderUid: stellarData?.uid,
@@ -943,10 +900,15 @@ const Dashboard: React.FC = () => {
             console.log("Recording debt in Smart Contract Ledger via Soroban RPC...");
 
             // 2. Call the smart contract to update the Immutable Ledger
-            await executeContractCall("request_advance", [
-                nativeToScVal(activePubKey, { type: 'address' }),
-                nativeToScVal(Math.floor(amount * 10000000).toString(), { type: 'i128' })
-            ]);
+            await executeContractCall(
+                activePubKey,
+                "request_advance",
+                [
+                    nativeToScVal(activePubKey, { type: 'address' }),
+                    nativeToScVal(Math.floor(amount * 10000000).toString(), { type: 'i128' })
+                ],
+                (stellarData as unknown as AppUserData).secret
+            );
 
             setDebtState(amount);
 
@@ -1040,9 +1002,14 @@ const Dashboard: React.FC = () => {
             console.log("Clearing Smart Contract Debt Ledger via Soroban RPC...");
 
             // 4. Update the Smart Contract to wipe the debt
-            await executeContractCall("settle_loan", [
-                nativeToScVal(activePubKey, { type: 'address' })
-            ]);
+            await executeContractCall(
+                activePubKey,
+                "settle_loan",
+                [
+                    nativeToScVal(activePubKey, { type: 'address' })
+                ],
+                (stellarData as unknown as AppUserData).secret
+            );
 
             setDebtState(0);
 

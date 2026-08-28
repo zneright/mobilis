@@ -55,14 +55,38 @@ export const TIER_CONFIG: Record<1 | 2 | 3, { name: string; limit: number; coopB
     3: { name: 'Gold TODA Master', limit: 75, coopBps: 20, platBps: 10 },
 };
 
+type LobstrExtension = {
+    requestAccess: () => Promise<string>;
+    signTransaction: (xdr: string, network: string) => Promise<string>;
+};
+
+export const MAX_POLL_ATTEMPTS = 15;
+
 /**
- * Signs and submits a Stellar / Soroban transaction via secretKey or Freighter wallet.
+ * Signs and submits a Stellar / Soroban transaction via secretKey, Freighter, or LOBSTR wallet.
  */
 export async function signAndSubmitTransaction(
     server: rpc.Server,
     tx: Transaction,
     secretKey?: string
 ): Promise<TransactionResult> {
+    const walletType = typeof window !== 'undefined' ? localStorage.getItem('externalWalletConnected') : null;
+
+    if (walletType === 'LOBSTR' && typeof window !== 'undefined' && (window as unknown as { lobstr?: LobstrExtension }).lobstr) {
+        const lobstrExt = (window as unknown as { lobstr: LobstrExtension }).lobstr;
+        const signedXdr = await lobstrExt.signTransaction(tx.toXDR(), getNetworkPassphrase());
+        const signedTx = TransactionBuilder.fromXDR(signedXdr, getNetworkPassphrase()) as Transaction;
+        const result = await server.sendTransaction(signedTx);
+        return { hash: result.hash, status: result.status, errorResult: result.errorResult };
+    }
+
+    if (walletType === 'Freighter' || (!secretKey && await isFreighterConnected())) {
+        const signedXdr = await requestFreighterSign(tx.toXDR(), getNetworkPassphrase());
+        const signedTx = TransactionBuilder.fromXDR(signedXdr, getNetworkPassphrase()) as Transaction;
+        const result = await server.sendTransaction(signedTx);
+        return { hash: result.hash, status: result.status, errorResult: result.errorResult };
+    }
+
     if (secretKey) {
         const kp = Keypair.fromSecret(secretKey);
         tx.sign(kp);
@@ -70,14 +94,7 @@ export async function signAndSubmitTransaction(
         return { hash: result.hash, status: result.status, errorResult: result.errorResult };
     }
 
-    if (await isFreighterConnected()) {
-        const signedXdr = await requestFreighterSign(tx.toXDR(), getNetworkPassphrase());
-        const signedTx = TransactionBuilder.fromXDR(signedXdr, getNetworkPassphrase()) as Transaction;
-        const result = await server.sendTransaction(signedTx);
-        return { hash: result.hash, status: result.status, errorResult: result.errorResult };
-    }
-
-    throw new Error('No signing mechanism available (neither secret key nor Freighter active).');
+    throw new Error('No signing mechanism available (neither secret key, Freighter, nor LOBSTR active).');
 }
 
 /**
@@ -86,7 +103,7 @@ export async function signAndSubmitTransaction(
 export async function pollTransactionStatus(server: rpc.Server, hash: string): Promise<boolean> {
     let txResult = await server.getTransaction(hash);
     let attempts = 0;
-    while ((txResult.status === "NOT_FOUND" || txResult.status === ("PENDING" as string)) && attempts < 15) {
+    while ((txResult.status === "NOT_FOUND" || txResult.status === ("PENDING" as string)) && attempts < MAX_POLL_ATTEMPTS) {
         await new Promise(resolve => setTimeout(resolve, 2000));
         txResult = await server.getTransaction(hash);
         attempts++;
