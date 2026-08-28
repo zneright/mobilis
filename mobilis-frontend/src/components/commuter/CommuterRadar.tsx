@@ -111,6 +111,9 @@ export const CommuterRadar: React.FC<CommuterRadarProps> = ({ commuterData, curr
                     <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                         Commuter Radar
                     </h2>
+                    <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        200m Radius
+                    </span>
                 </div>
 
                 <div className="flex items-center gap-2">

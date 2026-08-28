@@ -626,15 +626,17 @@ const Dashboard: React.FC = () => {
         setShowNotificationModal(true);
     };
 
-    useEffect(() => {
-        const root = window.document.documentElement;
-        if (theme === 'dark') {
-            root.classList.add('dark');
-        } else {
-            root.classList.remove('dark');
-        }
-        localStorage.setItem('theme', theme);
-    }, [theme]);
+    const [actionToast, setActionToast] = useState<{
+        type: 'success' | 'error' | 'info';
+        title: string;
+        message: string;
+    } | null>(null);
+
+    const showToast = (title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
+        playDoubleChime();
+        setActionToast({ title, message, type });
+        setTimeout(() => setActionToast(null), 6000);
+    };
 
     useEffect(() => {
         const checkAutoConnect = async () => {
@@ -745,9 +747,9 @@ const Dashboard: React.FC = () => {
                 await updateDoc(doc(db, 'coop_settings', snap.docs[0].id), { borrowLimit: newLimit });
             }
             setBorrowLimit(newLimit);
-            alert(`Driver borrow limit successfully set to ${newLimit} XLM`);
+            showToast("Borrow Limit Updated", `Driver borrow limit set to ${newLimit} XLM`, "success");
         } catch {
-            alert("Failed to update borrow limit in database.");
+            showToast("Update Failed", "Failed to update borrow limit in database.", "error");
         } finally {
             setIsProcessing(false);
         }
@@ -760,7 +762,7 @@ const Dashboard: React.FC = () => {
             await signOut(auth);
             window.location.reload();
         } catch {
-            alert("An error occurred while logging out.");
+            showToast("Sign Out Failed", "An error occurred while logging out.", "error");
         }
     };
 
@@ -772,17 +774,17 @@ const Dashboard: React.FC = () => {
                     const pubKey = await requestAccess();
                     setExternalWallet(typeof pubKey === 'string' ? pubKey : (pubKey as { address: string }).address);
                     localStorage.setItem('externalWalletConnected', 'Freighter');
-                } else alert("Freighter extension is not installed or enabled.");
+                } else showToast("Wallet Extension Missing", "Freighter extension is not installed or enabled.", "error");
             } else if (walletName === 'LOBSTR') {
                 if (window.lobstr) {
                     const lobstrExt = window.lobstr as LobstrExtension;
                     const pubKey = await lobstrExt.requestAccess();
                     setExternalWallet(pubKey);
                     localStorage.setItem('externalWalletConnected', 'LOBSTR');
-                } else alert("LOBSTR extension is not installed.");
+                } else showToast("Wallet Extension Missing", "LOBSTR extension is not installed.", "error");
             }
         } catch {
-            alert(`Connection to ${walletName} rejected or failed.`);
+            showToast("Connection Failed", `Connection to ${walletName} rejected or failed.`, "error");
         }
     };
 
@@ -845,7 +847,7 @@ const Dashboard: React.FC = () => {
         e.preventDefault();
         if (!activePubKey) return;
         if (parseFloat(sendAmt) > parseFloat(xlmBalance)) {
-            alert(`Transaction Blocked: Insufficient XLM.`);
+            showToast("Insufficient Balance", "Transaction blocked: Insufficient XLM balance.", "error");
             return;
         }
         setIsProcessing(true);
@@ -879,14 +881,14 @@ const Dashboard: React.FC = () => {
                     network: appNetwork,
                     timestamp: new Date().toISOString()
                 });
-                alert(`Success! Sent ${sendAmt} XLM.`);
+                showToast("Payment Successful", `Sent ${sendAmt} XLM.`, "success");
                 setShowSendModal(false);
                 setSendDest('');
                 setSendAmt('');
                 setTimeout(() => fetchLedgerData(), 3000);
             } else throw new Error("Execution failed on ledger.");
         } catch {
-            alert(`Failed to send funds. Ensure your wallet extension is set to ${appNetwork}.`);
+            showToast("Transfer Failed", `Failed to send funds. Ensure wallet is set to ${appNetwork}.`, "error");
         } finally { setIsProcessing(false); }
     };
 
@@ -895,11 +897,11 @@ const Dashboard: React.FC = () => {
         if (!activePubKey) return;
 
         if (debtState > 0 && stellarData?.role === 'driver') {
-            alert(`Request Blocked: You currently have a pending debt of ${debtState} XLM. Settle this before borrowing again.`);
+            showToast("Request Blocked", `You currently have a pending debt of ${debtState} XLM. Settle this before borrowing again.`, "error");
             return;
         }
         if (amount > borrowLimit) {
-            alert(`Request Blocked: The cooperative limit is ${borrowLimit} XLM.`);
+            showToast("Limit Exceeded", `The cooperative limit is ${borrowLimit} XLM.`, "error");
             return;
         }
 
@@ -963,13 +965,13 @@ const Dashboard: React.FC = () => {
                 timestamp: new Date().toISOString()
             });
 
-            alert(`Success! ${amount} XLM advance deposited directly from the Cooperative Wallet.`);
+            showToast("Advance Approved", `${amount} XLM advance deposited from Cooperative Treasury.`, "success");
             setTimeout(() => fetchLedgerData(), 3000);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: any) {
             console.error("Advance Failed:", e);
-            alert(`Advance Failed: ${e.message}`);
+            showToast("Advance Failed", e.message || "Failed to process advance.", "error");
         } finally {
             setIsProcessing(false);
         }
@@ -1053,13 +1055,13 @@ const Dashboard: React.FC = () => {
                 timestamp: new Date().toISOString()
             });
 
-            alert(`Settlement Complete! Principal and fees routed directly back to the Cooperative Wallet.`);
+            showToast("Settlement Complete", "Principal and fees routed to Cooperative Treasury.", "success");
             setTimeout(() => fetchLedgerData(), 3000);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: any) {
             console.error("Settlement Failed:", e);
-            alert(`Transaction Failed: ${e.message}`);
+            showToast("Settlement Failed", e.message || "Failed to settle loan.", "error");
         } finally {
             setIsProcessing(false);
         }
@@ -1137,6 +1139,38 @@ const Dashboard: React.FC = () => {
                                 <X className="w-4 h-4" />
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* IN-APP REALTIME ACTION / TRANSACTION STATUS TOAST */}
+            {actionToast && (
+                <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[210] w-11/12 max-w-md animate-fade-in font-sans">
+                    <div className={`p-4 rounded-3xl shadow-2xl border flex items-center justify-between gap-3 ${
+                        actionToast.type === 'error'
+                            ? 'bg-rose-950/95 text-white border-rose-500/40 backdrop-blur-xl'
+                            : actionToast.type === 'success'
+                            ? 'bg-emerald-950/95 text-white border-emerald-500/40 backdrop-blur-xl'
+                            : 'bg-slate-900/95 text-white border-cyan-500/40 backdrop-blur-xl'
+                    }`}>
+                        <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-lg flex-shrink-0 ${
+                                actionToast.type === 'error'
+                                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                    : actionToast.type === 'success'
+                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                    : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                            }`}>
+                                {actionToast.type === 'error' ? '⚠️' : actionToast.type === 'success' ? '✓' : 'ℹ️'}
+                            </div>
+                            <div>
+                                <h4 className="font-extrabold text-sm tracking-tight">{actionToast.title}</h4>
+                                <p className="text-xs text-slate-300 dark:text-gray-300 font-medium">{actionToast.message}</p>
+                            </div>
+                        </div>
+                        <button onClick={() => setActionToast(null)} className="p-1 text-slate-400 hover:text-white">
+                            <X className="w-4 h-4" />
+                        </button>
                     </div>
                 </div>
             )}

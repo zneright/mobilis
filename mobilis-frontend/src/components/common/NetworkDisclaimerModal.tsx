@@ -51,14 +51,14 @@ export const NetworkDisclaimerModal: React.FC<NetworkDisclaimerModalProps> = ({
         return createPortal(
             <AnimatePresence>
                 <motion.div
-                    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                    className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={onCancel}
                 >
                     <motion.div
-                        className="relative w-full max-w-md mx-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl p-6"
+                        className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl p-6"
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0.9, opacity: 0 }}
@@ -105,14 +105,14 @@ export const NetworkDisclaimerModal: React.FC<NetworkDisclaimerModalProps> = ({
     return createPortal(
         <AnimatePresence>
             <motion.div
-                className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-md"
+                className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={onCancel}
             >
                 <motion.div
-                    className="relative w-full max-w-lg mx-4 rounded-2xl bg-white dark:bg-slate-900 border border-amber-500/30 shadow-2xl shadow-amber-500/10 overflow-hidden"
+                    className="relative w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl bg-white dark:bg-slate-900 border border-amber-500/30 shadow-2xl shadow-amber-500/10 overflow-hidden"
                     initial={{ scale: 0.9, opacity: 0, y: 20 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -120,7 +120,7 @@ export const NetworkDisclaimerModal: React.FC<NetworkDisclaimerModalProps> = ({
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header */}
-                    <div className="bg-gradient-to-r from-amber-500/10 via-red-500/10 to-amber-500/10 dark:from-amber-500/20 dark:via-red-500/20 dark:to-amber-500/20 px-6 py-4 border-b border-amber-500/20">
+                    <div className="flex-shrink-0 bg-gradient-to-r from-amber-500/10 via-red-500/10 to-amber-500/10 dark:from-amber-500/20 dark:via-red-500/20 dark:to-amber-500/20 px-6 py-4 border-b border-amber-500/20">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center animate-pulse">
@@ -147,7 +147,7 @@ export const NetworkDisclaimerModal: React.FC<NetworkDisclaimerModalProps> = ({
                         </div>
                     </div>
 
-                    <div className="p-6">
+                    <div className="p-6 overflow-y-auto max-h-[calc(90vh-100px)] custom-scrollbar">
                         <AnimatePresence mode="wait">
                             {/* ─── Step 1: Warning ──────────────────── */}
                             {step === 1 && (
