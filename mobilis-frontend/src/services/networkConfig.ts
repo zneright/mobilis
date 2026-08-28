@@ -8,6 +8,9 @@
 
 import { Networks } from '@stellar/stellar-sdk';
 
+// ─── Exchange Rate Constant ──────────────────────────────────
+export const PHP_EXCHANGE_RATE = 60.69; // 1 XLM ≈ 60.69 PHP (approximate conversion rate)
+
 // ─── Network Type ────────────────────────────────────────────
 export type StellarNetwork = 'testnet' | 'mainnet';
 

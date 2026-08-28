@@ -5,7 +5,7 @@ import { Keypair } from '@stellar/stellar-sdk';
 import { ExternalLink, Fuel, Zap, CheckCircle2, Receipt, X, Printer, Copy, Check, Globe, ShieldCheck, Landmark, Coins, ArrowUpRight, ArrowDownLeft, Sparkles } from 'lucide-react';
 import { cardRoleStyle, rolePill, roleAccentText, roleCtaBg } from './roleStyleTokens';
 import { MobilisLogo } from '../common/MobilisLogo';
-import { getHorizonServer } from '../../services/networkConfig';
+import { getHorizonServer, PHP_EXCHANGE_RATE } from '../../services/networkConfig';
 
 interface HistoryTabProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -32,15 +32,15 @@ function extractTxAmount(t: any): { xlm: string; php: string } {
         const parsedPhp = parseFloat(String(t.amountPhp));
         if (!isNaN(parsedPhp) && parsedPhp > 0) {
             numPhp = parsedPhp;
-            numXlm = parsedPhp / 60.69;
+            numXlm = parsedPhp / PHP_EXCHANGE_RATE;
         }
     }
 
     if (numXlm > 0 && numPhp === 0) {
         if (t.amountPhp) {
-            numPhp = parseFloat(String(t.amountPhp)) || (numXlm * 60.69);
+            numPhp = parseFloat(String(t.amountPhp)) || (numXlm * PHP_EXCHANGE_RATE);
         } else {
-            numPhp = numXlm * 60.69;
+            numPhp = numXlm * PHP_EXCHANGE_RATE;
         }
     }
 

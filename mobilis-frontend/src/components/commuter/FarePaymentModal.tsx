@@ -7,7 +7,7 @@ import { requestAccess, signTransaction, isConnected } from '@stellar/freighter-
 import { X, Check, Copy, Printer, ExternalLink, Receipt, ShieldCheck, QrCode } from 'lucide-react';
 import { roleCtaBg, rolePill, roleAccentText } from '../tabs/roleStyleTokens';
 import { playDoubleChime } from '../../utils/webAudio';
-import { getHorizonServer, getNetworkPassphrase, getFriendbotUrl, isTestnet } from '../../services/networkConfig';
+import { getHorizonServer, getNetworkPassphrase, getFriendbotUrl, isTestnet, PHP_EXCHANGE_RATE } from '../../services/networkConfig';
 import { OfflineVoucherModal } from './OfflineVoucherModal';
 
 interface DriverLocation {
@@ -28,7 +28,7 @@ interface FarePaymentModalProps {
     onSuccess?: () => void;
 }
 
-const PHP_RATE = 60.69; // 1 XLM ≈ 60.69 PHP
+const PHP_RATE = PHP_EXCHANGE_RATE;
 
 export const FarePaymentModal: React.FC<FarePaymentModalProps> = ({
     driver,

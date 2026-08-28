@@ -8,6 +8,7 @@ import {
     TransactionBuilder,
     Contract,
     rpc,
+    Horizon,
     nativeToScVal,
     Operation,
     Asset,
@@ -41,6 +42,7 @@ import {
     getContractId,
     isTestnet,
     onNetworkChange,
+    PHP_EXCHANGE_RATE,
 } from '../services/networkConfig';
 import { CloudUpload, WifiOff } from 'lucide-react';
 
@@ -78,8 +80,6 @@ type AppUserData = {
     status?: string;
     [key: string]: unknown;
 };
-
-const PHP_EXCHANGE_RATE = 60.69;
 
 const Dashboard: React.FC = () => {
     const { stellarData } = useAuth();
@@ -906,7 +906,7 @@ const Dashboard: React.FC = () => {
         setIsProcessing(true);
 
         try {
-            const server = new rpc.Server(getRpcServer());
+            const horizonServer = new Horizon.Server(getHorizonServer());
 
             console.log("Fetching Cooperative Secret Key from Database...");
             const coopName = (stellarData as unknown as AppUserData).todaAffiliation;
@@ -919,11 +919,11 @@ const Dashboard: React.FC = () => {
 
             if (!coopSecret) throw new Error("Cooperative Secret Key is missing in Firestore.");
 
-            console.log("Transferring physical XLM from Cooperative Wallet...");
+            console.log("Transferring physical XLM from Cooperative Wallet via Horizon...");
 
-            // 1. Physically transfer the funds from the Admin to the Driver
+            // 1. Physically transfer the funds from the Admin to the Driver via Horizon
             const coopKeypair = Keypair.fromSecret(coopSecret);
-            const coopAccount = await server.getAccount(coopKeypair.publicKey());
+            const coopAccount = await horizonServer.loadAccount(coopKeypair.publicKey());
 
             const fundTxBuilder = new TransactionBuilder(coopAccount, { fee: "1000", networkPassphrase: getNetworkPassphrase() })
                 .addOperation(Operation.payment({
@@ -935,16 +935,10 @@ const Dashboard: React.FC = () => {
                 .build();
 
             fundTxBuilder.sign(coopKeypair);
-            const fundResponse = await server.sendTransaction(fundTxBuilder);
-            if (fundResponse.status === "ERROR") throw new Error("Failed to transfer funds from Coop wallet.");
+            const fundResponse = await horizonServer.submitTransaction(fundTxBuilder);
+            const fundTxHash = fundResponse.hash;
 
-            let fundTxResult = await server.getTransaction(fundResponse.hash);
-            while (fundTxResult.status === "NOT_FOUND" || fundTxResult.status === ("PENDING" as string)) {
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                fundTxResult = await server.getTransaction(fundResponse.hash);
-            }
-
-            console.log("Recording debt in Smart Contract Ledger...");
+            console.log("Recording debt in Smart Contract Ledger via Soroban RPC...");
 
             // 2. Call the smart contract to update the Immutable Ledger
             await executeContractCall("request_advance", [
@@ -956,7 +950,7 @@ const Dashboard: React.FC = () => {
 
             // 3. Save History to Firebase
             await addDoc(collection(db, 'transactions'), {
-                txHash: fundResponse.hash,
+                txHash: fundTxHash,
                 senderUid: coopData.uid,
                 senderName: coopData.coopName,
                 coopName: coopData.coopName,
@@ -987,7 +981,7 @@ const Dashboard: React.FC = () => {
         setIsProcessing(true);
 
         try {
-            const server = new rpc.Server(getRpcServer());
+            const horizonServer = new Horizon.Server(getHorizonServer());
 
             // 1. Fetch Dynamic Keys for Routing
             const superadminQuery = query(collection(db, 'users'), where('role', '==', 'superadmin'));
@@ -1006,27 +1000,38 @@ const Dashboard: React.FC = () => {
             const superadminFeeAmount = (debtState * 0.002).toFixed(7).toString();
             const totalFee = debtState * 0.005;
 
-            console.log("Routing Principal & Fees back to Cooperative...");
+            console.log("Routing Principal & Fees back to Cooperative via Horizon...");
 
-            // 3. Physically send the XLM back to the Admin and Superadmin (NATIVE TRANSACTION)
-            const account = await server.getAccount(activePubKey);
+            // 3. Physically send the XLM back to the Admin and Superadmin (NATIVE TRANSACTION via Horizon)
+            const account = await horizonServer.loadAccount(activePubKey);
             const paymentTxBuilder = new TransactionBuilder(account, { fee: "1000", networkPassphrase: getNetworkPassphrase() })
                 .addOperation(Operation.payment({ destination: coopPubKey, asset: Asset.native(), amount: totalToCoopAmount }))
                 .addOperation(Operation.payment({ destination: superadminPubKey, asset: Asset.native(), amount: superadminFeeAmount }))
                 .setTimeout(30).build();
 
-            // Native payments DO NOT need server.prepareTransaction()
-            const paymentResponse = await signAndSubmitTx(server, paymentTxBuilder as Transaction);
-
-            if (paymentResponse.status === "ERROR") throw new Error(`Payment failed. Ensure you have enough XLM to cover the 0.5% fee.`);
-
-            let paymentTxResult = await server.getTransaction(paymentResponse.hash);
-            while (paymentTxResult.status === "NOT_FOUND" || paymentTxResult.status === ("PENDING" as string)) {
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                paymentTxResult = await server.getTransaction(paymentResponse.hash);
+            let paymentTxHash = '';
+            const walletType = localStorage.getItem('externalWalletConnected');
+            if (externalWallet && walletType === 'Freighter') {
+                const { signedTxXdr, error } = await signTransaction(paymentTxBuilder.toXDR(), { networkPassphrase: getNetworkPassphrase() });
+                if (error) throw new Error(`Freighter Signing Error: ${error}`);
+                const signedTx = TransactionBuilder.fromXDR(signedTxXdr, getNetworkPassphrase());
+                const res = await horizonServer.submitTransaction(signedTx as Transaction);
+                paymentTxHash = res.hash;
+            } else if (externalWallet && walletType === 'LOBSTR') {
+                if (!window.lobstr) throw new Error("LOBSTR extension not found.");
+                const lobstrExt = window.lobstr as LobstrExtension;
+                const signedXdr = await lobstrExt.signTransaction(paymentTxBuilder.toXDR(), isTestnet() ? 'TESTNET' : 'PUBLIC');
+                const signedTx = TransactionBuilder.fromXDR(signedXdr, getNetworkPassphrase());
+                const res = await horizonServer.submitTransaction(signedTx as Transaction);
+                paymentTxHash = res.hash;
+            } else {
+                const sourceKeypair = Keypair.fromSecret((stellarData as unknown as AppUserData).secret!);
+                paymentTxBuilder.sign(sourceKeypair);
+                const res = await horizonServer.submitTransaction(paymentTxBuilder);
+                paymentTxHash = res.hash;
             }
 
-            console.log("Clearing Smart Contract Debt Ledger...");
+            console.log("Clearing Smart Contract Debt Ledger via Soroban RPC...");
 
             // 4. Update the Smart Contract to wipe the debt
             await executeContractCall("settle_loan", [
@@ -1037,7 +1042,7 @@ const Dashboard: React.FC = () => {
 
             // 5. Update Firebase History
             await addDoc(collection(db, 'transactions'), {
-                txHash: paymentResponse.hash,
+                txHash: paymentTxHash,
                 senderUid: stellarData?.uid,
                 senderName: (stellarData as unknown as AppUserData)?.fullName || 'Node Operator',
                 amountSettled: debtState.toString(),
