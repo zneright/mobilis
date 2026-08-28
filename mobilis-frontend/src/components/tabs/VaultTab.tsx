@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Wallet, ArrowUpRight, ArrowDownLeft, QrCode, ShieldCheck, RefreshCw, Zap, Copy, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cardRoleStyle, rolePill, roleAccentText, roleCtaBg } from './roleStyleTokens';
-import { isTestnet, getFriendbotUrl } from '../../services/networkConfig';
+import { isTestnet, getFriendbotUrl, PHP_EXCHANGE_RATE } from '../../services/networkConfig';
 
 interface VaultTabProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -37,7 +37,7 @@ export const VaultTab: React.FC<VaultTabProps> = ({
     setShowReceiveModal,
 }) => {
     const xlmNum = parseFloat(xlmBalance || '0');
-    const phpEquivalent = (xlmNum * 60.69).toFixed(2);
+    const phpEquivalent = (xlmNum * PHP_EXCHANGE_RATE).toFixed(2);
 
     const [isFunding, setIsFunding] = useState(false);
     const [fundMessage, setFundMessage] = useState<string | null>(null);

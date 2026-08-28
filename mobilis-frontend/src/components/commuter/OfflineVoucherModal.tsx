@@ -7,6 +7,7 @@ import {
     type OfflineVoucherPayload,
 } from '../../services/offlineVoucher';
 import { roleCtaBg } from '../tabs/roleStyleTokens';
+import { PHP_EXCHANGE_RATE } from '../../services/networkConfig';
 
 interface OfflineVoucherModalProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -14,7 +15,7 @@ interface OfflineVoucherModalProps {
     onClose: () => void;
 }
 
-const PHP_RATE = 60.69;
+const PHP_RATE = PHP_EXCHANGE_RATE;
 
 export const OfflineVoucherModal: React.FC<OfflineVoucherModalProps> = ({
     commuterData,

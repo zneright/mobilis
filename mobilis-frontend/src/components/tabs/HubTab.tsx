@@ -5,6 +5,7 @@ import { Fuel, Building2, UserCheck, ArrowUpRight, ShieldCheck, CheckCircle2, Me
 import { roleCtaBg, roleCardBorder } from './roleStyleTokens';
 import { getDriverReputation, type DriverReputationData } from '../../services/stellarContract';
 import { OfflineDriverScanner } from '../driver/OfflineDriverScanner';
+import { PHP_EXCHANGE_RATE } from '../../services/networkConfig';
 
 interface HubTabProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -292,13 +293,13 @@ export const HubTab: React.FC<HubTabProps> = ({
                             <div className="p-4 bg-white dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.06] rounded-2xl">
                                 <span className="text-[10px] font-mono text-slate-400 dark:text-gray-500 block uppercase font-bold">Gross Fares Collected</span>
                                 <span className="text-lg font-black text-slate-900 dark:text-white font-mono block mt-1">{formatCurrency(safeDebt > 0 ? (safeDebt * 2.8).toFixed(1) : '45.0')}</span>
-                                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold font-mono">{'\u2248'} {'\u20B1'}{((safeDebt > 0 ? safeDebt * 2.8 : 45) * 60.69).toFixed(0)} PHP</span>
+                                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold font-mono">{'\u2248'} {'\u20B1'}{((safeDebt > 0 ? safeDebt * 2.8 : 45) * PHP_EXCHANGE_RATE).toFixed(0)} PHP</span>
                             </div>
 
                             <div className="p-4 bg-white dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.06] rounded-2xl">
                                 <span className="text-[10px] font-mono text-slate-400 dark:text-gray-500 block uppercase font-bold">Soroban Fuel Advance</span>
                                 <span className="text-lg font-black text-amber-600 dark:text-amber-400 font-mono block mt-1">-{formatCurrency(safeDebt)}</span>
-                                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold font-mono">{'\u2248'} -{'\u20B1'}{(safeDebt * 60.69).toFixed(0)} PHP</span>
+                                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold font-mono">{'\u2248'} -{'\u20B1'}{(safeDebt * PHP_EXCHANGE_RATE).toFixed(0)} PHP</span>
                             </div>
 
                             <div className="p-4 bg-white dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.06] rounded-2xl">
@@ -307,7 +308,7 @@ export const HubTab: React.FC<HubTabProps> = ({
                                     +{formatCurrency(Math.max(0, (safeDebt > 0 ? safeDebt * 1.8 : 45)).toFixed(1))}
                                 </span>
                                 <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold font-mono">
-                                    {'\u2248'} +{'\u20B1'}{(Math.max(0, (safeDebt > 0 ? safeDebt * 1.8 : 45)) * 60.69).toFixed(0)} PHP
+                                    {'\u2248'} +{'\u20B1'}{(Math.max(0, (safeDebt > 0 ? safeDebt * 1.8 : 45)) * PHP_EXCHANGE_RATE).toFixed(0)} PHP
                                 </span>
                             </div>
                         </div>
