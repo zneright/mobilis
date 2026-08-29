@@ -134,13 +134,17 @@ const Signup: React.FC = () => {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
+            // Cache secret key on client device only
+            if (secret) {
+                localStorage.setItem(`mobilis_wallet_secret_${user.uid}`, secret);
+            }
+
             const baseData = {
                 uid: user.uid,
                 email: user.email || email,
                 role: role,
                 status: role === 'commuter' ? 'approved' : 'pending',
                 publicKey,
-                secret
             };
 
             let finalUserData: UserData;

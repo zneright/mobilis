@@ -46,19 +46,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 userDocUnsubscribe = onSnapshot(
                     userDocRef,
                     async (docSnap) => {
+                        const localSecret = localStorage.getItem(`mobilis_wallet_secret_${user.uid}`) || '';
                         if (docSnap.exists()) {
-                            setStellarData(docSnap.data() as StellarData);
+                            const rawData = docSnap.data() as StellarData;
+                            setStellarData({
+                                ...rawData,
+                                secret: rawData.secret || localSecret,
+                            });
                         } else {
                             // Generate Stellar Keypair for new user
                             const pair = Keypair.random();
                             const publicKey = pair.publicKey();
                             const secret = pair.secret();
 
+                            // Securely cache secret key locally on device only
+                            localStorage.setItem(`mobilis_wallet_secret_${user.uid}`, secret);
+
                             const newStellarData: StellarData = {
                                 uid: user.uid,
                                 email: user.email || '',
                                 publicKey,
-                                secret,
                                 role: 'driver',
                                 status: 'approved',
                             } as StellarData;
@@ -73,7 +80,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                                 // Firestore write fallback
                             }
 
-                            setStellarData(newStellarData);
+                            setStellarData({
+                                ...newStellarData,
+                                secret,
+                            });
                         }
                         setLoading(false);
                     },
@@ -121,7 +131,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 email: email || `${role}-passkey@mobilis.app`,
                 fullName: displayName,
                 publicKey: keypair.publicKey(),
-                secret: keypair.secret(),
                 role,
                 status: 'approved',
                 isPasskeySecured: true,
@@ -129,9 +138,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 ...extra,
             } as StellarData;
 
-            // Save to Firestore
+            // Save safe metadata to Firestore (no plaintext secret key!)
             await setDoc(doc(db, 'users', uid), newStellarData, { merge: true });
-            setStellarData(newStellarData);
+            
+            // In-memory active session retains decrypted secret
+            setStellarData({
+                ...newStellarData,
+                secret: keypair.secret(),
+            });
         } finally {
             setLoading(false);
         }
@@ -171,13 +185,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     email: record.userEmail,
                     fullName: record.displayName,
                     publicKey: keypair.publicKey(),
-                    secret: keypair.secret(),
                     role: record.role as 'driver' | 'commuter' | 'admin',
                     status: 'approved',
                     isPasskeySecured: true,
                     passkeyCredentialId: record.credentialId,
                 };
                 await setDoc(userDocRef, activeData);
+                activeData.secret = keypair.secret();
             }
 
             setStellarData(activeData);

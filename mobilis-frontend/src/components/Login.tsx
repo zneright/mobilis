@@ -40,13 +40,15 @@ const Login: React.FC = () => {
                     const pair = Keypair.random();
                     const role = email.includes('driver') ? 'driver' : email.includes('admin') ? 'admin' : 'commuter';
 
+                    const secret = pair.secret();
+                    localStorage.setItem(`mobilis_wallet_secret_${user.uid}`, secret);
+
                     const demoDoc = {
                         uid: user.uid,
                         email: user.email || email,
                         role,
                         status: 'approved',
                         publicKey: pair.publicKey(),
-                        secret: pair.secret(),
                         fullName: role === 'driver' ? 'Juan Driver Demo' : role === 'admin' ? 'Bacoor TODA Admin' : 'Maria Commuter Demo',
                         phone: '09171234567',
                         plateNumber: role === 'driver' ? 'TODA-888' : undefined,

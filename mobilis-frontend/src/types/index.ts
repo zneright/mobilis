@@ -9,7 +9,7 @@ export interface UserData {
 
     // Blockchain Data
     publicKey: string;
-    secret: string; // Non-custodial or Passkey Enclave unlocked
+    secret?: string; // Client-side decrypted or local session unlocked only
 
     // Passkey / WebAuthn Account Abstraction
     isPasskeySecured?: boolean;

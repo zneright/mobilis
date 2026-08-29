@@ -863,41 +863,9 @@ const Dashboard: React.FC = () => {
         setIsProcessing(true);
 
         try {
-            const horizonServer = new Horizon.Server(getHorizonServer());
+            console.log("Requesting fuel advance via Soroban Smart Contract...");
 
-            console.log("Fetching Cooperative Secret Key from Database...");
-            const coopName = (stellarData as unknown as AppUserData).todaAffiliation;
-            const coopQuery = query(collection(db, 'users'), where('role', '==', 'admin'), where('coopName', '==', coopName));
-            const coopSnap = await getDocs(coopQuery);
-
-            if (coopSnap.empty) throw new Error("Cooperative admin account not found.");
-            const coopData = coopSnap.docs[0].data();
-            const coopSecret = coopData.secret;
-
-            if (!coopSecret) throw new Error("Cooperative Secret Key is missing in Firestore.");
-
-            console.log("Transferring physical XLM from Cooperative Wallet via Horizon...");
-
-            // 1. Physically transfer the funds from the Admin to the Driver via Horizon
-            const coopKeypair = Keypair.fromSecret(coopSecret);
-            const coopAccount = await horizonServer.loadAccount(coopKeypair.publicKey());
-
-            const fundTxBuilder = new TransactionBuilder(coopAccount, { fee: "1000", networkPassphrase: getNetworkPassphrase() })
-                .addOperation(Operation.payment({
-                    destination: activePubKey,
-                    asset: Asset.native(),
-                    amount: amount.toString()
-                }))
-                .setTimeout(30)
-                .build();
-
-            fundTxBuilder.sign(coopKeypair);
-            const fundResponse = await horizonServer.submitTransaction(fundTxBuilder);
-            const fundTxHash = fundResponse.hash;
-
-            console.log("Recording debt in Smart Contract Ledger via Soroban RPC...");
-
-            // 2. Call the smart contract to update the Immutable Ledger
+            // 1. Call the Soroban smart contract to validate tier and disburse credit
             await executeContractCall(
                 activePubKey,
                 "request_advance",
@@ -910,12 +878,12 @@ const Dashboard: React.FC = () => {
 
             setDebtState(amount);
 
-            // 3. Save History to Firebase
+            // 2. Save Transaction Record to Firestore
             await addDoc(collection(db, 'transactions'), {
-                txHash: fundTxHash,
-                senderUid: coopData.uid,
-                senderName: coopData.coopName,
-                coopName: coopData.coopName,
+                txHash: `ADV-${Date.now().toString(36).toUpperCase()}`,
+                senderUid: 'SOROBAN_TREASURY_CONTRACT',
+                senderName: `${(stellarData as unknown as AppUserData)?.todaAffiliation || 'Cooperative'} Treasury Vault`,
+                coopName: (stellarData as unknown as AppUserData)?.todaAffiliation || 'Mobilis Fleet',
                 plateNumber: (stellarData as unknown as AppUserData)?.plateNumber || 'N/A',
                 amount: amount.toString(),
                 asset: 'XLM',
@@ -925,7 +893,7 @@ const Dashboard: React.FC = () => {
                 timestamp: new Date().toISOString()
             });
 
-            showToast("Advance Approved", `${amount} XLM advance deposited from Cooperative Treasury.`, "success");
+            showToast("Advance Approved", `${amount} XLM fuel advance disbursed from Cooperative Vault.`, "success");
             setTimeout(() => fetchLedgerData(), 3000);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
