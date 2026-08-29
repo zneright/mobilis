@@ -14,8 +14,8 @@ import {
     Transaction
 } from '@stellar/stellar-sdk';
 import { isFreighterConnected, checkFreighterAccess, requestFreighterSign } from '../services/freighter';
-import { Copy, ArrowUpRight, X, Wallet, Zap, Bell, ShieldCheck, Megaphone, Navigation, CheckCircle2 } from 'lucide-react';
-import { cardRoleStyle, roleCtaBg, rolePill, roleAccentText, roleShellBg } from './tabs/roleStyleTokens';
+import { X, Megaphone } from 'lucide-react';
+import { cardRoleStyle, roleAccentText, roleShellBg } from './tabs/roleStyleTokens';
 import Header from './Header';
 import BottomNav from './BottomNav';
 import Sidebar from './Sidebar';
