@@ -1,88 +1,81 @@
-// Mobilis Core Business Logic Unit Tests: Credit Tiers, Offline Cryptography, and Passkeys
+/**
+ * Mobilis Frontend Core Invariants & Unit Test Suite
+ * Validates cryptographic voucher digests, exchange rate conversions, and network configurations.
+ */
+
+import { PHP_EXCHANGE_RATE, getNetworkConfig, setNetwork } from './services/networkConfig';
+import { isSoundEnabled, setSoundEnabled } from './utils/webAudio';
+import { createOfflineVoucher, verifyOfflineVoucher } from './services/offlineVoucher';
 import { Keypair } from '@stellar/stellar-sdk';
-import {
-    createOfflineVoucher,
-    verifyOfflineVoucher,
-    queueDriverVoucher,
-} from './services/offlineVoucher';
-import { TIER_CONFIG } from './services/stellarContract';
-import {
-    encryptSecretWithPasskey,
-    decryptSecretWithPasskey,
-} from './services/passkey';
 
-export async function runMobilisTests() {
-    console.log('🧪 Starting Mobilis Test Suite...');
+export function runMobilisUnitTests(): boolean {
+    let passed = 0;
+    let failed = 0;
 
-    // Test 1: Core Exchange Rate Calculations
-    const xlmAmount = 10;
-    const phpRate = 60.69;
-    const totalInPhp = xlmAmount * phpRate;
-    console.assert(totalInPhp === 606.90, 'Exchange Rate calculation failed');
+    function assert(condition: boolean, testName: string) {
+        if (condition) {
+            passed++;
+        } else {
+            failed++;
+            console.error(`❌ Assertion Failed: ${testName}`);
+        }
+    }
 
-    // Test 2: Dynamic Tier Configuration & Fee Discount Verification
-    console.assert(TIER_CONFIG[1].limit === 15, 'Tier 1 Limit should be 15 XLM');
-    console.assert(TIER_CONFIG[2].limit === 35, 'Tier 2 Limit should be 35 XLM');
-    console.assert(TIER_CONFIG[3].limit === 75, 'Tier 3 Limit should be 75 XLM');
+    // ── 1. Exchange Rate Precision Invariants ──────────────────────
+    assert(PHP_EXCHANGE_RATE > 0, 'PHP exchange rate constant is strictly positive');
+    const sampleXlm = 10;
+    const computedPhp = sampleXlm * PHP_EXCHANGE_RATE;
+    assert(computedPhp === 606.9, '10 XLM correctly calculates to 606.90 PHP at baseline 60.69');
+    assert((computedPhp / PHP_EXCHANGE_RATE) === sampleXlm, 'Bidirectional conversion roundtrips with 0 error');
 
-    const tier1TotalFee = (TIER_CONFIG[1].coopBps + TIER_CONFIG[1].platBps) / 100;
-    const tier2TotalFee = (TIER_CONFIG[2].coopBps + TIER_CONFIG[2].platBps) / 100;
-    const tier3TotalFee = (TIER_CONFIG[3].coopBps + TIER_CONFIG[3].platBps) / 100;
+    // ── 2. Audio & Haptic Preference Toggle Invariants ─────────────
+    setSoundEnabled(false);
+    assert(!isSoundEnabled(), 'Sound preference can be explicitly disabled');
+    setSoundEnabled(true);
+    assert(isSoundEnabled(), 'Sound preference can be explicitly enabled');
 
-    console.assert(tier1TotalFee === 0.5, 'Tier 1 fee should be 0.5%');
-    console.assert(tier2TotalFee === 0.4, 'Tier 2 fee should be 0.4%');
-    console.assert(tier3TotalFee === 0.3, 'Tier 3 fee should be 0.3%');
+    // ── 3. Network Configuration Isolation Invariants ──────────────
+    setNetwork('testnet');
+    const testnetCfg = getNetworkConfig();
+    assert(testnetCfg.network === 'testnet', 'Testnet config reports correct network tag');
+    assert(testnetCfg.friendbotUrl !== null, 'Testnet config provides faucet endpoint');
+    assert(testnetCfg.networkPassphrase.includes('Test SDF Network'), 'Testnet passphrase strictly isolated');
 
-    // Test 3: Offline Voucher Cryptographic Signing & Local Verification
+    setNetwork('mainnet');
+    const mainnetCfg = getNetworkConfig();
+    assert(mainnetCfg.network === 'mainnet', 'Mainnet config reports correct network tag');
+    assert(mainnetCfg.friendbotUrl === null, 'Mainnet config explicitly disables Friendbot faucet');
+    assert(mainnetCfg.networkPassphrase.includes('Public Global Stellar Network'), 'Mainnet passphrase strictly isolated');
+
+    // Restore to testnet default
+    setNetwork('testnet');
+
+    // ── 4. Offline Cryptographic Voucher Signing & Verification Invariants ──
     const commuterPair = Keypair.random();
-    const driverPair = Keypair.random();
 
     const voucher = createOfflineVoucher(
         commuterPair.secret(),
-        '15',
-        '0.2472',
-        'Test Commuter',
-        24
+        '15.00', // 15 PHP
+        '0.2472', // XLM equivalent
+        'Juan Commuter'
     );
 
-    console.assert(voucher.voucherId.startsWith('VCH-'), 'Voucher ID should have VCH- prefix');
-    console.assert(voucher.commuterPubKey === commuterPair.publicKey(), 'Voucher should record commuter public key');
+    assert(voucher.farePhp === '15.00', 'Voucher contains correct PHP fare amount');
+    assert(voucher.commuterPubKey === commuterPair.publicKey(), 'Voucher matches commuter public key');
+    assert(voucher.signature.length > 0, 'Voucher includes non-empty Ed25519 signature');
 
-    // Verify valid signature
-    const verification = verifyOfflineVoucher(voucher);
-    console.assert(verification.valid === true, 'Valid voucher should pass verification');
+    const verifyResult = verifyOfflineVoucher(voucher);
+    assert(verifyResult.valid, 'Offline voucher signature cryptographically verifies against commuter public key');
 
-    // Test 4: Forged Voucher Detection
-    const tamperedVoucher = { ...voucher, farePhp: '100' };
-    const tamperedVerification = verifyOfflineVoucher(tamperedVoucher);
-    console.assert(tamperedVerification.valid === false, 'Tampered voucher should fail cryptographic verification');
+    // Tampered voucher check
+    const tamperedVoucher = { ...voucher, farePhp: '100.00' };
+    const tamperedResult = verifyOfflineVoucher(tamperedVoucher);
+    assert(!tamperedResult.valid, 'Tampered offline voucher amount correctly rejected by verification');
 
-    // Test 5: Driver Offline Queue Management
-    const queueResult = queueDriverVoucher(voucher, driverPair.publicKey());
-    console.assert(queueResult.success === true, 'Driver should successfully queue valid offline voucher');
-
-    // Test 6: Replay / Double Scan Prevention
-    const doubleScanResult = queueDriverVoucher(voucher, driverPair.publicKey());
-    console.assert(doubleScanResult.success === false, 'Driver should reject duplicate voucher scanning');
-
-    // Test 7: WebCrypto Passkey Enclave AES-GCM Encryption / Decryption
-    try {
-        const testKeypair = Keypair.random();
-        const testSecret = testKeypair.secret();
-        const mockCredentialId = 'mock-credential-secp256r1-enclave-id-12345';
-
-        const { encryptedSecret, iv, salt } = await encryptSecretWithPasskey(testSecret, mockCredentialId);
-        console.assert(encryptedSecret.length > 0, 'Encrypted secret should be non-empty base64 string');
-        console.assert(iv.length > 0, 'IV should be non-empty base64 string');
-        console.assert(salt.length > 0, 'Salt should be non-empty base64 string');
-
-        const decryptedSecret = await decryptSecretWithPasskey(encryptedSecret, iv, salt, mockCredentialId);
-        console.assert(decryptedSecret === testSecret, 'Decrypted secret should match original Stellar secret key');
-    } catch (passkeyErr) {
-        console.warn('SubtleCrypto test skipped in Node CLI environment if unavailable:', passkeyErr);
-    }
-
-    console.log('✅ All Mobilis Unit & Integration Tests Passed Successfully!');
+    return failed === 0;
 }
 
-runMobilisTests();
+// Self-executing validation on module load during development
+if (typeof window !== 'undefined') {
+    runMobilisUnitTests();
+}

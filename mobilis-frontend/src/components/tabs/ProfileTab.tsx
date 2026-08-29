@@ -21,6 +21,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ stellarData }) => {
         stellarData?.vehicleType || 'Tricycle'
     );
     const [isSubmittingChange, setIsSubmittingChange] = useState(false);
+    const [changeSuccessMsg, setChangeSuccessMsg] = useState('');
     const [soundOn, setSoundOn] = useState(isSoundEnabled());
 
     const handleToggleSound = () => {
