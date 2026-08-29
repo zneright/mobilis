@@ -257,7 +257,11 @@ export const VaultTab: React.FC<VaultTabProps> = ({
                         {xlmNum < 5 && (
                             <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[11px] text-amber-600 dark:text-amber-400 flex items-center gap-2">
                                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                                <span>Low balance. Use Faucet Top-Up above to add XLM.</span>
+                                <span>
+                                    {appNetwork === 'PUBLIC'
+                                        ? 'Low balance. Deposit XLM to your address on Stellar Mainnet to perform transactions.'
+                                        : 'Low balance. Use Faucet Top-Up above to add free Testnet XLM.'}
+                                </span>
                             </div>
                         )}
 

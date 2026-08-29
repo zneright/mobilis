@@ -103,10 +103,14 @@ const Dashboard: React.FC = () => {
 
     const appNetwork = isTestnet() ? 'TESTNET' : 'PUBLIC';
 
-    // Re-fetch balances when user toggles network
+    // Re-fetch balances and clear state when user toggles network
     useEffect(() => {
         const unsub = onNetworkChange(() => {
+            setXlmBalance('0.00');
+            setAssetBalances([]);
+            setDebtState(0);
             fetchLedgerData();
+            fetchFirebaseHistory();
         });
         return unsub;
     }, []);

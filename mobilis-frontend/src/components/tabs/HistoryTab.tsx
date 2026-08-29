@@ -319,6 +319,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ txHistory, appNetwork, s
 
         // Firestore Fare Transactions
         fareTxs.forEach((f) => {
+            if (f.network && f.network.toUpperCase() !== appNetwork) return;
             if (f.txHash) hashSet.add(f.txHash);
             const { xlm, php } = extractTxAmount(f);
             merged.push({
@@ -341,6 +342,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ txHistory, appNetwork, s
         // Firestore Soroban Contract Transactions (Settle Loan, Fuel Advance, Treasury)
         const combinedContractSources = [...(txHistory || []), ...contractTxs];
         combinedContractSources.forEach((t) => {
+            if (t.network && t.network.toUpperCase() !== appNetwork) return;
             if (t.txHash) hashSet.add(t.txHash);
             const upperType = (t.type || 'AUTO_LOAN_ADVANCE').toUpperCase();
             const { xlm, php } = extractTxAmount(t);
@@ -369,7 +371,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ txHistory, appNetwork, s
         });
 
         return merged.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    }, [fareTxs, contractTxs, txHistory, horizonPayments]);
+    }, [fareTxs, contractTxs, txHistory, horizonPayments, appNetwork]);
 
     // Category Live Counts
     const counts = React.useMemo(() => {
