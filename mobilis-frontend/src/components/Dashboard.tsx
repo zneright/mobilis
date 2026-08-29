@@ -25,6 +25,9 @@ import VaultTab from './tabs/VaultTab';
 import HistoryTab from './tabs/HistoryTab';
 import ProfileTab from './tabs/ProfileTab';
 
+import { SendModal, ReceiveModal, WalletConnectModal } from './common/WalletModals';
+import { NotificationCenterModal } from './common/NotificationCenterModal';
+
 import { CommuterRadar } from './commuter/CommuterRadar';
 import { DriverDutyToggle } from './driver/DriverDutyToggle';
 import { DriverOperationsMap } from './driver/DriverOperationsMap';
@@ -1227,240 +1230,52 @@ const Dashboard: React.FC = () => {
 
             <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} role={stellarData.role} />
 
-            {/* SEND MODAL */}
-            {showSendModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-                    <div className={`w-full max-w-md rounded-3xl p-6 shadow-2xl relative transition-all ${cardRoleStyle(stellarData.role)}`}>
-                        <button onClick={() => setShowSendModal(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 dark:hover:text-white"><X className="w-5 h-5" /></button>
-                        <h3 className="text-xl font-black mb-6 text-slate-900 dark:text-white">Send XLM</h3>
-                        <form onSubmit={handleSendXLM} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">Recipient Wallet Address</label>
-                                <input required type="text" value={sendDest} onChange={(e) => setSendDest(e.target.value)} placeholder="G..." className="w-full p-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none font-mono text-slate-900 dark:text-white focus:border-cyan-500" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">Amount (XLM)</label>
-                                <input required type="number" step="0.0000001" value={sendAmt} onChange={(e) => setSendAmt(e.target.value)} placeholder="0.00" className="w-full p-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none text-slate-900 dark:text-white focus:border-cyan-500" />
-                            </div>
-                            <button type="submit" disabled={isProcessing} className={`w-full py-4 mt-2 font-black text-sm rounded-xl transition-all disabled:opacity-50 ${roleCtaBg(stellarData.role)}`}>
-                                {isProcessing ? "Processing..." : `Confirm & Send on ${appNetwork}`}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
+            {/* MODULAR WALLET MODALS */}
+            <SendModal
+                isOpen={showSendModal}
+                onClose={() => setShowSendModal(false)}
+                role={stellarData.role}
+                sendDest={sendDest}
+                setSendDest={setSendDest}
+                sendAmt={sendAmt}
+                setSendAmt={setSendAmt}
+                isProcessing={isProcessing}
+                appNetwork={appNetwork}
+                onSend={handleSendXLM}
+            />
 
-            {/* RECEIVE MODAL */}
-            {showReceiveModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-                    <div className={`w-full max-w-sm rounded-3xl p-8 shadow-2xl relative text-center transition-all ${cardRoleStyle(stellarData.role)}`}>
-                        <button onClick={() => setShowReceiveModal(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 dark:hover:text-white"><X className="w-5 h-5" /></button>
-                        <h3 className="text-xl font-black mb-2 text-slate-900 dark:text-white">Receive Assets</h3>
-                        <p className="text-sm text-slate-500 dark:text-gray-400 mb-8">Scan to transfer funds to your wallet.</p>
-                        <div className="bg-white p-4 rounded-2xl mx-auto w-fit mb-8 shadow-md">
-                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${activePubKey}`} alt="QR Code" className="w-48 h-48" />
-                        </div>
-                        <div className="text-left">
-                            <label className="block text-xs font-bold text-slate-500 dark:text-gray-400 uppercase mb-2">Your Address</label>
-                            <div className="flex gap-2">
-                                <code className="flex-1 bg-slate-50 dark:bg-black/50 p-4 rounded-xl text-[10px] break-all border border-slate-200 dark:border-white/10 font-mono text-slate-900 dark:text-white">{activePubKey}</code>
-                                <button onClick={() => navigator.clipboard.writeText(activePubKey!)} className={`p-4 rounded-xl font-bold transition-colors ${roleCtaBg(stellarData.role)}`}><Copy className="w-4 h-4" /></button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ReceiveModal
+                isOpen={showReceiveModal}
+                onClose={() => setShowReceiveModal(false)}
+                role={stellarData.role}
+                activePubKey={activePubKey || undefined}
+            />
 
-            {/* WALLET SELECTION MODAL */}
-            {showWalletModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-                    <div className={`w-full max-w-sm rounded-3xl p-8 shadow-2xl relative text-center transition-all ${cardRoleStyle(stellarData.role)}`}>
-                        <button onClick={() => setShowWalletModal(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 dark:hover:text-white"><X className="w-5 h-5" /></button>
-                        <Wallet className="w-12 h-12 text-cyan-500 mx-auto mb-4" />
-                        <h3 className="text-xl font-black mb-2 text-slate-900 dark:text-white">Connect Wallet</h3>
-                        <p className="text-sm text-slate-500 dark:text-gray-400 mb-6">Connect your wallet to continue.</p>
+            <WalletConnectModal
+                isOpen={showWalletModal}
+                onClose={() => setShowWalletModal(false)}
+                role={stellarData.role}
+                onConnectWallet={executeWalletConnection}
+            />
 
-                        <div className="flex flex-col gap-3">
-                            <button onClick={() => executeWalletConnection('LOBSTR')} className="w-full py-4 px-6 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 rounded-xl font-bold text-sm text-slate-900 dark:text-white flex items-center justify-between transition-colors">
-                                LOBSTR Extension <ArrowUpRight className="w-4 h-4 opacity-50" />
-                            </button>
-                            <button onClick={() => executeWalletConnection('Freighter')} className="w-full py-4 px-6 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 rounded-xl font-bold text-sm text-slate-900 dark:text-white flex items-center justify-between transition-colors">
-                                Freighter <ArrowUpRight className="w-4 h-4 opacity-50" />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* INTERACTIVE NOTIFICATION CENTER MODAL */}
-            {showNotificationModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-xl animate-fade-in font-sans">
-                    <div className={`w-full max-w-xl rounded-[2.5rem] p-6 sm:p-8 shadow-2xl relative text-slate-900 dark:text-white space-y-5 transition-all ${cardRoleStyle(stellarData.role)}`}>
-
-                        {/* Modal Header */}
-                        <div className="flex items-center justify-between pb-4 border-b border-slate-200/80 dark:border-white/10">
-                            <div className="flex items-center gap-3.5">
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${rolePill(stellarData.role)}`}>
-                                    <Bell className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="font-black text-xl tracking-tight">Notification Center</h3>
-                                        {unreadNotificationCount > 0 && (
-                                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500 text-white font-mono animate-pulse shadow-md">
-                                                {unreadNotificationCount} NEW
-                                            </span>
-                                        )}
-                                    </div>
-                                    <p className="text-xs text-slate-500 dark:text-gray-400 font-mono flex items-center gap-1.5 pt-0.5">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                                        Live Updates
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={markAllNotificationsAsRead}
-                                    className={`text-xs font-mono font-bold hover:underline px-2.5 py-1 transition-all ${roleAccentText(stellarData.role)}`}
-                                >
-                                    Mark Read
-                                </button>
-                                <button
-                                    onClick={() => setShowNotificationModal(false)}
-                                    className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Notification Filter Category Bar */}
-                        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs font-mono font-bold">
-                            {[
-                                { id: 'all', label: `All (${allNotifications.length})` },
-                                { id: 'fare', label: '⚡ Fares & Loans' },
-                                { id: 'broadcast', label: '📢 System' },
-                                { id: 'ride', label: '🛺 Ride Status' },
-                            ].map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    onClick={() => setNotifCategory(tab.id as any)}
-                                    className={`px-3.5 py-2 rounded-2xl font-bold transition-all border whitespace-nowrap ${notifCategory === tab.id
-                                        ? `${roleCtaBg(stellarData.role)} border-transparent shadow-md scale-102 text-white`
-                                        : 'bg-slate-100 dark:bg-white/[0.05] border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-gray-300 hover:scale-102'
-                                        }`}
-                                >
-                                    {tab.label}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Notifications Feed */}
-                        <div className="space-y-3 max-h-[70vh] overflow-y-auto custom-scrollbar font-mono">
-                            {filteredNotifications.length > 0 ? (
-                                filteredNotifications.map((notif) => {
-                                    if (!notif) return null;
-                                    try {
-                                        const notifId = notif.id || `notif-${Math.random()}`;
-                                        const isUnread = !readIds.has(notifId);
-                                        const notifType = notif.type || 'system';
-                                        const notifTitle = notif.title || 'Notification';
-                                        const notifMessage = notif.message || '';
-                                        const formattedTime = formatNotifDate(notif.timestamp);
-
-                                        return (
-                                            <div
-                                                key={notifId}
-                                                className={`p-4.5 rounded-2xl border transition-all duration-200 relative ${isUnread
-                                                    ? 'bg-white dark:bg-[#0f1420] border-cyan-500/50 shadow-md'
-                                                    : 'bg-slate-50/80 dark:bg-white/[0.03] border-slate-200/60 dark:border-white/[0.06] opacity-90'
-                                                    }`}
-                                            >
-                                                {isUnread && (
-                                                    <span className="absolute top-3.5 right-3.5 w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping shadow-sm" />
-                                                )}
-                                                <div className="flex items-start justify-between gap-3.5">
-                                                    <div className="flex items-start gap-3.5">
-                                                        <div className={`p-3 rounded-2xl border flex-shrink-0 mt-0.5 shadow-sm ${rolePill(stellarData.role)}`}>
-                                                            {notifType === 'fare' ? <Zap className="w-5 h-5 text-emerald-500" /> :
-                                                                notifType === 'broadcast' || notifType === 'system' ? <Megaphone className="w-5 h-5 text-cyan-500" /> :
-                                                                    notifType === 'ride' ? <Navigation className="w-5 h-5 text-amber-500" /> :
-                                                                        <ShieldCheck className="w-5 h-5 text-indigo-500" />}
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <div className="flex items-center gap-2">
-                                                                <p className="text-xs font-black text-slate-900 dark:text-white tracking-tight">{notifTitle}</p>
-                                                            </div>
-
-                                                            <p className="text-xs text-slate-600 dark:text-gray-300 font-medium leading-relaxed">{notifMessage}</p>
-
-                                                            {/* Prominent Amount Display if Available */}
-                                                            {notif.amountPhp && (
-                                                                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono font-black text-xs mt-1.5 border border-emerald-500/25 shadow-xs">
-                                                                    <span>₱{notif.amountPhp} PHP</span>
-                                                                    {notif.amountXlm && <span className="opacity-75">({notif.amountXlm} XLM)</span>}
-                                                                </div>
-                                                            )}
-
-                                                            <p className="text-[9px] text-slate-400 font-mono pt-1">
-                                                                {formattedTime}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                                                        {notifType === 'fare' && (
-                                                            <button
-                                                                onClick={() => {
-                                                                    setShowNotificationModal(false);
-                                                                    setActiveTab('history');
-                                                                }}
-                                                                className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all active:scale-95 shadow-sm ${roleCtaBg(stellarData.role)}`}
-                                                            >
-                                                                Receipt
-                                                            </button>
-                                                        )}
-                                                        {notifType === 'ride' && (
-                                                            <button
-                                                                onClick={() => {
-                                                                    setShowNotificationModal(false);
-                                                                    setActiveTab('hub');
-                                                                }}
-                                                                className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all active:scale-95 shadow-sm ${roleCtaBg(stellarData.role)}`}
-                                                            >
-                                                                View Map
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    } catch (err) {
-                                        console.warn("Notification item render note:", err);
-                                        return null;
-                                    }
-                                })
-                            ) : (
-                                <div className="py-12 text-center text-slate-400 font-mono space-y-2.5">
-                                    <CheckCircle2 className="w-10 h-10 mx-auto opacity-30 text-emerald-500" />
-                                    <p className="text-xs font-bold">All clear! No notifications in this category.</p>
-                                </div>
-                            )}
-                        </div>
-
-                        <button
-                            onClick={() => {
-                                markAllNotificationsAsRead();
-                                setShowNotificationModal(false);
-                            }}
-                            className={`w-full py-4 font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-xl hover:opacity-90 active:scale-98 ${roleCtaBg(stellarData.role)}`}
-                        >
-                            Done & Dismiss All
-                        </button>
-                    </div>
-                </div>
-            )}
+            {/* MODULAR NOTIFICATION CENTER MODAL */}
+            <NotificationCenterModal
+                isOpen={showNotificationModal}
+                onClose={() => setShowNotificationModal(false)}
+                role={stellarData.role}
+                unreadCount={unreadNotificationCount}
+                allNotifications={allNotifications}
+                filteredNotifications={filteredNotifications}
+                notifCategory={notifCategory}
+                setNotifCategory={setNotifCategory}
+                readIds={readIds}
+                markAllAsRead={markAllNotificationsAsRead}
+                formatNotifDate={formatNotifDate}
+                onSelectTab={(tab) => {
+                    setActiveTab(tab);
+                    setShowNotificationModal(false);
+                }}
+            />
         </div>
     );
 };
