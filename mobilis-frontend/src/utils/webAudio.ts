@@ -1,8 +1,47 @@
 /**
- * Web Audio API Sound Synthesizer
+ * Web Audio API Sound Synthesizer & Mobile Haptics
  * Generates clean, distinct notification sounds for Commuters vs Drivers vs Startup.
  */
 let audioCtx: AudioContext | null = null;
+
+const SOUND_PREF_KEY = 'mobilis_sound_enabled';
+
+/**
+ * Returns true if audio and haptic feedback is enabled (default: true).
+ */
+export function isSoundEnabled(): boolean {
+    try {
+        const pref = localStorage.getItem(SOUND_PREF_KEY);
+        return pref !== 'false';
+    } catch {
+        return true;
+    }
+}
+
+/**
+ * Sets user preference for sound and haptic effects.
+ */
+export function setSoundEnabled(enabled: boolean): void {
+    try {
+        localStorage.setItem(SOUND_PREF_KEY, enabled ? 'true' : 'false');
+    } catch {
+        // Fallback
+    }
+}
+
+/**
+ * Triggers subtle native mobile vibration haptics on supported devices.
+ */
+export function triggerHaptic(pattern: number | number[] = [40, 60, 40]): void {
+    if (!isSoundEnabled()) return;
+    try {
+        if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
+            navigator.vibrate(pattern);
+        }
+    } catch {
+        // Silent fallback on non-vibrating devices
+    }
+}
 
 function getAudioContext(): AudioContext {
     if (!audioCtx) {
@@ -19,7 +58,9 @@ function getAudioContext(): AudioContext {
  * Commuter Notification Chime: Soft ambient 2-tone chime (C5 -> G5)
  */
 export function playCommuterChime(): void {
+    if (!isSoundEnabled()) return;
     try {
+        triggerHaptic([30, 40, 30]);
         const ctx = getAudioContext();
         const now = ctx.currentTime;
 
@@ -55,7 +96,9 @@ export function playCommuterChime(): void {
  * Driver Notification Chime: Upbeat triple-pulse dispatch chime (A5 -> C6 -> E6)
  */
 export function playDriverAlertChime(): void {
+    if (!isSoundEnabled()) return;
     try {
+        triggerHaptic([50, 60, 50]);
         const ctx = getAudioContext();
         const now = ctx.currentTime;
 
@@ -101,9 +144,9 @@ export function playDriverAlertChime(): void {
 
 /**
  * Startup Chime: Ascending futuristic 4-note chord (C5 -> E5 -> G5 -> C6)
- * Triggered on app launch during splash screen animation.
  */
 export function playStartupChime(): void {
+    if (!isSoundEnabled()) return;
     try {
         const ctx = getAudioContext();
         const now = ctx.currentTime;

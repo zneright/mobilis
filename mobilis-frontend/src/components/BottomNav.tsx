@@ -37,7 +37,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, role }) 
         : 'bg-emerald-500';
 
     return (
-        <div className="md:hidden fixed bottom-3 left-4 right-4 z-50 max-w-md mx-auto transition-all duration-300 font-sans">
+        <div className="md:hidden fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-4 right-4 z-50 max-w-md mx-auto transition-all duration-300 font-sans">
             <nav className="h-16 rounded-3xl bg-white/85 dark:bg-[#07090E]/85 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)] flex items-center justify-around px-2">
                 {tabs.map((tab) => {
                     const Icon = tab.icon;

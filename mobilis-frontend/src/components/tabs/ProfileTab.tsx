@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Copy, Check, QrCode, Shield, LogOut, ChevronRight, User, Phone, MapPin, Truck, Clock, CheckCircle2 } from 'lucide-react';
+import { Copy, Check, QrCode, Shield, LogOut, ChevronRight, User, Phone, MapPin, Truck, Clock, CheckCircle2, Volume2, VolumeX } from 'lucide-react';
 import { auth, db } from '../../firebase';
 import { signOut } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { cardRoleStyle, rolePill, roleAccentText, roleCtaBg, roleAvatarGradient, roleDisplayName } from './roleStyleTokens';
+import { isSoundEnabled, setSoundEnabled, playCommuterChime } from '../../utils/webAudio';
 
 interface ProfileTabProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -20,7 +21,16 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ stellarData }) => {
         stellarData?.vehicleType || 'Tricycle'
     );
     const [isSubmittingChange, setIsSubmittingChange] = useState(false);
-    const [changeSuccessMsg, setChangeSuccessMsg] = useState('');
+    const [soundOn, setSoundOn] = useState(isSoundEnabled());
+
+    const handleToggleSound = () => {
+        const nextState = !soundOn;
+        setSoundOn(nextState);
+        setSoundEnabled(nextState);
+        if (nextState) {
+            playCommuterChime();
+        }
+    };
 
     const isDriver = stellarData?.role === 'driver';
     const role = stellarData?.role ?? 'commuter';
@@ -188,6 +198,24 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({ stellarData }) => {
                                 <span className={`font-bold ${accentStyle}`}>{stellarData.todaAffiliation}</span>
                             </div>
                         )}
+
+                        {/* Sound & Haptic Effects Toggle */}
+                        <div className="p-4 bg-white/60 dark:bg-white/[0.03] rounded-2xl flex items-center justify-between text-xs font-medium">
+                            <div className="flex items-center gap-3">
+                                {soundOn ? <Volume2 className={`w-4 h-4 ${accentStyle}`} /> : <VolumeX className="w-4 h-4 text-slate-400" />}
+                                <div>
+                                    <span className="text-slate-700 dark:text-gray-300 font-bold block">Audio & Haptic Feedback</span>
+                                    <span className="text-[10px] text-slate-400 dark:text-gray-500">Chimes and vibration alerts</span>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleToggleSound}
+                                className={`relative w-11 h-6 rounded-full transition-colors ${soundOn ? 'bg-cyan-500' : 'bg-slate-300 dark:bg-slate-700'}`}
+                            >
+                                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${soundOn ? 'left-6' : 'left-1'}`} />
+                            </button>
+                        </div>
 
                         <button
                             onClick={handleSignOut}
