@@ -139,11 +139,12 @@ const Signup: React.FC = () => {
                 localStorage.setItem(`mobilis_wallet_secret_${user.uid}`, secret);
             }
 
+            const isDemo = import.meta.env.VITE_DEMO_MODE !== 'false';
             const baseData = {
                 uid: user.uid,
                 email: user.email || email,
                 role: role,
-                status: role === 'commuter' ? 'approved' : 'pending',
+                status: (role === 'commuter' || isDemo) ? 'approved' : 'pending',
                 publicKey,
             };
 

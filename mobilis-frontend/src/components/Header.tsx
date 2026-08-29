@@ -59,10 +59,10 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onOpenNotifications
                 </div>
                 
                 {/* Role-Based Pill Badge */}
-                <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wide border transition-all duration-200 ${pillClass}`}>
+                <div className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wide border transition-all duration-200 ${pillClass}`}>
                     <span className={`w-1.5 h-1.5 rounded-full animate-ping ${roleConfig.dot}`} />
                     <RoleIcon className="w-3 h-3 flex-shrink-0" />
-                    <span className="hidden xs:inline">{roleConfig.label}</span>
+                    <span className="hidden sm:inline">{roleConfig.label}</span>
                 </div>
             </div>
 

@@ -225,7 +225,7 @@ export const HubTab: React.FC<HubTabProps> = ({
                                 <Fuel className="w-6 h-6" />
                             </div>
                             <div>
-                                <h3 className="font-black text-xl text-slate-900 dark:text-white">Soroban Micro-Credit Line</h3>
+                                <h3 className="font-black text-xl text-slate-900 dark:text-white">Cooperative Fuel Credit Line</h3>
                                 <p className="text-xs text-slate-500 dark:text-gray-400 font-mono">Affiliated with {stellarData?.todaAffiliation || 'Cooperative TODA'}</p>
                             </div>
                         </div>
