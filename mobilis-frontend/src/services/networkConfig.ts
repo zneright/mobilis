@@ -8,8 +8,42 @@
 
 import { Networks } from '@stellar/stellar-sdk';
 
-// ─── Exchange Rate Constant ──────────────────────────────────
-export const PHP_EXCHANGE_RATE = 60.69; // 1 XLM ≈ 60.69 PHP (approximate conversion rate)
+// ─── Exchange Rate Constant & Cache ──────────────────────────
+export const PHP_EXCHANGE_RATE = 60.69; // 1 XLM ≈ 60.69 PHP (baseline fallback conversion rate)
+
+const RATE_STORAGE_KEY = 'mobilis_php_exchange_rate';
+const RATE_TIMESTAMP_KEY = 'mobilis_php_rate_ts';
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Fetches the live PHP/XLM exchange rate with a 5-minute local cache and resilient offline fallback.
+ */
+export async function fetchLiveExchangeRate(): Promise<number> {
+    try {
+        const cachedRate = localStorage.getItem(RATE_STORAGE_KEY);
+        const cachedTs = localStorage.getItem(RATE_TIMESTAMP_KEY);
+        const now = Date.now();
+
+        if (cachedRate && cachedTs && now - parseInt(cachedTs, 10) < CACHE_TTL_MS) {
+            const parsed = parseFloat(cachedRate);
+            if (!isNaN(parsed) && parsed > 0) return parsed;
+        }
+
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=stellar&vs_currencies=php');
+        if (res.ok) {
+            const data = await res.json();
+            const liveRate = data?.stellar?.php;
+            if (typeof liveRate === 'number' && liveRate > 0) {
+                localStorage.setItem(RATE_STORAGE_KEY, liveRate.toString());
+                localStorage.setItem(RATE_TIMESTAMP_KEY, now.toString());
+                return liveRate;
+            }
+        }
+    } catch {
+        // Fallback silently on network interruption
+    }
+    return PHP_EXCHANGE_RATE;
+}
 
 // ─── Network Type ────────────────────────────────────────────
 export type StellarNetwork = 'testnet' | 'mainnet';

@@ -659,7 +659,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ txHistory, appNetwork, s
                                     </div>
                                     <div className="text-right">
                                         <p className={`text-[10px] font-mono font-bold uppercase ${accentStyle}`}>OFFICIAL BLOCKCHAIN RECEIPT</p>
-                                        <p className="text-[9px] text-slate-400 font-mono font-semibold">Stellar Soroban Proof</p>
+                                        <p className="text-[9px] text-slate-400 font-mono font-semibold">On-Chain Ledger Proof</p>
                                     </div>
                                 </div>
 
